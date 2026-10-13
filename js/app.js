@@ -29,7 +29,7 @@ function App() {
       <a href="#/" className="flex items-center gap-3 min-w-0 flex-1">
         <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-white shadow-card" style=${{ background: "linear-gradient(160deg,var(--hero1),var(--hero2))" }}><${Ic} n="Receipt" s=${20} /></span>
         <span className="min-w-0"><span className="block font-display text-2xl font-extrabold leading-none tracking-tight">Going Dutch</span>
-          <span className="block text-xs text-muted mt-1 truncate">Pay for what you had. Share the rest fairly.</span></span>
+          <span className="block text-xs text-muted mt-1 leading-snug">Pay for what you had. Share the rest fairly.</span></span>
       </a>
       <${ThemePicker} theme=${theme} setTheme=${setTheme} />
       <${AccountMenu} user=${user} toast=${toast} />

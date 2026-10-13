@@ -57,14 +57,14 @@ function PickMe({ state, user, onPick, onAdd }) {
   return html`<${Card} className="p-5">
     <p className="font-display text-2xl font-extrabold leading-tight">Who are you?</p>
     <p className="text-sm text-muted mt-1">Tap your name to see the bill and claim what you had.</p>
-    <div className="mt-4 grid grid-cols-2 gap-2">
+    <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
       ${P.map(p => {
         const takenByOther = p.userId && p.userId !== user.id;
         return html`<button key=${p.id} type="button" onClick=${() => onPick(p.id)}
           className="flex items-center gap-3 rounded-2xl border border-line bg-card p-3 text-left hover:bg-soft transition">
           <${Avatar} name=${p.name} color=${colorFor(P, p.id)} size=${40} />
-          <span className="min-w-0"><span className="block font-semibold truncate">${p.name || "Unnamed"}</span>
-            <span className="block text-xs text-muted">${p.isHost ? "Paid the bill" : takenByOther ? "Picked on another phone" : "Tap to join"}</span></span>
+          <span className="min-w-0 flex-1"><span className="block font-semibold leading-snug break-words">${p.name || "Unnamed"}</span>
+            <span className="block text-xs text-muted mt-0.5">${p.isHost ? "Paid the bill" : takenByOther ? "Picked on another phone" : "Tap to join"}</span></span>
         </button>`;
       })}
     </div>

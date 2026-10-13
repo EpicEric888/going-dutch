@@ -10,7 +10,7 @@ const num = v => { const n = parseFloat(String(v ?? "").replace(/[^0-9.\-]/g, ""
 const r2 = n => Math.round((n + Number.EPSILON) * 100) / 100;
 const fmt = n => (n < 0 ? "-$" : "$") + Math.abs(r2(n)).toFixed(2);
 const sum = a => a.reduce((x, y) => x + y, 0);
-const initials = name => (name || "?").trim().split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase() || "").join("") || "?";
+const initials = name => (name || "").trim().split(/\s+/).filter(w => /^[\p{L}\p{N}]/u.test(w)).slice(0, 2).map(w => w[0].toUpperCase()).join("") || "?";
 const COLORS = ["#0f9f6e", "#5b5bd6", "#d98a05", "#d6407e", "#0b8fc4", "#8a54d6", "#d4483b", "#0d9488", "#e06d14", "#5f9c12", "#0891b2", "#b34bc9"];
 const colorFor = (participants, id) => COLORS[Math.max(0, participants.findIndex(p => p.id === id)) % COLORS.length];
 

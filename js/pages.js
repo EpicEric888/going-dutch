@@ -186,7 +186,7 @@ function BillHeader({ state, calc, shareUrl, toast }) {
       <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-moneysoft text-money"><${Ic} n="Receipt" s=${18} /></span>
       <div className="min-w-0 flex-1">
         <p className="font-semibold leading-tight truncate">${R.merchant || "Untitled bill"}</p>
-        <p className="text-xs text-muted tnum truncate">${[dateLabel, state.participants.length + (state.participants.length === 1 ? " person" : " people"), guestCount && paidCount ? `${paidCount}/${guestCount} paid` : ""].filter(Boolean).join(" · ")}</p>
+        <p className="text-xs text-muted tnum leading-snug">${[dateLabel, state.participants.length + (state.participants.length === 1 ? " person" : " people"), guestCount && paidCount ? `${paidCount}/${guestCount} paid` : ""].filter(Boolean).join(" · ")}</p>
       </div>
       <div className="text-right">
         <p className="font-display text-lg font-extrabold leading-none tnum">${fmt(calc.total)}</p>
