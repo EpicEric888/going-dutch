@@ -86,8 +86,10 @@ async function readReceipt(blob) {
   const { data, error } = await supa.functions.invoke("read-receipt", { body: { image, mediaType: blob.type || "image/png" } });
   if (error) {
     const status = error.context?.status;
-    if (error.name === "FunctionsFetchError" || status === 404) throw { code: "not_set_up" };
+    if (error.name === "FunctionsFetchError" || status === 404 || status === 503) throw { code: "not_set_up" };
     if (status === 429) throw { code: "rate_limited" };
+    if (status === 422) throw { code: "invalid_json" };
+    if (status === 400) throw { code: "image_rejected" };
     throw { code: "upstream" };
   }
   if (!data || !Array.isArray(data.items)) throw { code: "invalid_json" };
