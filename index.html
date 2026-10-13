@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Split a group bill by what everyone actually ordered. Snap the receipt, share the link, friends tap their own items.">
+<meta name="theme-color" content="#0a7d50">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%230a7d50'/%3E%3Cpath d='M20 14h24v36l-4-3-4 3-4-3-4 3-4-3-4 3z' fill='white'/%3E%3Cpath d='M26 24h12M26 31h12M26 38h8' stroke='%230a7d50' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<title>Going Dutch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+/* Layout: one centered mobile-first column (max 640px), sticky segmented tabs, receipt-paper cards for money blocks */
+:root{
+  --bg:#f2f5f3; --card:#ffffff; --ink:#0f1f19; --muted:#5d6e67; --line:#e1e8e4; --soft:#edf2ef;
+  --paper:#fbfaf5; --money:#078554; --money-ink:#ffffff; --money-soft:#dff4ea; --warn:#a85a06; --warn-soft:#fcf0de;
+  --danger:#c2412d; --shadow:0 1px 2px rgba(15,31,25,.05),0 8px 24px -12px rgba(15,31,25,.18);
+  --f-display:"Bricolage Grotesque",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"Figtree",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0b1210; --card:#131c19; --ink:#e7efeb; --muted:#93a39c; --line:#24312c; --soft:#1a2521;
+  --paper:#17201d; --money:#3fd096; --money-ink:#04140d; --money-soft:#123327; --warn:#f2a94e; --warn-soft:#31230f;
+  --danger:#f07a66; --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -14px rgba(0,0,0,.7); color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0b1210; --card:#131c19; --ink:#e7efeb; --muted:#93a39c; --line:#24312c; --soft:#1a2521;
+  --paper:#17201d; --money:#3fd096; --money-ink:#04140d; --money-soft:#123327; --warn:#f2a94e; --warn-soft:#31230f;
+  --danger:#f07a66; --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -14px rgba(0,0,0,.7); color-scheme:dark }
+html,body{background:var(--bg);color:var(--ink)}
+.app{background:var(--bg);color:var(--ink);min-height:100vh}
+body{font-family:var(--f-body);font-size:15px;-webkit-font-smoothing:antialiased}
+h1,h2,h3{text-wrap:balance}
+.tnum{font-variant-numeric:tabular-nums}
+input[type=number]::-webkit-inner-spin-button{opacity:.4}
+@media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script>
+tailwind.config={theme:{extend:{
+  colors:{bg:'var(--bg)',card:'var(--card)',ink:'var(--ink)',muted:'var(--muted)',line:'var(--line)',soft:'var(--soft)',paper:'var(--paper)',money:'var(--money)',moneyink:'var(--money-ink)',moneysoft:'var(--money-soft)',warn:'var(--warn)',warnsoft:'var(--warn-soft)',danger:'var(--danger)'},
+  fontFamily:{display:'var(--f-display)',body:'var(--f-body)',mono:'var(--f-mono)'},
+  boxShadow:{card:'var(--shadow)'}
+}}}
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/htm@3.1.1/dist/htm.umd.js"></script>
+<script src="https://unpkg.com/lucide-react@0.263.1/dist/umd/lucide-react.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+</head>
+<body>
+<div id="root"></div>
+<noscript>Going Dutch needs JavaScript turned on.</noscript>
+<script src="js/config.js"></script>
+<script src="js/core.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/data.js"></script>
+<script src="js/pages.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
