@@ -68,7 +68,7 @@ async function continueWithGoogle(user) {
 
 async function createBill(user, demo = false) {
   const base = demo ? demoState() : blankState();
-  const participants = base.participants.map(p => p.isHost ? { ...p, name: p.name || displayNameOf(user), userId: user.id } : p);
+  const participants = base.participants.map(p => p.isHost ? { ...p, name: p.name || displayNameOf(user), userId: user.id, pay: user.user_metadata?.pay || {} } : p);
   const { data, error } = await supa.from("bills").insert({
     created_by: user.id,
     receipt: { ...base.receipt, isDemo: !!base.isDemo },

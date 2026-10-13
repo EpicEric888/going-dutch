@@ -157,6 +157,7 @@ function Home({ user, toast, go }) {
               </div>
               <div className="text-right">
                 ${mine?.isHost ? html`<p className="text-[10px] uppercase tracking-[0.08em] text-muted">Owed to you</p><p className="font-display font-bold text-money tnum">${fmt(owedToMe)}</p>`
+                  : row && mine.paid ? html`<p className="text-[10px] uppercase tracking-[0.08em] text-muted">You paid</p><p className="font-display font-bold text-muted tnum">${fmt(row.total)}</p>`
                   : row ? html`<p className="text-[10px] uppercase tracking-[0.08em] text-muted">You owe</p><p className="font-display font-bold text-money tnum">${fmt(row.total)}</p>`
                   : html`<${Ic} n="ChevronRight" s=${18} c="text-muted" />`}
               </div>
@@ -172,6 +173,7 @@ function BillPage({ code, user, toast, go }) {
   const calc = useMemo(() => state ? compute(state) : null, [state]);
   const setMode = mode => { setState(s => ({ ...s, mode })); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const shareUrl = location.origin + location.pathname + "#/b/" + code;
+  const [claimView, setClaimView] = useState(null); // "me" | "all"
 
   if (status === "notfound") return html`<${Card} className="p-6 text-center"><p className="font-display text-lg font-bold">This bill doesn't exist</p>
     <p className="text-sm text-muted mt-1">The link may be mistyped, or the bill was deleted.</p>
@@ -197,6 +199,17 @@ function BillPage({ code, user, toast, go }) {
   const meDefault = state.participants.find(p => p.userId === user.id)?.id || null;
   const newBill = async () => { try { go("/b/" + await createBill(user, false)); } catch (e) { toast("Couldn't create the bill. Try again."); } };
 
+  const onAddMe = name => setState(s => {
+    if (s.participants.length >= 12) return s;
+    const cleared = s.participants.map(p => p.userId === user.id ? { ...p, userId: null } : p);
+    return { ...s, participants: [...cleared, { id: uid(), name, isHost: false, userId: user.id }] };
+  });
+  const isCreator = meta?.createdBy === user.id;
+  const view = claimView || (isCreator ? "all" : "me");
+  const ViewSwitch = () => html`<div className="grid grid-cols-2 gap-1 rounded-xl bg-soft p-1 text-sm font-semibold">
+    ${[["me", "My items"], ["all", "Everyone's"]].map(([v, label]) => html`<button key=${v} type="button" onClick=${() => setClaimView(v)}
+      className=${"rounded-lg py-1.5 transition " + (view === v ? "bg-card text-ink shadow-card" : "text-muted")}>${label}</button>`)}
+  </div>`;
   const tabs = [["host-setup", "Setup", "Receipt"], ["guest-split", "Claim items", "Users"], ["summary", "Summary", "Wallet"]];
   return html`<div className="flex flex-col gap-4">
     <nav className="sticky z-30 -mx-4 px-4 py-2 bg-bg/90 backdrop-blur" style=${{ top: "env(safe-area-inset-top, 0px)", background: "color-mix(in srgb, var(--bg) 90%, transparent)" }}>
@@ -214,8 +227,15 @@ function BillPage({ code, user, toast, go }) {
       <${Card} className="p-5"><${StepHead} n="1" title="Upload the receipt" sub="We read the line items, tax and fees for you." /><${UploadZone} onParsed=${onParsed} /></${Card}>
       <${Card} className="p-5"><${StepHead} n="2" title="Who's splitting?" sub="2 to 12 people, including you. Rename, add or remove anyone." /><${People} state=${state} setState=${setState} toast=${toast} /></${Card}>
       <${Card} className="p-5"><${StepHead} n="3" title="Check the numbers" sub="Everything is editable. Claims stay put when you edit an item." /><${ReceiptEditor} state=${state} setState=${setState} calc=${calc} /></${Card}>
-      <${Card} className="p-5"><${StepHead} n="4" title="Send it to the table" /><${Share} state=${state} toast=${toast} shareUrl=${shareUrl} goGuest=${() => setMode("guest-split")} /></${Card}>`}
-    ${state.mode === "guest-split" && html`<${Assign} key=${code} state=${state} setState=${setState} calc=${calc} toast=${toast} meDefault=${meDefault} onPickMe=${onPickMe} goSummary=${() => setMode("summary")} />`}
+      <${Card} className="p-5"><${StepHead} n="4" title="How should people pay you?" sub="Optional. Adds one-tap pay buttons for your friends." /><${PaySetup} state=${state} setState=${setState} user=${user} toast=${toast} /></${Card}>
+      <${Card} className="p-5"><${StepHead} n="5" title="Send it to the table" /><${Share} state=${state} toast=${toast} shareUrl=${shareUrl} goGuest=${() => setMode("guest-split")} /></${Card}>`}
+    ${state.mode === "guest-split" && html`
+      <${ViewSwitch} />
+      ${view === "all"
+        ? html`<${Assign} key=${code} state=${state} setState=${setState} calc=${calc} toast=${toast} meDefault=${meDefault} onPickMe=${onPickMe} goSummary=${() => setMode("summary")} />`
+        : meDefault
+          ? html`<${MyClaims} state=${state} setState=${setState} calc=${calc} meId=${meDefault} onSwitch=${() => onPickMe(null)} toast=${toast} goSummary=${() => setMode("summary")} />`
+          : html`<${PickMe} state=${state} user=${user} onPick=${onPickMe} onAdd=${onAddMe} />`}`}
     ${state.mode === "summary" && html`<${Summary} state=${state} setState=${setState} calc=${calc} toast=${toast} reset=${newBill} live=${true} readOnly=${false} />`}
   </div>`;
 }

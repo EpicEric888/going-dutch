@@ -422,7 +422,7 @@ function PersonCard({ r, calc, P, hostName }) {
       <${Avatar} name=${r.p.name} color=${col} size=${40} />
       <div className="min-w-0 flex-1">
         <p className="font-display text-lg font-bold leading-tight truncate">${r.p.name || "Host"}</p>
-        <p className="text-xs text-muted">${r.p.isHost ? "Paid the bill" : `Owes ${hostName}`}</p>
+        <p className="text-xs text-muted">${r.p.isHost ? "Paid the bill" : r.p.paid ? html`<span className="font-semibold text-money">Paid ${hostName} ✓</span>` : `Owes ${hostName}`}</p>
       </div>
       <div className="relative group text-right" onMouseEnter=${() => setOpen(true)} onMouseLeave=${() => setOpen(false)}>
         <button type="button" onClick=${() => setOpen(o => !o)} aria-expanded=${open} className="font-display text-2xl font-extrabold text-money tnum leading-none">${fmt(r.total)}</button>
@@ -440,9 +440,11 @@ function PersonCard({ r, calc, P, hostName }) {
   </${Card}>`;
 }
 
-function settleText(r, R) {
+function settleText(r, R, host) {
   const items = r.items.map(i => i.ways > 1 ? `${i.name} (1/${i.ways})` : i.name).join(", ");
-  return `Hey ${r.p.name}, you owe ${fmt(r.total)} for ${R.merchant || "dinner"}${items ? " - " + items : ""}`;
+  const pay = typeof payLinks === "function" ? payLinks(host, r.total, `${R.merchant || "Dinner"} via Going Dutch`) : { links: [], zelle: "" };
+  const how = pay.links[0] ? ` Pay here: ${pay.links[0].href}` : pay.zelle ? ` Zelle: ${pay.zelle}` : "";
+  return `Hey ${r.p.name}, you owe ${fmt(r.total)} for ${R.merchant || "dinner"}${items ? " - " + items : ""}.${how}`;
 }
 function summaryText(state, calc) {
   const R = state.receipt, host = state.participants.find(p => p.isHost);
@@ -522,10 +524,15 @@ function Summary({ state, setState, calc, toast, reset, live, readOnly }) {
     ${guests.length > 0 && html`<${Card} className="p-4">
       <h3 className="font-display text-lg font-bold mb-3">Settle up</h3>
       <ul className="flex flex-col gap-2">
-        ${guests.map(r => html`<li key=${r.p.id} className="flex items-start gap-3 rounded-xl bg-soft p-3">
+        ${guests.map(r => html`<li key=${r.p.id} className=${"flex items-start gap-3 rounded-xl bg-soft p-3 " + (r.p.paid ? "opacity-60" : "")}>
           <${Avatar} name=${r.p.name} color=${colorFor(P, r.p.id)} size=${28} />
-          <p className="text-sm flex-1 min-w-0 break-words">${settleText(r, R)}</p>
-          <button type="button" aria-label=${"Copy message for " + r.p.name} onClick=${async () => toast(await copyText(settleText(r, R)) ? "Message copied" : "Copy blocked. Select the text instead.")}
+          <div className="flex-1 min-w-0">
+            <p className="text-sm break-words">${settleText(r, R, host)}</p>
+            <button type="button" onClick=${() => setState(s => ({ ...s, participants: s.participants.map(p => p.id === r.p.id ? { ...p, paid: !p.paid } : p) }))}
+              className=${"mt-2 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold " + (r.p.paid ? "bg-moneysoft text-money" : "border border-line text-muted hover:text-ink")}>
+              <${Ic} n=${r.p.paid ? "CheckCircle2" : "Circle"} s=${13} />${r.p.paid ? "Paid" : "Mark as paid"}</button>
+          </div>
+          <button type="button" aria-label=${"Copy message for " + r.p.name} onClick=${async () => toast(await copyText(settleText(r, R, host)) ? "Message copied" : "Copy blocked. Select the text instead.")}
             className="p-2 -m-1 rounded-lg text-money hover:bg-card"><${Ic} n="Copy" s=${16} /></button>
         </li>`)}
       </ul>
