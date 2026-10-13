@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy · Going Dutch</title>
+<style>
+  :root { --bg:#f2f5f3; --ink:#0f1f19; --muted:#5d6e67; --money:#078554; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#0b1210; --ink:#e7efeb; --muted:#93a39c; --money:#3fd096; } }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.6 -apple-system, "Segoe UI", system-ui, sans-serif; }
+  main { max-width:640px; margin:0 auto; padding:40px 20px 80px; }
+  h1 { font-size:28px; margin:0 0 4px; } h2 { font-size:18px; margin:28px 0 6px; }
+  p, li { color:var(--ink); } .muted { color:var(--muted); font-size:14px; }
+  a { color:var(--money); }
+</style>
+</head>
+<body>
+<main>
+  <p><a href="./">← Going Dutch</a></p>
+  <h1>Privacy</h1>
+  <p class="muted">Last updated October 12, 2026</p>
+
+  <p>Going Dutch is a small app for splitting a restaurant bill with friends. This page explains what it stores and why. Short version: we keep only what's needed to split the bill, and we don't sell or share it.</p>
+
+  <h2>What we store</h2>
+  <ul>
+    <li><b>Bills you create or open:</b> the restaurant name, date, items, prices, tax, fees, tip, the names you type in for the people at the table, and who claimed which item.</li>
+    <li><b>Your account, if you make one:</b> your email address and display name. If you sign in with Google, we receive your name, email and profile picture from Google.</li>
+    <li><b>Guests:</b> if you use the app without an account, we create an anonymous ID so you can get back to your bills on the same device.</li>
+  </ul>
+
+  <h2>Receipt photos</h2>
+  <p>When you upload a receipt, the image is sent to Meta's Muse API to read the items and totals. We don't keep the photo after it's read. Only the extracted text, like item names and prices, is saved to the bill.</p>
+
+  <h2>Who can see your bills</h2>
+  <p>Only people who have the bill's link can open it. Anyone with the link can see the bill and claim items, so share it only with the people at the table.</p>
+
+  <h2>Services we use</h2>
+  <ul>
+    <li>Supabase, for the database and sign-in</li>
+    <li>GitHub Pages, to host the website</li>
+    <li>Meta Muse API, to read receipt photos</li>
+    <li>Google, if you choose to sign in with Google</li>
+  </ul>
+
+  <h2>Deleting your data</h2>
+  <p>Email <a href="mailto:ericpape88@gmail.com">ericpape88@gmail.com</a> and we'll delete your account and the bills you created.</p>
+
+  <h2>Contact</h2>
+  <p>Questions? Email <a href="mailto:ericpape88@gmail.com">ericpape88@gmail.com</a>.</p>
+</main>
+</body>
+</html>

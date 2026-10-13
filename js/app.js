@@ -41,6 +41,7 @@ function App() {
         : !user ? html`<${Card} className="p-6 text-center text-muted text-sm"><${Ic} n="Loader2" s=${18} c="animate-spin inline mr-2" />Getting things ready…</${Card}>`
         : route.page === "bill" ? html`<${BillPage} key=${route.code} code=${route.code} user=${user} toast=${toast} go=${go} />`
         : html`<${Home} user=${user} toast=${toast} go=${go} />`}
+      <footer className="pt-6 text-center text-xs text-muted"><a href="privacy.html" className="hover:underline">Privacy</a> · <a href="terms.html" className="hover:underline">Terms</a></footer>
     </main>
 
     ${toastMsg && html`<div className="fixed left-1/2 -translate-x-1/2 z-50 rounded-full bg-ink text-bg px-4 py-2 text-sm font-semibold shadow-card inline-flex items-center gap-2" style=${{ bottom: "calc(20px + env(safe-area-inset-bottom, 0px))" }}>
