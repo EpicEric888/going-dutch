@@ -43,7 +43,28 @@ function useAuth() {
   return { user, error };
 }
 
-const displayNameOf = user => user?.user_metadata?.display_name || "";
+const displayNameOf = user => { const m = user?.user_metadata || {}; return m.display_name || m.full_name || m.name || ""; };
+
+/* Google: a guest links Google to their current session (keeps their bills).
+   If that Google account already belongs to someone, sign in to it instead. */
+async function continueWithGoogle(user) {
+  const opts = { provider: "google", options: { redirectTo: location.origin + location.pathname } };
+  if (user?.is_anonymous && supa.auth.linkIdentity) {
+    const { error } = await supa.auth.linkIdentity(opts);
+    if (!error) return null;
+    if (!/already|exists|linking/i.test(error.message || "")) return error;
+  }
+  const { error } = await supa.auth.signInWithOAuth(opts);
+  return error || null;
+}
+// Coming back from a Google link attempt whose account already exists: sign in to that account.
+(function handleOAuthReturn() {
+  const q = new URLSearchParams(location.search + "&" + location.hash.replace(/^#/, ""));
+  if (q.get("error_code") === "identity_already_exists") {
+    history.replaceState(null, "", location.pathname);
+    supa.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + location.pathname } });
+  }
+})();
 
 async function createBill(user, demo = false) {
   const base = demo ? demoState() : blankState();
