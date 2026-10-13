@@ -346,8 +346,6 @@ function Assign({ state, setState, calc, goSummary, toast, meDefault, onPickMe }
           <${Avatar} name=${p.name} color=${colorFor(P, p.id)} size=${26} /><span className="text-sm font-medium">${p.name || "Host"}${p.isHost ? " · host" : ""}</span></button>`)}
       </div>
       <p className="text-xs text-muted mt-2">${me ? "Tap an item to claim it for yourself. Tap a name chip to assign anyone." : "Pick who you are, or tap the name chips under each item."}</p>
-      <div className="mt-3 h-2 rounded-full bg-soft overflow-hidden"><div className="h-full rounded-full bg-money transition-all" style=${{ width: claimedPct + "%" }}></div></div>
-      <p className="text-xs text-muted mt-1.5 tnum">${fmt(calc.subtotal - calc.unassigned)} of ${fmt(calc.subtotal)} claimed</p>
     </${Card}>
 
     ${calc.unassignedItems.length > 0 && html`<div className="flex items-start gap-2 rounded-2xl bg-warnsoft text-warn px-4 py-3 text-sm">

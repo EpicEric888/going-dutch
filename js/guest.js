@@ -100,7 +100,6 @@ function MyClaims({ state, setState, calc, meId, onSwitch, toast, goSummary }) {
       <button type="button" onClick=${onSwitch} className="text-sm font-semibold text-money whitespace-nowrap">Not you?</button>
     </div>
 
-    ${calc.unassignedItems.length > 0 && html`<p className="text-xs text-warn tnum">${calc.unassignedItems.length} unclaimed ${calc.unassignedItems.length === 1 ? "item" : "items"} left on the bill (${fmt(calc.unassigned)})</p>`}
 
     <ul className="flex flex-col gap-2">
       ${items.map(it => {

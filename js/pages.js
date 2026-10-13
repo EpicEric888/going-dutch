@@ -167,6 +167,39 @@ function Home({ user, toast, go }) {
   </div>`;
 }
 
+/* ---------- always-visible bill header ---------- */
+function BillHeader({ state, calc, shareUrl, toast }) {
+  const R = state.receipt;
+  const claimed = Math.max(0, calc.subtotal - calc.unassigned);
+  const pct = calc.subtotal > 0 ? Math.min(100, claimed / calc.subtotal * 100) : 0;
+  const allClaimed = calc.subtotal > 0 && calc.unassignedItems.length === 0;
+  const paidCount = state.participants.filter(p => !p.isHost && p.paid).length;
+  const guestCount = state.participants.filter(p => !p.isHost).length;
+  const dateLabel = R.date ? new Date(R.date + "T12:00").toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "";
+  const share = async () => {
+    const text = `Our bill from ${R.merchant || "dinner"} is on Going Dutch. Tap your name, then what you had: ${shareUrl}`;
+    if (navigator.share) { try { await navigator.share({ title: "Going Dutch", text }); return; } catch (e) { if (e?.name === "AbortError") return; } }
+    toast(await copyText(shareUrl) ? "Link copied" : "Copy blocked");
+  };
+  return html`<div className="rounded-2xl border border-line bg-card px-3.5 py-2.5 shadow-card">
+    <div className="flex items-center gap-3">
+      <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-moneysoft text-money"><${Ic} n="Receipt" s=${18} /></span>
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold leading-tight truncate">${R.merchant || "Untitled bill"}</p>
+        <p className="text-xs text-muted tnum truncate">${[dateLabel, state.participants.length + (state.participants.length === 1 ? " person" : " people"), guestCount && paidCount ? `${paidCount}/${guestCount} paid` : ""].filter(Boolean).join(" · ")}</p>
+      </div>
+      <div className="text-right">
+        <p className="font-display text-lg font-extrabold leading-none tnum">${fmt(calc.total)}</p>
+        <p className=${"mt-1 text-[11px] font-semibold tnum " + (allClaimed ? "text-money" : calc.subtotal > 0 ? "text-warn" : "text-muted")}>
+          ${calc.subtotal <= 0 ? "No items yet" : allClaimed ? "All claimed" : fmt(calc.unassigned) + " unclaimed"}</p>
+      </div>
+      <button type="button" onClick=${share} aria-label="Share bill link" className="-mr-1 p-2 rounded-xl text-muted hover:text-ink hover:bg-soft"><${Ic} n="Share2" s=${18} /></button>
+    </div>
+    ${calc.subtotal > 0 && html`<div className="mt-2 h-1.5 rounded-full bg-soft overflow-hidden" role="progressbar" aria-label="Share of items claimed" aria-valuenow=${Math.round(pct)} aria-valuemin="0" aria-valuemax="100">
+      <div className="h-full rounded-full transition-all duration-500" style=${{ width: pct + "%", background: allClaimed ? "var(--money)" : "var(--warn)" }}></div></div>`}
+  </div>`;
+}
+
 /* ---------- a single bill ---------- */
 function BillPage({ code, user, toast, go }) {
   const { state, setState, status, meta } = useBill(code, user, toast);
@@ -212,8 +245,9 @@ function BillPage({ code, user, toast, go }) {
   </div>`;
   const tabs = [["host-setup", "Setup", "Receipt"], ["guest-split", "Claim items", "Users"], ["summary", "Summary", "Wallet"]];
   return html`<div className="flex flex-col gap-4">
-    <nav className="sticky z-30 -mx-4 px-4 py-2 bg-bg/90 backdrop-blur" style=${{ top: "env(safe-area-inset-top, 0px)", background: "color-mix(in srgb, var(--bg) 90%, transparent)" }}>
-      <div className="grid grid-cols-3 gap-1 rounded-2xl bg-soft p-1" role="tablist">
+    <nav className="sticky z-30 -mx-4 px-4 pt-2 pb-2 backdrop-blur" style=${{ top: "env(safe-area-inset-top, 0px)", background: "color-mix(in srgb, var(--bg) 92%, transparent)" }}>
+      <${BillHeader} state=${state} calc=${calc} shareUrl=${shareUrl} toast=${toast} />
+      <div className="mt-2 grid grid-cols-3 gap-1 rounded-2xl bg-soft p-1" role="tablist">
         ${tabs.map(([id, label, icon]) => html`<button key=${id} role="tab" aria-selected=${state.mode === id} onClick=${() => setMode(id)}
           className=${"inline-flex items-center justify-center gap-1.5 rounded-xl py-2 text-sm font-semibold transition " + (state.mode === id ? "bg-card text-ink shadow-card" : "text-muted hover:text-ink")}>
           <${Ic} n=${icon} s=${15} />${label}</button>`)}
