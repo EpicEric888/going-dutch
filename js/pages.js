@@ -168,7 +168,30 @@ function Home({ user, toast, go }) {
 }
 
 /* ---------- always-visible bill header ---------- */
+function ReceiptViewer({ path, onClose }) {
+  const [url, setUrl] = useState(null);
+  const [err, setErr] = useState(false);
+  useEffect(() => { let alive = true; receiptPhotoUrl(path).then(u => alive && setUrl(u)).catch(() => alive && setErr(true)); return () => { alive = false; }; }, [path]);
+  useEffect(() => { const k = e => e.key === "Escape" && onClose(); window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k); }, []);
+  return html`<div className="fixed inset-0 z-50 flex flex-col bg-black/90" onClick=${onClose} role="dialog" aria-label="Receipt photo">
+    <div className="flex items-center justify-between px-4 pb-2 text-white" style=${{ paddingTop: "calc(12px + env(safe-area-inset-top, 0px))" }}>
+      <p className="font-semibold">Receipt</p>
+      <div className="flex items-center gap-2">
+        ${url && html`<a href=${url} target="_blank" rel="noopener" onClick=${e => e.stopPropagation()} className="rounded-xl px-3 py-1.5 text-sm font-semibold" style=${{ background: "rgba(255,255,255,.15)" }}>Open full size</a>`}
+        <button type="button" onClick=${onClose} aria-label="Close" className="rounded-xl p-2" style=${{ background: "rgba(255,255,255,.15)" }}><${Ic} n="X" s=${18} /></button>
+      </div>
+    </div>
+    <div className="flex-1 overflow-auto flex items-start justify-center p-4" style=${{ paddingBottom: "calc(16px + env(safe-area-inset-bottom, 0px))" }}>
+      ${err ? html`<p className="text-white/80 text-sm mt-10">Couldn't load the photo. Check your connection and try again.</p>`
+        : url ? html`<img src=${url} alt="Receipt photo" onClick=${e => e.stopPropagation()} className="max-w-full h-auto rounded-xl" />`
+        : html`<p className="text-white/80 text-sm mt-10 inline-flex items-center gap-2"><${Ic} n="Loader2" s=${16} c="animate-spin" />Loading photo…</p>`}
+    </div>
+  </div>`;
+}
+
 function BillHeader({ state, calc, shareUrl, toast }) {
+  const [viewing, setViewing] = useState(false);
+  const photo = state.receipt.photo;
   const R = state.receipt;
   const claimed = Math.max(0, calc.subtotal - calc.unassigned);
   const pct = calc.subtotal > 0 ? Math.min(100, claimed / calc.subtotal * 100) : 0;
@@ -193,8 +216,12 @@ function BillHeader({ state, calc, shareUrl, toast }) {
         <p className=${"mt-1 text-[11px] font-semibold tnum " + (allClaimed ? "text-money" : calc.subtotal > 0 ? "text-warn" : "text-muted")}>
           ${calc.subtotal <= 0 ? "No items yet" : allClaimed ? "All claimed" : fmt(calc.unassigned) + " unclaimed"}</p>
       </div>
-      <button type="button" onClick=${share} aria-label="Share bill link" className="-mr-1 p-2 rounded-xl text-muted hover:text-ink hover:bg-soft"><${Ic} n="Share2" s=${18} /></button>
+      <div className="-mr-1 flex items-center">
+        ${photo && html`<button type="button" onClick=${() => setViewing(true)} aria-label="View receipt photo" title="View receipt" className="p-2 rounded-xl text-muted hover:text-ink hover:bg-soft"><${Ic} n="Image" s=${18} /></button>`}
+        <button type="button" onClick=${share} aria-label="Share bill link" className="p-2 rounded-xl text-muted hover:text-ink hover:bg-soft"><${Ic} n="Share2" s=${18} /></button>
+      </div>
     </div>
+    ${viewing && photo && html`<${ReceiptViewer} path=${photo} onClose=${() => setViewing(false)} />`}
     ${calc.subtotal > 0 && html`<div className="mt-2 h-1.5 rounded-full bg-soft overflow-hidden" role="progressbar" aria-label="Share of items claimed" aria-valuenow=${Math.round(pct)} aria-valuemin="0" aria-valuemax="100">
       <div className="h-full rounded-full transition-all duration-500" style=${{ width: pct + "%", background: allClaimed ? "var(--money)" : "var(--warn)" }}></div></div>`}
   </div>`;
@@ -223,11 +250,18 @@ function BillPage({ code, user, toast, go }) {
       receipt: {
         merchant: d.merchant || "", date: /^\d{4}-\d{2}-\d{2}$/.test(d.date || "") ? d.date : s.receipt.date, items: items.length ? items : s.receipt.items,
         tax: d.tax != null ? String(r2(num(d.tax))) : "", fees: (d.fees || []).map(f => ({ id: uid(), name: String(f.name || "Fee"), amount: String(r2(num(f.amount))) })),
-        printedSubtotal: d.subtotal ?? null, printedTotal: d.total ?? null
+        printedSubtotal: d.subtotal ?? null, printedTotal: d.total ?? null, photo: s.receipt.photo || null
       },
       tip: tipVal > 0 ? { mode: "amount", value: tipVal.toFixed(2) } : s.tip
     };
   });
+  const onPhoto = async blob => {
+    if (!meta?.id) return;
+    try {
+      const path = await uploadReceiptPhoto(meta.id, blob);
+      setState(s => ({ ...s, receipt: { ...s.receipt, photo: path } }));
+    } catch (e) { toast("Couldn't save the receipt photo, but you can keep going"); }
+  };
   const onPickMe = pid => setState(s => ({ ...s, participants: s.participants.map(p => p.id === pid ? { ...p, userId: user.id } : (p.userId === user.id ? { ...p, userId: null } : p)) }));
   const meDefault = state.participants.find(p => p.userId === user.id)?.id || null;
   const newBill = async () => { try { go("/b/" + await createBill(user, false)); } catch (e) { toast("Couldn't create the bill. Try again."); } };
@@ -258,7 +292,7 @@ function BillPage({ code, user, toast, go }) {
       <button type="button" onClick=${newBill} className="font-semibold text-money whitespace-nowrap">New bill</button></div>`}
 
     ${state.mode === "host-setup" && html`
-      <${Card} className="p-5"><${StepHead} n="1" title="Upload the receipt" sub="We read the line items, tax and fees for you." /><${UploadZone} onParsed=${onParsed} /></${Card}>
+      <${Card} className="p-5"><${StepHead} n="1" title="Upload the receipt" sub="We read the line items, tax and fees for you." /><${UploadZone} onParsed=${onParsed} onPhoto=${onPhoto} /></${Card}>
       <${Card} className="p-5"><${StepHead} n="2" title="Who's splitting?" sub="2 to 12 people, including you. Rename, add or remove anyone." /><${People} state=${state} setState=${setState} toast=${toast} /></${Card}>
       <${Card} className="p-5"><${StepHead} n="3" title="Check the numbers" sub="Everything is editable. Claims stay put when you edit an item." /><${ReceiptEditor} state=${state} setState=${setState} calc=${calc} /></${Card}>
       <${Card} className="p-5"><${StepHead} n="4" title="How should people pay you?" sub="Optional. Adds one-tap pay buttons for your friends." /><${PaySetup} state=${state} setState=${setState} user=${user} toast=${toast} /></${Card}>

@@ -101,6 +101,32 @@ async function listMyBills() {
   });
 }
 
+/* Receipt photos: shrunk to a sensible size, kept privately with the bill. */
+async function shrinkImage(blob, max = 2000, quality = 0.85) {
+  try {
+    const bmp = await createImageBitmap(blob);
+    const scale = Math.min(1, max / Math.max(bmp.width, bmp.height));
+    const c = document.createElement("canvas");
+    c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale);
+    c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+    const out = await new Promise(r => c.toBlob(r, "image/jpeg", quality));
+    return out && out.size < blob.size ? out : blob;
+  } catch (e) { return blob; }
+}
+async function uploadReceiptPhoto(billId, blob) {
+  const img = await shrinkImage(blob);
+  const ext = img.type === "image/png" ? "png" : img.type === "image/webp" ? "webp" : "jpg";
+  const path = `${billId}/${Date.now()}.${ext}`;
+  const { error } = await supa.storage.from("receipts").upload(path, img, { contentType: img.type || "image/jpeg", upsert: false });
+  if (error) throw error;
+  return path;
+}
+async function receiptPhotoUrl(path) {
+  const { data, error } = await supa.storage.from("receipts").createSignedUrl(path, 60 * 60);
+  if (error) throw error;
+  return data.signedUrl;
+}
+
 async function readReceipt(blob) {
   if (blob.size > 8 * 1024 * 1024) throw { code: "too_large" };
   const image = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1]); r.onerror = rej; r.readAsDataURL(blob); });

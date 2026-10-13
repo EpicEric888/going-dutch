@@ -15,7 +15,7 @@ function StepHead({ n, title, sub }) {
 }
 
 /* ---------- Step 1: upload ---------- */
-function UploadZone({ onParsed, sampleState }) {
+function UploadZone({ onParsed, onPhoto, sampleState }) {
   const [drag, setDrag] = useState(false);
   const [status, setStatus] = useState({ kind: "idle" });
   const [preview, setPreview] = useState(null);
@@ -42,6 +42,7 @@ function UploadZone({ onParsed, sampleState }) {
       setStatus({ kind: "busy", msg: isPdf ? "Opening PDF…" : "Preparing image…" });
       const blob = isPdf ? await pdfToBlob(file) : file;
       setPreview(URL.createObjectURL(blob));
+      onPhoto?.(blob);
       setStatus({ kind: "busy", msg: "Reading your receipt…" });
       const data = await readReceipt(blob);
       if (!data || !Array.isArray(data.items)) throw { code: "invalid_json" };
