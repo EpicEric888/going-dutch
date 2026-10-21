@@ -24,7 +24,7 @@ function App() {
   const toast = (m, action) => { setToastMsg({ m, action }); clearTimeout(tRef.current); tRef.current = setTimeout(() => setToastMsg(null), action ? 5000 : 2400); };
   const go = path => { location.hash = "#" + path; window.scrollTo({ top: 0 }); };
 
-  return html`<div className="app" ref=${appRef} data-pal=${theme.pal} data-mode=${theme.mode}>
+  return html`<div className=${"app" + (route.page === "bill" ? " has-tabbar" : "")} ref=${appRef} data-pal=${theme.pal} data-mode=${theme.mode}>
     <header className="px-4 pt-5 pb-3 max-w-[640px] mx-auto flex items-center gap-3">
       <a href="#/" className="flex items-center gap-3 min-w-0 flex-1">
         <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-white shadow-card" style=${{ background: "linear-gradient(160deg,var(--hero1),var(--hero2))" }}><${Ic} n="Receipt" s=${20} /></span>
@@ -44,7 +44,7 @@ function App() {
       <footer className="pt-6 text-center text-xs text-muted"><a href="privacy.html" className="hover:underline">Privacy</a> · <a href="terms.html" className="hover:underline">Terms</a></footer>
     </main>
 
-    ${toastMsg && html`<div className="fixed left-1/2 -translate-x-1/2 z-50 rounded-full bg-ink text-bg px-4 py-2 text-sm font-semibold shadow-card inline-flex items-center gap-2" style=${{ bottom: "calc(20px + env(safe-area-inset-bottom, 0px))" }}>
+    ${toastMsg && html`<div className="above-tabbar fixed left-1/2 -translate-x-1/2 z-50 rounded-full bg-ink text-bg px-4 py-2 text-sm font-semibold shadow-card inline-flex items-center gap-2" style=${{ bottom: "calc(20px + env(safe-area-inset-bottom, 0px))" }}>
       <${Ic} n="Check" s=${16} />${toastMsg.m}
       ${toastMsg.action && html`<button type="button" onClick=${() => { toastMsg.action.fn(); setToastMsg(null); }} className="ml-1 rounded-full px-2.5 py-0.5 text-money font-bold" style=${{ background: "color-mix(in srgb, var(--bg) 18%, transparent)" }}>${toastMsg.action.label}</button>`}</div>`}
   </div>`;

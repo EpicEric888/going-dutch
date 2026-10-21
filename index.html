@@ -47,6 +47,11 @@ body{font-family:var(--f-body);font-size:15px;-webkit-font-smoothing:antialiased
 h1,h2,h3{text-wrap:balance}
 .tnum{font-variant-numeric:tabular-nums}
 input[type=number]::-webkit-inner-spin-button{opacity:.4}
+/* Phones: bill sections live in a bottom tab bar; lift anything pinned to the bottom above it */
+@media (max-width: 639px){
+  .has-tabbar main{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px)) !important}
+  .has-tabbar .above-tabbar{bottom:calc(72px + env(safe-area-inset-bottom,0px)) !important}
+}
 @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
 </style>
 <script src="https://cdn.tailwindcss.com/3.4.17"></script>
@@ -67,12 +72,12 @@ tailwind.config={theme:{extend:{
 <body>
 <div id="root"></div>
 <noscript>Going Dutch needs JavaScript turned on.</noscript>
-<script src="js/config.js?v=202610202112"></script>
-<script src="js/core.js?v=202610202112"></script>
-<script src="js/ui.js?v=202610202112"></script>
-<script src="js/guest.js?v=202610202112"></script>
-<script src="js/data.js?v=202610202112"></script>
-<script src="js/pages.js?v=202610202112"></script>
-<script src="js/app.js?v=202610202112"></script>
+<script src="js/config.js?v=202610202129"></script>
+<script src="js/core.js?v=202610202129"></script>
+<script src="js/ui.js?v=202610202129"></script>
+<script src="js/guest.js?v=202610202129"></script>
+<script src="js/data.js?v=202610202129"></script>
+<script src="js/pages.js?v=202610202129"></script>
+<script src="js/app.js?v=202610202129"></script>
 </body>
 </html>

@@ -147,7 +147,7 @@ const pairKey = (pid, iid) => pid + "|" + iid;
 // Claims are kept as a Map of "person|item" -> how many of that item the person had (usually 1).
 function claimsFromRows(rows) {
   const m = new Map();
-  (rows || []).forEach(c => m.set(pairKey(c.participant_id, c.item_id), Math.max(1, c.units || 1)));
+  (rows || []).forEach(c => m.set(pairKey(c.participant_id, c.item_id), (Number(c.units) > 0 ? Number(c.units) : 1)));
   return m;
 }
 function withClaims(s, m) {
@@ -156,7 +156,7 @@ function withClaims(s, m) {
     const [pid, iid] = k.split("|");
     if (!s.participants.some(p => p.id === pid) || !s.receipt.items.some(i => i.id === iid)) return;
     (a[iid] = a[iid] || []).push(pid);
-    if (n > 1) (units[iid] = units[iid] || {})[pid] = n;
+    if (n !== 1) (units[iid] = units[iid] || {})[pid] = n;
   });
   // keep the people order stable
   Object.keys(a).forEach(iid => a[iid].sort((x, y) => s.participants.findIndex(p => p.id === x) - s.participants.findIndex(p => p.id === y)));
@@ -166,7 +166,7 @@ function pairsOf(s) {
   const m = new Map();
   Object.entries(s.assignments || {}).forEach(([iid, pids]) => {
     if (!s.receipt.items.some(i => i.id === iid)) return;
-    pids.forEach(pid => { if (s.participants.some(p => p.id === pid)) m.set(pairKey(pid, iid), Math.max(1, s.units?.[iid]?.[pid] || 1)); });
+    pids.forEach(pid => { if (s.participants.some(p => p.id === pid)) m.set(pairKey(pid, iid), unitsOf(s, iid, pid)); });
   });
   return m;
 }

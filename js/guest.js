@@ -83,8 +83,7 @@ function MyClaims({ state, setState, calc, meId, onSwitch, toast, goSummary }) {
   const host = P.find(p => p.isHost);
   const row = calc.rows.find(r => r.p.id === meId);
   const items = state.receipt.items.filter(i => i.name || num(i.price));
-  const unitsOf = (s, itemId, pid) => ((s.assignments[itemId] || []).includes(pid) ? Math.max(1, s.units?.[itemId]?.[pid] || 1) : 0);
-  const toggle = itemId => setState(s => setClaimUnits(s, itemId, meId, unitsOf(s, itemId, meId) ? 0 : 1));
+  const toggle = it => setState(s => setClaimUnits(s, it.id, meId, unitsOf(s, it.id, meId) ? 0 : claimDefault(s, it, meId)));
   const setMine = (itemId, n) => setState(s => setClaimUnits(s, itemId, meId, n));
   const setPaid = v => setState(s => ({ ...s, participants: s.participants.map(p => p.id === meId ? { ...p, paid: v } : p) }));
   const owedToMe = sum(calc.rows.filter(r => !r.p.isHost).map(r => r.total));
@@ -94,7 +93,7 @@ function MyClaims({ state, setState, calc, meId, onSwitch, toast, goSummary }) {
     <div className="flex items-center gap-3">
       <${Avatar} name=${me.name} color=${colorFor(P, me.id)} size=${44} />
       <div className="min-w-0 flex-1"><p className="font-display text-xl font-bold leading-tight truncate">Hi ${me.name || "there"}</p>
-        <p className="text-sm text-muted">Tap everything you had. Shared something? Tap it too and it splits. Got 2 of something? Use the + and −.</p></div>
+        <p className="text-sm text-muted">Tap everything you had. Shared something? Tap it too and it splits. Only had part, like half the fries? Pick how much after you tap.</p></div>
       <button type="button" onClick=${onSwitch} className="text-sm font-semibold text-money whitespace-nowrap">Not you?</button>
     </div>
 
@@ -103,43 +102,51 @@ function MyClaims({ state, setState, calc, meId, onSwitch, toast, goSummary }) {
       ${items.map(it => {
         const ids = (state.assignments[it.id] || []).filter(id => P.some(p => p.id === id));
         const qty = itemQty(it);
-        const u = id => Math.max(1, state.units?.[it.id]?.[id] || 1);
+        const u = id => unitsOf(state, it.id, id);
         const myUnits = ids.includes(meId) ? u(meId) : 0;
         const mine = myUnits > 0;
         const othersIds = ids.filter(id => id !== meId);
         const othersUnits = sum(othersIds.map(u));
-        const others = othersIds.map(id => (P.find(p => p.id === id)?.name || "Someone") + (qty > 1 ? ` (${u(id)})` : ""));
+        const others = othersIds.map(id => (P.find(p => p.id === id)?.name || "Someone") + (u(id) !== 1 || qty > 1 ? ` (${fmtPortion(u(id)) === "all" ? 1 : fmtPortion(u(id))})` : ""));
         const price = num(it.price);
-        const myShare = shareFor(price, qty, mine ? myUnits : 1, othersUnits);
-        const left = Math.max(0, qty - othersUnits - myUnits);
+        const myShare = shareFor(price, qty, mine ? myUnits : claimDefault(state, it, meId), othersUnits);
+        const leftRaw = qty - othersUnits - myUnits;
+        const left = leftRaw > FULL ? leftRaw : 0;
         const sub = others.length ? (mine ? (qty > 1 ? "Also: " : "Shared with ") : "Claimed by ") + others.join(", ") : mine ? "Just you" : "Nobody yet";
         return html`<li key=${it.id} className=${"rounded-2xl border transition " + (mine ? "bg-moneysoft" : "bg-card border-line")} style=${mine ? { borderColor: "var(--money)" } : null}>
-          <button type="button" onClick=${() => toggle(it.id)} aria-pressed=${mine}
+          <button type="button" onClick=${() => toggle(it)} aria-pressed=${mine}
             className=${"w-full flex items-center gap-3 rounded-2xl p-3.5 text-left " + (mine ? "" : "hover:bg-soft")}>
             <span className=${"inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 " + (mine ? "text-moneyink" : "border-line")}
               style=${mine ? { background: "var(--money)", borderColor: "var(--money)" } : null}>${mine && html`<${Ic} n="Check" s=${16} />`}</span>
             <span className="min-w-0 flex-1">
               <span className="block font-semibold leading-snug">${it.name || "Untitled item"}${qty > 1 && html`<span className="ml-1.5 text-xs font-mono text-muted">×${qty}</span>`}</span>
-              <span className="block text-xs text-muted">${sub}${qty > 1 && left > 0 ? html` · <span className="text-warn">${left} left</span>` : null}</span>
+              <span className="block text-xs text-muted">${sub}${left > 0 && (mine || others.length) ? html` · <span className="text-warn">${fmtPortion(left) === "all" ? 1 : fmtPortion(left)} left</span>` : null}</span>
             </span>
             <span className="text-right">
               <span className="block font-mono font-bold tnum">${fmt(mine ? myShare : price)}</span>
               ${(mine && myShare !== price) || (!mine && (others.length || qty > 1)) ? html`<span className="block text-[11px] text-muted tnum">${mine ? "of " + fmt(price) : "you'd pay " + fmt(myShare)}</span>` : null}
             </span>
           </button>
+          ${mine && qty === 1 && html`<div className="flex flex-wrap items-center justify-between gap-2 border-t px-3.5 py-2.5" style=${{ borderColor: "color-mix(in srgb, var(--money) 30%, transparent)" }}>
+            <span className="text-sm">How much did you have?</span>
+            <span className="inline-flex gap-1" role="group" aria-label="Your portion">
+              ${[[1, "All"], [0.5, "½"], [1 / 3, "⅓"], [0.25, "¼"]].map(([v, label]) => { const on = Math.abs(myUnits - v) < 0.005; return html`<button key=${label} type="button" onClick=${() => setMine(it.id, v)} aria-pressed=${on}
+                className=${"min-w-[2.5rem] rounded-full border px-2.5 py-1 text-sm font-semibold transition " + (on ? "text-moneyink" : "border-line bg-card")} style=${on ? { background: "var(--money)", borderColor: "var(--money)" } : null}>${label}</button>`; })}
+            </span>
+          </div>`}
           ${mine && qty > 1 && html`<div className="flex items-center justify-between gap-3 border-t px-3.5 py-2.5" style=${{ borderColor: "color-mix(in srgb, var(--money) 30%, transparent)" }}>
             <span className="text-sm">How many did you have?</span>
             <span className="inline-flex items-center gap-1">
-              <button type="button" onClick=${() => setMine(it.id, myUnits - 1)} aria-label="One fewer" className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-line bg-card"><${Ic} n="Minus" s=${14} /></button>
-              <span className="w-8 text-center font-mono font-bold tnum">${myUnits}</span>
-              <button type="button" onClick=${() => setMine(it.id, myUnits + 1)} disabled=${myUnits >= 99} aria-label="One more" className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-line bg-card disabled:opacity-40"><${Ic} n="Plus" s=${14} /></button>
+              <button type="button" onClick=${() => setMine(it.id, myUnits > 1 ? Math.ceil(myUnits) - 1 : 0)} aria-label="One fewer" className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-line bg-card"><${Ic} n="Minus" s=${14} /></button>
+              <span className="w-8 text-center font-mono font-bold tnum">${fmtPortion(myUnits) === "all" ? 1 : fmtPortion(myUnits)}</span>
+              <button type="button" onClick=${() => setMine(it.id, Math.floor(myUnits) + 1)} disabled=${myUnits >= 99} aria-label="One more" className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-line bg-card disabled:opacity-40"><${Ic} n="Plus" s=${14} /></button>
             </span>
           </div>`}
         </li>`;
       })}
     </ul>
 
-    <div className="fixed inset-x-0 z-30 px-4" style=${{ bottom: "calc(12px + env(safe-area-inset-bottom, 0px))" }}>
+    <div className="above-tabbar fixed inset-x-0 z-30 px-4" style=${{ bottom: "calc(12px + env(safe-area-inset-bottom, 0px))" }}>
       <div className="mx-auto max-w-[640px] rounded-2xl border border-line bg-card p-4 shadow-card">
         ${me.isHost ? html`
           <div className="flex items-center gap-3">

@@ -318,7 +318,8 @@ function Assign({ state, setState, calc, goSummary, toast, meDefault, onPickMe }
   const setMe = v => { setMeRaw(v); onPickMe?.(v); };
   const me = P.some(p => p.id === meRaw) ? meRaw : null;
   const [editPeople, setEditPeople] = useState(false);
-  const toggle = (itemId, pid) => setState(s => setClaimUnits(s, itemId, pid, (s.assignments[itemId] || []).includes(pid) ? 0 : 1));
+  const toggle = (itemId, pid) => setState(s => { const it = s.receipt.items.find(i => i.id === itemId); return setClaimUnits(s, itemId, pid, unitsOf(s, itemId, pid) ? 0 : claimDefault(s, it, pid)); });
+  const [portionsOpen, setPortionsOpen] = useState({});
   const setUnits = (itemId, pid, n) => setState(s => setClaimUnits(s, itemId, pid, n));
   const everyone = itemId => setState(s => {
     const cur = s.assignments[itemId] || [];
@@ -363,10 +364,12 @@ function Assign({ state, setState, calc, goSummary, toast, meDefault, onPickMe }
               <div className="min-w-0 flex-1">
                 <p className="font-semibold leading-snug">${it.name || "Untitled item"}${num(it.quantity) > 1 && html`<span className="ml-1.5 text-xs font-mono text-muted">×${num(it.quantity)}</span>`}</p>
                 <p className="text-xs text-muted mt-0.5 tnum">${(() => {
-                  const qty = itemQty(it), claimed = sum(ids.map(id => Math.max(1, state.units?.[it.id]?.[id] || 1)));
+                  const qty = itemQty(it), claimed = sum(ids.map(id => unitsOf(state, it.id, id)));
                   if (ids.length === 0) return "Unclaimed";
-                  if (qty > 1) return claimed < qty ? html`${claimed} of ${qty} claimed · <span className="text-warn">${qty - claimed} left</span>` : `All ${qty} claimed` + (claimed > qty ? ` · split ${claimed} ways` : "");
-                  return ids.length === 1 ? "1 person" : `Split ${ids.length} ways · ${fmt(price / ids.length)} each`;
+                  const leftover = qty - claimed;
+                  if (leftover > FULL) return html`${qty > 1 ? `${fmtPortion(claimed) === "all" ? 1 : fmtPortion(claimed)} of ${qty}` : fmtPortion(claimed)} claimed · <span className="text-warn">${fmtPortion(leftover) === "all" ? 1 : fmtPortion(leftover)} left</span>`;
+                  if (qty > 1) return `All ${qty} claimed` + (claimed > qty + FULL ? ` · shared` : "");
+                  return ids.length === 1 ? "1 person" : `Shared by ${ids.length}`;
                 })()}</p>
               </div>
               <span className="font-mono font-bold tnum">${fmt(price)}</span>
@@ -385,14 +388,26 @@ function Assign({ state, setState, calc, goSummary, toast, meDefault, onPickMe }
               <button type="button" onClick=${() => everyone(it.id)} className=${"inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold border border-dashed transition " + (ids.length === P.length ? "border-money text-money" : "border-line text-muted hover:text-ink")}>
                 <${Ic} n="Users" s=${12} />${ids.length === P.length ? "Everyone" : "Split equally among all"}</button>
             </div>
+            ${itemQty(it) === 1 && ids.length > 0 && html`<div className="mt-2">
+              <button type="button" onClick=${() => setPortionsOpen(o => ({ ...o, [it.id]: !o[it.id] }))} className="text-xs font-semibold text-money">${portionsOpen[it.id] ? "Hide portions" : "Adjust portions"}</button>
+              ${portionsOpen[it.id] && html`<div className="mt-2 flex flex-col gap-1.5 border-t border-line pt-3">
+                ${ids.map(id => { const p = P.find(x => x.id === id); const n = unitsOf(state, it.id, id); return html`<div key=${id} className="flex flex-wrap items-center gap-2">
+                  <${Avatar} name=${p?.name} color=${colorFor(P, id)} size=${22} />
+                  <span className="flex-1 min-w-0 truncate text-sm">${p?.name || "Someone"}</span>
+                  ${[[1, "All"], [0.5, "½"], [1 / 3, "⅓"], [0.25, "¼"]].map(([v, label]) => { const on = Math.abs(n - v) < 0.005; return html`<button key=${label} type="button" onClick=${() => setUnits(it.id, id, v)} aria-pressed=${on}
+                    className=${"min-w-[2.25rem] rounded-full border px-2 py-0.5 text-xs font-semibold " + (on ? "text-moneyink" : "border-line")} style=${on ? { background: "var(--money)", borderColor: "var(--money)" } : null}>${label}</button>`; })}
+                </div>`; })}
+                <p className="text-[11px] text-muted">"All" from several people splits it evenly.</p>
+              </div>`}
+            </div>`}
             ${itemQty(it) > 1 && ids.length > 0 && html`<div className="mt-3 flex flex-col gap-1.5 border-t border-line pt-3">
               <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">How many each</p>
-              ${ids.map(id => { const p = P.find(x => x.id === id); const n = Math.max(1, state.units?.[it.id]?.[id] || 1); return html`<div key=${id} className="flex items-center gap-2">
+              ${ids.map(id => { const p = P.find(x => x.id === id); const n = unitsOf(state, it.id, id); return html`<div key=${id} className="flex items-center gap-2">
                 <${Avatar} name=${p?.name} color=${colorFor(P, id)} size=${22} />
                 <span className="flex-1 min-w-0 truncate text-sm">${p?.name || "Someone"}</span>
-                <button type="button" onClick=${() => setUnits(it.id, id, n - 1)} aria-label=${"One fewer for " + (p?.name || "them")} className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-line"><${Ic} n="Minus" s=${12} /></button>
-                <span className="w-6 text-center font-mono text-sm font-bold tnum">${n}</span>
-                <button type="button" onClick=${() => setUnits(it.id, id, n + 1)} disabled=${n >= 99} aria-label=${"One more for " + (p?.name || "them")} className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-line disabled:opacity-40"><${Ic} n="Plus" s=${12} /></button>
+                <button type="button" onClick=${() => setUnits(it.id, id, n > 1 ? Math.ceil(n) - 1 : 0)} aria-label=${"One fewer for " + (p?.name || "them")} className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-line"><${Ic} n="Minus" s=${12} /></button>
+                <span className="w-6 text-center font-mono text-sm font-bold tnum">${fmtPortion(n) === "all" ? 1 : fmtPortion(n)}</span>
+                <button type="button" onClick=${() => setUnits(it.id, id, Math.floor(n) + 1)} disabled=${n >= 99} aria-label=${"One more for " + (p?.name || "them")} className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-line disabled:opacity-40"><${Ic} n="Plus" s=${12} /></button>
               </div>`; })}
             </div>`}
           </${Card}>
@@ -400,7 +415,7 @@ function Assign({ state, setState, calc, goSummary, toast, meDefault, onPickMe }
       })}
     </ul>
 
-    <${Card} className="p-4 sticky bottom-3" >
+    <${Card} className="above-tabbar p-4 sticky bottom-3" >
       <div className="flex items-center gap-3">
         <div className="flex -space-x-2">${calc.rows.slice(0, 5).map(r => html`<span key=${r.p.id} className="ring-2 ring-[var(--card)] rounded-full"><${Avatar} name=${r.p.name} color=${colorFor(P, r.p.id)} size=${28} /></span>`)}</div>
         <div className="min-w-0 flex-1 text-sm">

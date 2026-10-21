@@ -352,11 +352,12 @@ function BillPage({ code, user, toast, go }) {
       <${BillHeader} state=${state} calc=${calc} shareUrl=${shareUrl} toast=${toast} menu=${html`<${BillMenu} state=${state} isCreator=${isCreator} setState=${setState} setLocked=${setLocked}
         onDelete=${async () => { try { await deleteBill(meta.id, code); toast("Bill deleted"); go("/"); } catch (e) { toast("Couldn't delete the bill. Try again."); } }}
         onLeave=${async () => { try { await leaveBill(meta.id, user.id, code); toast("You left the bill"); go("/"); } catch (e) { toast("Couldn't leave the bill. Try again."); } }} />`} />
-      <div className="mt-2 grid grid-cols-3 gap-1 rounded-2xl bg-soft p-1" role="tablist">
+      <div className="mt-2 hidden sm:grid grid-cols-3 gap-1 rounded-2xl bg-soft p-1" role="tablist">
         ${tabs.map(([id, label, icon]) => html`<button key=${id} role="tab" aria-selected=${state.mode === id} onClick=${() => setMode(id)}
           className=${"inline-flex items-center justify-center gap-1.5 rounded-xl py-2 text-sm font-semibold transition " + (state.mode === id ? "bg-card text-ink shadow-card" : "text-muted hover:text-ink")}>
           <${Ic} n=${icon} s=${15} />${label}</button>`)}
       </div>
+
     </nav>
     ${state.isDemo && html`<div className="flex items-center gap-3 rounded-2xl border border-dashed bg-moneysoft px-4 py-2.5 text-sm" style=${{ borderColor: "var(--money)" }}>
       <${Ic} n="Sparkles" s=${16} c="text-money shrink-0" /><span className="flex-1">This is an example bill. Play with it, then start a real one.</span>
@@ -380,5 +381,12 @@ function BillPage({ code, user, toast, go }) {
           : html`<${PickMe} state=${state} user=${user} onPick=${onPickMe} onAdd=${onAddMe} />`}`}
     </fieldset>
     ${state.mode === "summary" && html`<${Summary} state=${state} setState=${setState} calc=${calc} toast=${toast} reset=${newBill} live=${true} readOnly=${!!state.locked} />`}
+      <div className="sm:hidden fixed inset-x-0 bottom-0 z-40 border-t border-line" style=${{ background: "color-mix(in srgb, var(--card) 94%, transparent)", backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", paddingBottom: "env(safe-area-inset-bottom, 0px)" }}>
+        <div className="mx-auto grid max-w-[640px] grid-cols-3" role="tablist" aria-label="Bill sections">
+          ${tabs.map(([id, label, icon]) => { const on = state.mode === id; return html`<button key=${id} role="tab" aria-selected=${on} onClick=${() => setMode(id)}
+            className=${"flex flex-col items-center justify-center gap-0.5 pt-2 pb-2 text-[11px] font-semibold transition " + (on ? "text-money" : "text-muted")}>
+            <span className=${"inline-flex h-7 w-12 items-center justify-center rounded-full transition " + (on ? "bg-moneysoft" : "")}><${Ic} n=${icon} s=${19} /></span>${label}</button>`; })}
+        </div>
+      </div>
   </div>`;
 }

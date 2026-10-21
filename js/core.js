@@ -98,24 +98,49 @@ function loadState() {
 
 /* ---------- the math ---------- */
 const itemQty = it => Math.max(1, Math.min(99, Math.round(num(it.quantity)) || 1));
-// What a person pays for an item, given how many units they and everyone else claimed.
-const shareFor = (price, qty, mine, others) => (mine > 0 ? price * mine / Math.max(qty, mine + others) : 0);
+// Units say how much of an item someone had: 2 = two of them, 0.5 = half of one. Default 1.
+const unitsOf = (s, itemId, pid) => ((s.assignments?.[itemId] || []).includes(pid) ? (Number(s.units?.[itemId]?.[pid]) > 0 ? Number(s.units[itemId][pid]) : 1) : 0);
+const FULL = 0.01; // within a cent of a whole counts as whole (⅓ + ⅓ + ⅓)
+// What a person pays for an item, given how much they and everyone else claimed.
+const shareFor = (price, qty, mine, others) => {
+  if (!(mine > 0)) return 0;
+  const claimed = mine + others;
+  return price * mine / (Math.abs(claimed - qty) < FULL ? claimed : Math.max(qty, claimed));
+};
 // Claim n units of an item for a person (0 = unclaim). Keeps assignments and units in step.
 function setClaimUnits(s, itemId, pid, n) {
+  n = Math.round(Math.max(0, Math.min(99, Number(n) || 0)) * 10000) / 10000;
   const cur = s.assignments[itemId] || [];
   const units = { ...(s.units || {}) };
   const forItem = { ...(units[itemId] || {}) };
-  if (n > 1) forItem[pid] = n; else delete forItem[pid];
+  if (n > 0 && n !== 1) forItem[pid] = n; else delete forItem[pid];
   units[itemId] = forItem;
   const next = n > 0 ? (cur.includes(pid) ? cur : [...cur, pid]) : cur.filter(x => x !== pid);
   return { ...s, assignments: { ...s.assignments, [itemId]: next }, units };
 }
-// How a person's slice of an item reads: "2 of 3" for counted items, "1/3" when shared evenly.
-function shareLabel(qty, units, claimed, ways) {
-  if (qty > 1 && claimed <= qty) return `${units} of ${qty}`;
-  if (qty > 1) return `${units}/${claimed}`;
-  return ways > 1 ? `1/${ways}` : "";
+// Tapping an item: take what's left if someone already claimed part of it, otherwise one whole.
+function claimDefault(s, it, pid) {
+  const qty = itemQty(it);
+  const others = sum((s.assignments[it.id] || []).filter(id => id !== pid).map(id => unitsOf(s, it.id, id)));
+  const left = qty - others;
+  return left > FULL && left < 1 ? Math.round(left * 10000) / 10000 : 1;
 }
+// Pretty fractions for portions: 0.5 -> "½"
+function fmtPortion(x) {
+  const known = [[1, "all"], [0.5, "½"], [1 / 3, "⅓"], [2 / 3, "⅔"], [0.25, "¼"], [0.75, "¾"], [0.2, "⅕"]];
+  const hit = known.find(([v]) => Math.abs(v - x) < 0.005);
+  if (hit) return hit[1];
+  return Number.isInteger(x) ? String(x) : (Math.round(x * 100) / 100).toString();
+}
+// How a person's slice of an item reads: "2 of 3" for counted items, "½" for a portion, "1/3" when shared evenly.
+function shareLabel(qty, units, claimed, ways) {
+  const whole = Math.abs(claimed - qty) < FULL || claimed < qty;
+  if (qty > 1 && whole) return `${fmtPortion(units) === "all" ? 1 : fmtPortion(units)} of ${qty}`;
+  if (qty > 1) return `${Math.round(units / claimed * 100)}%`;
+  if (whole) return units < 1 - FULL ? fmtPortion(units) : "";
+  return ways > 1 && ids_equal(units, claimed, ways) ? `1/${ways}` : fmtPortion(units / claimed);
+}
+const ids_equal = (units, claimed, ways) => Math.abs(units * ways - claimed) < FULL;
 function compute(state) {
   const { receipt, tip, participants, assignments } = state;
   const line = it => num(it.price);
@@ -133,15 +158,15 @@ function compute(state) {
     if (!ids.length) { if (price !== 0 || it.name) { unassignedItems.push(it); unassigned += price; } return; }
     // Each person pays for the units they had. If more units are claimed than exist, everyone's units shrink to fit.
     const qty = itemQty(it);
-    const u = id => Math.max(1, state.units?.[it.id]?.[id] || 1);
+    const u = id => unitsOf(state, it.id, id);
     const claimed = sum(ids.map(u));
-    const denom = Math.max(qty, claimed);
+    const denom = Math.abs(claimed - qty) < FULL ? claimed : Math.max(qty, claimed);
     ids.forEach(id => {
       const share = price * u(id) / denom;
       per[id].sub += share;
       per[id].items.push({ id: it.id, name: it.name || "Untitled item", share, ways: ids.length, units: u(id), qty, label: shareLabel(qty, u(id), claimed, ids.length) });
     });
-    if (claimed < qty) { unassigned += price * (qty - claimed) / qty; unassignedItems.push(it); }
+    if (claimed < qty - FULL) { unassigned += price * (qty - claimed) / qty; unassignedItems.push(it); }
   });
   const rows = participants.map(p => {
     const s = per[p.id].sub, ratio = subtotal > 0 ? s / subtotal : 0;
