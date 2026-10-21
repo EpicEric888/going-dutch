@@ -97,6 +97,25 @@ function loadState() {
 }
 
 /* ---------- the math ---------- */
+const itemQty = it => Math.max(1, Math.min(99, Math.round(num(it.quantity)) || 1));
+// What a person pays for an item, given how many units they and everyone else claimed.
+const shareFor = (price, qty, mine, others) => (mine > 0 ? price * mine / Math.max(qty, mine + others) : 0);
+// Claim n units of an item for a person (0 = unclaim). Keeps assignments and units in step.
+function setClaimUnits(s, itemId, pid, n) {
+  const cur = s.assignments[itemId] || [];
+  const units = { ...(s.units || {}) };
+  const forItem = { ...(units[itemId] || {}) };
+  if (n > 1) forItem[pid] = n; else delete forItem[pid];
+  units[itemId] = forItem;
+  const next = n > 0 ? (cur.includes(pid) ? cur : [...cur, pid]) : cur.filter(x => x !== pid);
+  return { ...s, assignments: { ...s.assignments, [itemId]: next }, units };
+}
+// How a person's slice of an item reads: "2 of 3" for counted items, "1/3" when shared evenly.
+function shareLabel(qty, units, claimed, ways) {
+  if (qty > 1 && claimed <= qty) return `${units} of ${qty}`;
+  if (qty > 1) return `${units}/${claimed}`;
+  return ways > 1 ? `1/${ways}` : "";
+}
 function compute(state) {
   const { receipt, tip, participants, assignments } = state;
   const line = it => num(it.price);
@@ -107,13 +126,23 @@ function compute(state) {
   const total = subtotal + tax + fees + tipAmt;
   const per = {}; participants.forEach(p => per[p.id] = { items: [], sub: 0 });
   const unassignedItems = [];
+  let unassigned = 0;
   receipt.items.forEach(it => {
     const ids = (assignments[it.id] || []).filter(id => per[id]);
-    if (!ids.length) { if (line(it) !== 0 || it.name) unassignedItems.push(it); return; }
-    const share = line(it) / ids.length;
-    ids.forEach(id => { per[id].sub += share; per[id].items.push({ id: it.id, name: it.name || "Untitled item", share, ways: ids.length }); });
+    const price = line(it);
+    if (!ids.length) { if (price !== 0 || it.name) { unassignedItems.push(it); unassigned += price; } return; }
+    // Each person pays for the units they had. If more units are claimed than exist, everyone's units shrink to fit.
+    const qty = itemQty(it);
+    const u = id => Math.max(1, state.units?.[it.id]?.[id] || 1);
+    const claimed = sum(ids.map(u));
+    const denom = Math.max(qty, claimed);
+    ids.forEach(id => {
+      const share = price * u(id) / denom;
+      per[id].sub += share;
+      per[id].items.push({ id: it.id, name: it.name || "Untitled item", share, ways: ids.length, units: u(id), qty, label: shareLabel(qty, u(id), claimed, ids.length) });
+    });
+    if (claimed < qty) { unassigned += price * (qty - claimed) / qty; unassignedItems.push(it); }
   });
-  const unassigned = sum(unassignedItems.map(line));
   const rows = participants.map(p => {
     const s = per[p.id].sub, ratio = subtotal > 0 ? s / subtotal : 0;
     const taxS = ratio * tax, feeS = ratio * fees, tipS = ratio * tipAmt;

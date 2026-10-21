@@ -98,6 +98,18 @@ function Home({ user, toast, go }) {
   const [bills, setBills] = useState(null);
   const [busy, setBusy] = useState(false);
   const [code, setCode] = useState("");
+  const [managing, setManaging] = useState(false);
+  const [confirmId, setConfirmId] = useState(null);
+  const [removing, setRemoving] = useState(null);
+  const removeBill = async b => {
+    setRemoving(b.id);
+    try {
+      if (b.created_by === user.id) await deleteBill(b.id, b.share_code); else await leaveBill(b.id, user.id, b.share_code);
+      setBills(list => list.filter(x => x.id !== b.id));
+      toast(b.created_by === user.id ? "Bill deleted" : "You left the bill");
+    } catch (e) { toast("Couldn't remove that bill. Try again."); }
+    setRemoving(null); setConfirmId(null);
+  };
   useEffect(() => {
     if (!user) return;
     let alive = true;
@@ -136,7 +148,7 @@ function Home({ user, toast, go }) {
 
     <div className="flex items-baseline justify-between">
       <h2 className="font-display text-xl font-bold">My bills</h2>
-      ${bills && bills.length > 0 && html`<span className="text-xs text-muted tnum">${bills.length}</span>`}
+      ${bills && bills.length > 0 && html`<button type="button" onClick=${() => { setManaging(m => !m); setConfirmId(null); }} className="text-sm font-semibold text-money">${managing ? "Done" : "Edit"}</button>`}
     </div>
     ${bills === null ? html`<${Card} className="p-6 text-center text-muted text-sm"><${Ic} n="Loader2" s=${18} c="animate-spin inline mr-2" />Loading your bills…</${Card}>`
       : bills.length === 0 ? html`<${Card} className="p-6 text-center">
@@ -148,11 +160,24 @@ function Home({ user, toast, go }) {
           const mine = P.find(p => p.userId === user.id);
           const row = mine && b.calc.rows.find(r => r.p.id === mine.id);
           const owedToMe = mine?.isHost ? sum(b.calc.rows.filter(r => !r.p.isHost).map(r => r.total)) : 0;
+          const isMineToDelete = b.created_by === user.id;
+          if (managing) return html`<li key=${b.id}><${Card} className="p-4">
+            <div className="flex items-center gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="font-semibold truncate">${R.merchant || "Untitled bill"}</p>
+                <p className="text-xs text-muted">${confirmId === b.id ? (isMineToDelete ? "Deletes it for everyone, with the receipt photo." : "Removes it from your list. The link still works.") : (isMineToDelete ? "You started this bill" : "A friend's bill")}</p>
+              </div>
+              ${confirmId === b.id
+                ? html`<div className="flex gap-2"><button type="button" onClick=${() => setConfirmId(null)} className="rounded-xl border border-line px-3 py-2 text-sm font-semibold">Cancel</button>
+                    <button type="button" disabled=${removing === b.id} onClick=${() => removeBill(b)} className="rounded-xl px-3 py-2 text-sm font-semibold text-white disabled:opacity-50" style=${{ background: "var(--danger)" }}>${removing === b.id ? "…" : isMineToDelete ? "Delete" : "Leave"}</button></div>`
+                : html`<button type="button" onClick=${() => setConfirmId(b.id)} className="inline-flex items-center gap-1.5 rounded-xl border border-line px-3 py-2 text-sm font-semibold text-danger hover:bg-soft"><${Ic} n=${isMineToDelete ? "Trash2" : "LogOut"} s=${15} />${isMineToDelete ? "Delete" : "Leave"}</button>`}
+            </div>
+          </${Card}></li>`;
           return html`<li key=${b.id}><a href=${"#/b/" + b.share_code} className="block"><${Card} className="p-4 hover:bg-soft transition">
             <div className="flex items-center gap-3">
               <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-moneysoft text-money"><${Ic} n="Receipt" s=${20} /></span>
               <div className="min-w-0 flex-1">
-                <p className="font-semibold truncate">${R.merchant || "Untitled bill"}${R.isDemo ? html`<span className="ml-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">Example</span>` : null}</p>
+                <p className="font-semibold truncate">${R.merchant || "Untitled bill"}${R.isDemo ? html`<span className="ml-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">Example</span>` : null}${b.locked ? html`<span className="ml-2 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted"><${Ic} n="Lock" s=${10} />Settled</span>` : null}</p>
                 <p className="text-xs text-muted tnum">${R.date ? new Date(R.date + "T12:00").toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "No date"} · ${P.length} ${P.length === 1 ? "person" : "people"} · ${fmt(b.calc.total)}</p>
               </div>
               <div className="text-right">
@@ -189,7 +214,50 @@ function ReceiptViewer({ path, onClose }) {
   </div>`;
 }
 
-function BillHeader({ state, calc, shareUrl, toast }) {
+function BillMenu({ state, isCreator, setState, setLocked, onDelete, onLeave }) {
+  const [open, setOpen] = useState(false);
+  const [view, setView] = useState("menu"); // menu | rename | confirm
+  const [name, setName] = useState(state.receipt.merchant || "");
+  const [busy, setBusy] = useState(false);
+  const ref = useRef(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("pointerdown", close);
+    return () => document.removeEventListener("pointerdown", close);
+  }, [open]);
+  const Item = ({ icon, label, onClick, danger, disabled }) => html`<button type="button" onClick=${onClick} disabled=${disabled}
+    className=${"flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition disabled:opacity-40 " + (danger ? "text-danger hover:bg-soft" : "hover:bg-soft")}>
+    <${Ic} n=${icon} s=${16} />${label}</button>`;
+  const run = async fn => { setBusy(true); try { await fn(); } finally { setBusy(false); } };
+  return html`<div className="relative" ref=${ref}>
+    <button type="button" onClick=${() => { setOpen(o => !o); setView("menu"); setName(state.receipt.merchant || ""); }} aria-expanded=${open} aria-label="Bill options"
+      className="p-2 rounded-xl text-muted hover:text-ink hover:bg-soft"><${Ic} n="MoreHorizontal" s=${18} /></button>
+    ${open && html`<div className="absolute right-0 top-full mt-2 z-40 w-64 rounded-2xl border border-line bg-card p-2 shadow-card">
+      ${view === "menu" && html`
+        <${Item} icon="Pencil" label="Rename bill" disabled=${state.locked} onClick=${() => setView("rename")} />
+        ${isCreator && html`<${Item} icon=${state.locked ? "Unlock" : "Lock"} label=${state.locked ? "Unlock bill" : "Lock bill (everyone's settled)"} onClick=${() => run(async () => { await setLocked(!state.locked); setOpen(false); })} disabled=${busy} />`}
+        <div className="my-1 h-px bg-line"></div>
+        ${isCreator
+          ? html`<${Item} icon="Trash2" label="Delete bill" danger onClick=${() => setView("confirm")} />`
+          : html`<${Item} icon="LogOut" label="Leave bill" danger onClick=${() => setView("confirm")} />`}`}
+      ${view === "rename" && html`<form className="flex flex-col gap-2 p-1" onSubmit=${e => { e.preventDefault(); setState(s => ({ ...s, receipt: { ...s.receipt, merchant: name.trim() } })); setOpen(false); }}>
+        <label htmlFor="bill-rename" className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">Bill name</label>
+        <input id="bill-rename" className=${inputCls} value=${name} onInput=${e => setName(e.target.value)} placeholder="Restaurant or occasion" autoFocus />
+        <div className="flex gap-2"><button type="button" onClick=${() => setView("menu")} className="flex-1 rounded-xl border border-line py-2 text-sm font-semibold">Cancel</button>
+          <button type="submit" className="flex-1 rounded-xl py-2 text-sm font-semibold text-moneyink" style=${{ background: "var(--money)" }}>Save</button></div>
+      </form>`}
+      ${view === "confirm" && html`<div className="flex flex-col gap-2 p-1">
+        <p className="font-semibold">${isCreator ? "Delete this bill for everyone?" : "Leave this bill?"}</p>
+        <p className="text-sm text-muted">${isCreator ? "The bill, everyone's claims and the receipt photo are removed. This can't be undone." : "It disappears from your bills. You can rejoin with the link anytime."}</p>
+        <div className="flex gap-2"><button type="button" onClick=${() => setView("menu")} className="flex-1 rounded-xl border border-line py-2 text-sm font-semibold">Cancel</button>
+          <button type="button" disabled=${busy} onClick=${() => run(isCreator ? onDelete : onLeave)} className="flex-1 rounded-xl py-2 text-sm font-semibold text-white disabled:opacity-50" style=${{ background: "var(--danger)" }}>${busy ? "…" : isCreator ? "Delete" : "Leave"}</button></div>
+      </div>`}
+    </div>`}
+  </div>`;
+}
+
+function BillHeader({ state, calc, shareUrl, toast, menu }) {
   const [viewing, setViewing] = useState(false);
   const photo = state.receipt.photo;
   const R = state.receipt;
@@ -209,7 +277,7 @@ function BillHeader({ state, calc, shareUrl, toast }) {
       <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-moneysoft text-money"><${Ic} n="Receipt" s=${18} /></span>
       <div className="min-w-0 flex-1">
         <p className="font-semibold leading-tight truncate">${R.merchant || "Untitled bill"}</p>
-        <p className="text-xs text-muted tnum leading-snug">${[dateLabel, state.participants.length + (state.participants.length === 1 ? " person" : " people"), guestCount && paidCount ? `${paidCount}/${guestCount} paid` : ""].filter(Boolean).join(" · ")}</p>
+        <p className="text-xs text-muted tnum leading-snug">${[dateLabel, state.participants.length + (state.participants.length === 1 ? " person" : " people"), guestCount && paidCount ? `${paidCount}/${guestCount} paid` : "", state.locked ? "Locked" : ""].filter(Boolean).join(" · ")}</p>
       </div>
       <div className="text-right">
         <p className="font-display text-lg font-extrabold leading-none tnum">${fmt(calc.total)}</p>
@@ -219,6 +287,7 @@ function BillHeader({ state, calc, shareUrl, toast }) {
       <div className="-mr-1 flex items-center">
         ${photo && html`<button type="button" onClick=${() => setViewing(true)} aria-label="View receipt photo" title="View receipt" className="p-2 rounded-xl text-muted hover:text-ink hover:bg-soft"><${Ic} n="Image" s=${18} /></button>`}
         <button type="button" onClick=${share} aria-label="Share bill link" className="p-2 rounded-xl text-muted hover:text-ink hover:bg-soft"><${Ic} n="Share2" s=${18} /></button>
+        ${menu}
       </div>
     </div>
     ${viewing && photo && html`<${ReceiptViewer} path=${photo} onClose=${() => setViewing(false)} />`}
@@ -229,7 +298,7 @@ function BillHeader({ state, calc, shareUrl, toast }) {
 
 /* ---------- a single bill ---------- */
 function BillPage({ code, user, toast, go }) {
-  const { state, setState, status, meta } = useBill(code, user, toast);
+  const { state, setState, status, meta, setLocked } = useBill(code, user, toast);
   const calc = useMemo(() => state ? compute(state) : null, [state]);
   const setMode = mode => { setState(s => ({ ...s, mode })); window.scrollTo({ top: 0, behavior: "smooth" }); };
   const shareUrl = location.origin + location.pathname + "#/b/" + code;
@@ -280,7 +349,9 @@ function BillPage({ code, user, toast, go }) {
   const tabs = [["host-setup", "Setup", "Receipt"], ["guest-split", "Claim items", "Users"], ["summary", "Summary", "Wallet"]];
   return html`<div className="flex flex-col gap-4">
     <nav className="sticky z-30 -mx-4 px-4 pt-2 pb-2 backdrop-blur" style=${{ top: "env(safe-area-inset-top, 0px)", background: "color-mix(in srgb, var(--bg) 92%, transparent)" }}>
-      <${BillHeader} state=${state} calc=${calc} shareUrl=${shareUrl} toast=${toast} />
+      <${BillHeader} state=${state} calc=${calc} shareUrl=${shareUrl} toast=${toast} menu=${html`<${BillMenu} state=${state} isCreator=${isCreator} setState=${setState} setLocked=${setLocked}
+        onDelete=${async () => { try { await deleteBill(meta.id, code); toast("Bill deleted"); go("/"); } catch (e) { toast("Couldn't delete the bill. Try again."); } }}
+        onLeave=${async () => { try { await leaveBill(meta.id, user.id, code); toast("You left the bill"); go("/"); } catch (e) { toast("Couldn't leave the bill. Try again."); } }} />`} />
       <div className="mt-2 grid grid-cols-3 gap-1 rounded-2xl bg-soft p-1" role="tablist">
         ${tabs.map(([id, label, icon]) => html`<button key=${id} role="tab" aria-selected=${state.mode === id} onClick=${() => setMode(id)}
           className=${"inline-flex items-center justify-center gap-1.5 rounded-xl py-2 text-sm font-semibold transition " + (state.mode === id ? "bg-card text-ink shadow-card" : "text-muted hover:text-ink")}>
@@ -291,6 +362,9 @@ function BillPage({ code, user, toast, go }) {
       <${Ic} n="Sparkles" s=${16} c="text-money shrink-0" /><span className="flex-1">This is an example bill. Play with it, then start a real one.</span>
       <button type="button" onClick=${newBill} className="font-semibold text-money whitespace-nowrap">New bill</button></div>`}
 
+    ${state.locked && html`<div className="flex items-center gap-3 rounded-2xl border border-line bg-soft px-4 py-2.5 text-sm">
+      <${Ic} n="Lock" s=${16} c="text-muted shrink-0" /><span className="flex-1">This bill is settled and locked, so nothing can be changed.${isCreator ? " Unlock it from the ⋯ menu if you need to." : ""}</span></div>`}
+    <fieldset disabled=${!!state.locked} className="contents">
     ${state.mode === "host-setup" && html`
       <${Card} className="p-5"><${StepHead} n="1" title="Upload the receipt" sub="We read the line items, tax and fees for you." /><${UploadZone} onParsed=${onParsed} onPhoto=${onPhoto} /></${Card}>
       <${Card} className="p-5"><${StepHead} n="2" title="Who's splitting?" sub="2 to 12 people, including you. Rename, add or remove anyone." /><${People} state=${state} setState=${setState} toast=${toast} /></${Card}>
@@ -304,6 +378,7 @@ function BillPage({ code, user, toast, go }) {
         : meDefault
           ? html`<${MyClaims} state=${state} setState=${setState} calc=${calc} meId=${meDefault} onSwitch=${() => onPickMe(null)} toast=${toast} goSummary=${() => setMode("summary")} />`
           : html`<${PickMe} state=${state} user=${user} onPick=${onPickMe} onAdd=${onAddMe} />`}`}
-    ${state.mode === "summary" && html`<${Summary} state=${state} setState=${setState} calc=${calc} toast=${toast} reset=${newBill} live=${true} readOnly=${false} />`}
+    </fieldset>
+    ${state.mode === "summary" && html`<${Summary} state=${state} setState=${setState} calc=${calc} toast=${toast} reset=${newBill} live=${true} readOnly=${!!state.locked} />`}
   </div>`;
 }

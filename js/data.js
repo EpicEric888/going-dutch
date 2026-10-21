@@ -88,15 +88,14 @@ async function createBill(user, demo = false) {
 
 async function listMyBills() {
   const { data: bills, error } = await supa.from("bills")
-    .select("id, share_code, created_by, receipt, tip, participants, updated_at")
+    .select("id, share_code, created_by, receipt, tip, participants, locked, updated_at")
     .order("updated_at", { ascending: false }).limit(50);
   if (error) throw error;
   if (!bills.length) return [];
-  const { data: claims } = await supa.from("claims").select("bill_id, participant_id, item_id").in("bill_id", bills.map(b => b.id));
+  const { data: claims } = await supa.from("claims").select("bill_id, participant_id, item_id, units").in("bill_id", bills.map(b => b.id));
   return bills.map(b => {
-    const set = new Set((claims || []).filter(c => c.bill_id === b.id).map(c => c.participant_id + "|" + c.item_id));
-    const s = { receipt: b.receipt, tip: b.tip, participants: b.participants || [] };
-    s.assignments = deriveFromPairs(s, set);
+    const m = claimsFromRows((claims || []).filter(c => c.bill_id === b.id));
+    const s = withClaims({ receipt: b.receipt, tip: b.tip, participants: b.participants || [], locked: !!b.locked }, m);
     return { ...b, state: s, calc: compute(s) };
   });
 }
@@ -145,24 +144,53 @@ async function readReceipt(blob) {
 
 /* ---------- live bill state ---------- */
 const pairKey = (pid, iid) => pid + "|" + iid;
-function deriveFromPairs(s, set) {
-  const a = {};
-  set.forEach(k => {
+// Claims are kept as a Map of "person|item" -> how many of that item the person had (usually 1).
+function claimsFromRows(rows) {
+  const m = new Map();
+  (rows || []).forEach(c => m.set(pairKey(c.participant_id, c.item_id), Math.max(1, c.units || 1)));
+  return m;
+}
+function withClaims(s, m) {
+  const a = {}, units = {};
+  m.forEach((n, k) => {
     const [pid, iid] = k.split("|");
     if (!s.participants.some(p => p.id === pid) || !s.receipt.items.some(i => i.id === iid)) return;
     (a[iid] = a[iid] || []).push(pid);
+    if (n > 1) (units[iid] = units[iid] || {})[pid] = n;
   });
   // keep the people order stable
   Object.keys(a).forEach(iid => a[iid].sort((x, y) => s.participants.findIndex(p => p.id === x) - s.participants.findIndex(p => p.id === y)));
-  return a;
+  return { ...s, assignments: a, units };
 }
 function pairsOf(s) {
-  const set = new Set();
+  const m = new Map();
   Object.entries(s.assignments || {}).forEach(([iid, pids]) => {
     if (!s.receipt.items.some(i => i.id === iid)) return;
-    pids.forEach(pid => { if (s.participants.some(p => p.id === pid)) set.add(pairKey(pid, iid)); });
+    pids.forEach(pid => { if (s.participants.some(p => p.id === pid)) m.set(pairKey(pid, iid), Math.max(1, s.units?.[iid]?.[pid] || 1)); });
   });
-  return set;
+  return m;
+}
+
+/* ---------- managing bills ---------- */
+function forgetCode(code) {
+  try { localStorage.setItem(CODES_STORE, JSON.stringify(rememberedCodes().filter(c => c !== code))); } catch (e) {}
+}
+async function deleteBill(billId, code) {
+  // Photos first: once the bill is gone, nobody is allowed to touch its folder.
+  const { data: files } = await supa.storage.from("receipts").list(billId, { limit: 100 });
+  if (files?.length) await supa.storage.from("receipts").remove(files.map(f => `${billId}/${f.name}`));
+  const { error } = await supa.from("bills").delete().eq("id", billId);
+  if (error) throw error;
+  forgetCode(code);
+}
+async function leaveBill(billId, userId, code) {
+  const { error } = await supa.from("bill_members").delete().eq("bill_id", billId).eq("user_id", userId);
+  if (error) throw error;
+  forgetCode(code);
+}
+async function setBillLocked(billId, locked) {
+  const { error } = await supa.from("bills").update({ locked }).eq("id", billId);
+  if (error) throw error;
 }
 const billFields = s => ({ receipt: { ...s.receipt, isDemo: !!s.isDemo }, tip: s.tip, participants: s.participants });
 
@@ -170,7 +198,7 @@ function useBill(code, user, toast) {
   const [state, setLocal] = useState(null);
   const [status, setStatus] = useState("loading"); // loading | ready | notfound | error
   const [meta, setMeta] = useState(null);
-  const stateRef = useRef(null), billId = useRef(null), claimsRef = useRef(new Set());
+  const stateRef = useRef(null), billId = useRef(null), claimsRef = useRef(new Map());
   const lastEdit = useRef(0), billTimer = useRef(null), remoteLater = useRef(null), claimTimer = useRef(null);
   const pending = useRef(0), claimsDirty = useRef(false), billQueue = useRef(Promise.resolve());
   const apply = next => { stateRef.current = next; setLocal(next); };
@@ -185,18 +213,16 @@ function useBill(code, user, toast) {
     clearTimeout(claimTimer.current);
     claimTimer.current = setTimeout(async () => {
       if (pending.current > 0) { claimsDirty.current = true; return; }
-      const { data, error } = await supa.from("claims").select("participant_id, item_id").eq("bill_id", billId.current);
+      const { data, error } = await supa.from("claims").select("participant_id, item_id, units").eq("bill_id", billId.current);
       if (error || pending.current > 0) { if (!error) claimsDirty.current = true; return; }
-      claimsRef.current = new Set(data.map(c => pairKey(c.participant_id, c.item_id)));
-      const cur = stateRef.current; if (cur) apply({ ...cur, assignments: deriveFromPairs(cur, claimsRef.current) });
+      claimsRef.current = claimsFromRows(data);
+      const cur = stateRef.current; if (cur) apply(withClaims(cur, claimsRef.current));
     }, 150);
   };
 
   const applyRemoteBill = row => {
     const cur = stateRef.current; if (!cur) return;
-    const n = { ...cur, receipt: row.receipt, tip: row.tip, participants: row.participants || [], isDemo: !!row.receipt?.isDemo };
-    n.assignments = deriveFromPairs(n, claimsRef.current);
-    apply(n);
+    apply(withClaims({ ...cur, receipt: row.receipt, tip: row.tip, participants: row.participants || [], isDemo: !!row.receipt?.isDemo, locked: !!row.locked }, claimsRef.current));
   };
 
   useEffect(() => {
@@ -210,19 +236,19 @@ function useBill(code, user, toast) {
       billId.current = bid; rememberCode(code);
       const [{ data: row, error: e1 }, { data: cl }] = await Promise.all([
         supa.from("bills").select("*").eq("id", bid).single(),
-        supa.from("claims").select("participant_id, item_id").eq("bill_id", bid)
+        supa.from("claims").select("participant_id, item_id, units").eq("bill_id", bid)
       ]);
       if (!alive) return;
       if (e1 || !row) { setStatus("error"); return; }
-      claimsRef.current = new Set((cl || []).map(c => pairKey(c.participant_id, c.item_id)));
-      const s = { receipt: row.receipt, tip: row.tip, participants: row.participants || [], isDemo: !!row.receipt?.isDemo, mode: row.created_by === user.id ? "host-setup" : "guest-split" };
-      s.assignments = deriveFromPairs(s, claimsRef.current);
+      claimsRef.current = claimsFromRows(cl);
+      const s = withClaims({ receipt: row.receipt, tip: row.tip, participants: row.participants || [], isDemo: !!row.receipt?.isDemo, locked: !!row.locked, mode: row.created_by === user.id ? "host-setup" : "guest-split" }, claimsRef.current);
       apply(s); setMeta({ id: bid, createdBy: row.created_by, shareCode: row.share_code }); setStatus("ready");
 
       channel = supa.channel("bill-" + bid)
         .on("postgres_changes", { event: "UPDATE", schema: "public", table: "bills", filter: `id=eq.${bid}` }, p => {
           const row = p.new; if (!row?.receipt) return;
           const cur = stateRef.current;
+          if (cur && !!row.locked !== !!cur.locked) { applyRemoteBill(row); return; }
           if (cur && JSON.stringify(billFields(cur)) === JSON.stringify({ receipt: row.receipt, tip: row.tip, participants: row.participants })) return;
           const quiet = Date.now() - lastEdit.current;
           clearTimeout(remoteLater.current);
@@ -234,6 +260,7 @@ function useBill(code, user, toast) {
         })
         .on("postgres_changes", { event: "DELETE", schema: "public", table: "bills" }, p => { if (p.old?.id === bid) setStatus("notfound"); })
         .on("postgres_changes", { event: "INSERT", schema: "public", table: "claims", filter: `bill_id=eq.${bid}` }, refetchClaims)
+        .on("postgres_changes", { event: "UPDATE", schema: "public", table: "claims", filter: `bill_id=eq.${bid}` }, refetchClaims)
         .on("postgres_changes", { event: "DELETE", schema: "public", table: "claims" }, p => { if (!p.old?.bill_id || p.old.bill_id === bid) refetchClaims(); })
         .subscribe(st => { if (st === "SUBSCRIBED") refetchClaims(); });
     })();
@@ -258,26 +285,26 @@ function useBill(code, user, toast) {
         const fields = billFields(stateRef.current);
         billQueue.current = billQueue.current.then(async () => {
           const { error } = await supa.from("bills").update(fields).eq("id", bid);
-          if (error) report(error);
+          if (error) { if (stateRef.current?.locked) toast("This bill is locked"); else report(error); }
         });
       }, 500);
     }
-    if (prev.assignments !== next.assignments || prev.receipt.items !== next.receipt.items || prev.participants !== next.participants) {
+    if (prev.assignments !== next.assignments || prev.units !== next.units || prev.receipt.items !== next.receipt.items || prev.participants !== next.participants) {
       const after = pairsOf(next), before = claimsRef.current;
-      const adds = [...after].filter(k => !before.has(k));
-      const removes = [...before].filter(k => !after.has(k));
+      const adds = [...after.keys()].filter(k => before.get(k) !== after.get(k));
+      const removes = [...before.keys()].filter(k => !after.has(k));
       if (!adds.length && !removes.length) return;
       claimsRef.current = after;
       pending.current++;
       (async () => {
         const ops = [];
-        if (adds.length) ops.push(supa.from("claims").upsert(adds.map(k => { const [participant_id, item_id] = k.split("|"); return { bill_id: bid, participant_id, item_id }; }), { onConflict: "bill_id,participant_id,item_id", ignoreDuplicates: true }));
+        if (adds.length) ops.push(supa.from("claims").upsert(adds.map(k => { const [participant_id, item_id] = k.split("|"); return { bill_id: bid, participant_id, item_id, units: after.get(k) }; }), { onConflict: "bill_id,participant_id,item_id" }));
         const byPerson = {};
         removes.forEach(k => { const [pid, iid] = k.split("|"); (byPerson[pid] = byPerson[pid] || []).push(iid); });
         Object.entries(byPerson).forEach(([pid, iids]) => ops.push(supa.from("claims").delete().eq("bill_id", bid).eq("participant_id", pid).in("item_id", iids)));
         const results = await Promise.all(ops);
         const err = results.find(r => r.error)?.error;
-        if (err) { report(err); claimsDirty.current = true; }
+        if (err) { if (stateRef.current?.locked) toast("This bill is locked"); else report(err); claimsDirty.current = true; }
       })().finally(() => {
         pending.current--;
         if (pending.current === 0 && claimsDirty.current) { claimsDirty.current = false; refetchClaims(); }
@@ -285,5 +312,9 @@ function useBill(code, user, toast) {
     }
   };
 
-  return { state, setState, status, meta };
+  const setLocked = async v => {
+    try { await setBillLocked(billId.current, v); apply({ ...stateRef.current, locked: v }); toast(v ? "Bill locked" : "Bill unlocked"); }
+    catch (e) { toast("Couldn't change the lock. Try again."); }
+  };
+  return { state, setState, status, meta, setLocked };
 }

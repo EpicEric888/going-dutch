@@ -318,15 +318,13 @@ function Assign({ state, setState, calc, goSummary, toast, meDefault, onPickMe }
   const setMe = v => { setMeRaw(v); onPickMe?.(v); };
   const me = P.some(p => p.id === meRaw) ? meRaw : null;
   const [editPeople, setEditPeople] = useState(false);
-  const toggle = (itemId, pid) => setState(s => {
-    const cur = s.assignments[itemId] || [];
-    const next = cur.includes(pid) ? cur.filter(x => x !== pid) : [...cur, pid];
-    return { ...s, assignments: { ...s.assignments, [itemId]: next } };
-  });
+  const toggle = (itemId, pid) => setState(s => setClaimUnits(s, itemId, pid, (s.assignments[itemId] || []).includes(pid) ? 0 : 1));
+  const setUnits = (itemId, pid, n) => setState(s => setClaimUnits(s, itemId, pid, n));
   const everyone = itemId => setState(s => {
     const cur = s.assignments[itemId] || [];
     const all = cur.length === s.participants.length;
-    return { ...s, assignments: { ...s.assignments, [itemId]: all ? [] : s.participants.map(p => p.id) } };
+    const units = { ...(s.units || {}) }; delete units[itemId];
+    return { ...s, units, assignments: { ...s.assignments, [itemId]: all ? [] : s.participants.map(p => p.id) } };
   });
   const items = state.receipt.items.filter(i => i.name || num(i.price));
   const claimedPct = calc.subtotal > 0 ? Math.min(100, (calc.subtotal - calc.unassigned) / calc.subtotal * 100) : 0;
@@ -364,7 +362,12 @@ function Assign({ state, setState, calc, goSummary, toast, meDefault, onPickMe }
             <div className=${"flex items-start gap-3 " + (me ? "cursor-pointer" : "")} onClick=${() => me && toggle(it.id, me)}>
               <div className="min-w-0 flex-1">
                 <p className="font-semibold leading-snug">${it.name || "Untitled item"}${num(it.quantity) > 1 && html`<span className="ml-1.5 text-xs font-mono text-muted">×${num(it.quantity)}</span>`}</p>
-                <p className="text-xs text-muted mt-0.5 tnum">${ids.length === 0 ? "Unclaimed" : ids.length === 1 ? "1 person" : `Split ${ids.length} ways · ${fmt(price / ids.length)} each`}</p>
+                <p className="text-xs text-muted mt-0.5 tnum">${(() => {
+                  const qty = itemQty(it), claimed = sum(ids.map(id => Math.max(1, state.units?.[it.id]?.[id] || 1)));
+                  if (ids.length === 0) return "Unclaimed";
+                  if (qty > 1) return claimed < qty ? html`${claimed} of ${qty} claimed · <span className="text-warn">${qty - claimed} left</span>` : `All ${qty} claimed` + (claimed > qty ? ` · split ${claimed} ways` : "");
+                  return ids.length === 1 ? "1 person" : `Split ${ids.length} ways · ${fmt(price / ids.length)} each`;
+                })()}</p>
               </div>
               <span className="font-mono font-bold tnum">${fmt(price)}</span>
               ${me && html`<span className=${"mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full border-2 " + (mine ? "bg-money border-money text-moneyink" : "border-line")}>${mine && html`<${Ic} n="Check" s=${14} />`}</span>`}
@@ -382,6 +385,16 @@ function Assign({ state, setState, calc, goSummary, toast, meDefault, onPickMe }
               <button type="button" onClick=${() => everyone(it.id)} className=${"inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold border border-dashed transition " + (ids.length === P.length ? "border-money text-money" : "border-line text-muted hover:text-ink")}>
                 <${Ic} n="Users" s=${12} />${ids.length === P.length ? "Everyone" : "Split equally among all"}</button>
             </div>
+            ${itemQty(it) > 1 && ids.length > 0 && html`<div className="mt-3 flex flex-col gap-1.5 border-t border-line pt-3">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted">How many each</p>
+              ${ids.map(id => { const p = P.find(x => x.id === id); const n = Math.max(1, state.units?.[it.id]?.[id] || 1); return html`<div key=${id} className="flex items-center gap-2">
+                <${Avatar} name=${p?.name} color=${colorFor(P, id)} size=${22} />
+                <span className="flex-1 min-w-0 truncate text-sm">${p?.name || "Someone"}</span>
+                <button type="button" onClick=${() => setUnits(it.id, id, n - 1)} aria-label=${"One fewer for " + (p?.name || "them")} className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-line"><${Ic} n="Minus" s=${12} /></button>
+                <span className="w-6 text-center font-mono text-sm font-bold tnum">${n}</span>
+                <button type="button" onClick=${() => setUnits(it.id, id, n + 1)} disabled=${n >= 99} aria-label=${"One more for " + (p?.name || "them")} className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-line disabled:opacity-40"><${Ic} n="Plus" s=${12} /></button>
+              </div>`; })}
+            </div>`}
           </${Card}>
         </li>`;
       })}
@@ -430,7 +443,7 @@ function PersonCard({ r, calc, P, hostName }) {
       </div>
     </div>
     ${r.items.length ? html`<ul className="mt-3 border-t border-dashed border-line pt-3 flex flex-col gap-1 text-sm">
-      ${r.items.map(i => html`<li key=${i.id} className="flex justify-between gap-3"><span className="min-w-0 truncate">${i.name}${i.ways > 1 && html`<span className="text-muted text-xs"> · 1/${i.ways}</span>`}</span><span className="font-mono tnum text-muted">${fmt(i.share)}</span></li>`)}
+      ${r.items.map(i => html`<li key=${i.id} className="flex justify-between gap-3"><span className="min-w-0 truncate">${i.name}${i.label && html`<span className="text-muted text-xs"> · ${i.label}</span>`}</span><span className="font-mono tnum text-muted">${fmt(i.share)}</span></li>`)}
     </ul>` : html`<p className="mt-3 text-sm text-muted">Nothing claimed yet.</p>`}
     <div className="mt-3 grid grid-cols-4 gap-2 rounded-xl bg-soft p-2.5 text-center">
       ${[["Items", r.sub], ["Tax", r.tax], ["Fees", r.fees], ["Tip", r.tip]].map(([k, v]) => html`<div key=${k}><p className="text-[10px] uppercase tracking-[0.08em] text-muted">${k}</p><p className="font-mono text-xs font-semibold tnum">${fmt(v)}</p></div>`)}
@@ -440,7 +453,7 @@ function PersonCard({ r, calc, P, hostName }) {
 }
 
 function settleText(r, R, host) {
-  const items = r.items.map(i => i.ways > 1 ? `${i.name} (1/${i.ways})` : i.name).join(", ");
+  const items = r.items.map(i => i.label ? `${i.name} (${i.label})` : i.name).join(", ");
   const pay = typeof payLinks === "function" ? payLinks(host, r.total, `${R.merchant || "Dinner"} via Going Dutch`) : { links: [], zelle: "" };
   const how = pay.links[0] ? ` Pay here: ${pay.links[0].href}` : pay.zelle ? ` Zelle: ${pay.zelle}` : "";
   return `Hey ${r.p.name}, you owe ${fmt(r.total)} for ${R.merchant || "dinner"}${items ? " - " + items : ""}.${how}`;
@@ -448,7 +461,7 @@ function settleText(r, R, host) {
 function summaryText(state, calc) {
   const R = state.receipt, host = state.participants.find(p => p.isHost);
   const lines = [`${R.merchant || "Dinner"}${R.date ? " · " + R.date : ""}`, `Total ${fmt(calc.total)} (tax ${fmt(calc.tax)}, fees ${fmt(calc.fees)}, tip ${fmt(calc.tipAmt)})`, ""];
-  calc.rows.forEach(r => lines.push(`${r.p.name}${r.p.isHost ? " (paid)" : ""}: ${fmt(r.total)}${r.items.length ? "  [" + r.items.map(i => i.ways > 1 ? `${i.name} 1/${i.ways}` : i.name).join(", ") + "]" : ""}`));
+  calc.rows.forEach(r => lines.push(`${r.p.name}${r.p.isHost ? " (paid)" : ""}: ${fmt(r.total)}${r.items.length ? "  [" + r.items.map(i => i.label ? `${i.name} ${i.label}` : i.name).join(", ") + "]" : ""}`));
   if (calc.unassigned > 0) lines.push("", `Unassigned: ${fmt(calc.unassigned)} in items`);
   lines.push("", `Pay ${host?.name || "the host"} back. Split with Going Dutch.`);
   return lines.join("\n");
@@ -474,7 +487,7 @@ function drawPng(state, calc) {
     x.font = "700 20px 'Figtree', sans-serif"; x.fillStyle = "#0f1f19"; x.textAlign = "left"; x.fillText(r.p.name + (r.p.isHost ? " (paid)" : ""), pad + 30, y + 1);
     x.font = "700 22px 'JetBrains Mono', monospace"; x.fillStyle = "#078554"; x.textAlign = "right"; x.fillText(fmt(r.total), W - pad, y);
     y += lh + 4;
-    r.items.forEach(it => { lr("  " + it.name + (it.ways > 1 ? ` 1/${it.ways}` : ""), fmt(it.share), "400 15px 'JetBrains Mono', monospace", "#5d6e67"); y += 24; });
+    r.items.forEach(it => { lr("  " + it.name + (it.label ? ` ${it.label}` : ""), fmt(it.share), "400 15px 'JetBrains Mono', monospace", "#5d6e67"); y += 24; });
     y += 22;
   });
   dash(y); y += 20;
@@ -527,7 +540,7 @@ function Summary({ state, setState, calc, toast, reset, live, readOnly }) {
           <${Avatar} name=${r.p.name} color=${colorFor(P, r.p.id)} size=${28} />
           <div className="flex-1 min-w-0">
             <p className="text-sm break-words">${settleText(r, R, host)}</p>
-            <button type="button" onClick=${() => setState(s => ({ ...s, participants: s.participants.map(p => p.id === r.p.id ? { ...p, paid: !p.paid } : p) }))}
+            <button type="button" disabled=${readOnly} onClick=${() => setState(s => ({ ...s, participants: s.participants.map(p => p.id === r.p.id ? { ...p, paid: !p.paid } : p) }))}
               className=${"mt-2 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold " + (r.p.paid ? "bg-moneysoft text-money" : "border border-line text-muted hover:text-ink")}>
               <${Ic} n=${r.p.paid ? "CheckCircle2" : "Circle"} s=${13} />${r.p.paid ? "Paid" : "Mark as paid"}</button>
           </div>
