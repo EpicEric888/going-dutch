@@ -10,7 +10,7 @@ Group bill splitter: upload a receipt, friends claim what they ordered, everyone
 - [x] Guest links, "My bills" page, email sign-in (magic link), live claiming
 - [ ] Google sign-in
 - [ ] Receipt reading (Supabase Edge Function, Meta Muse Spark API)
-- [ ] Hosting (Vercel or Netlify)
+- [x] Hosting: GitHub Pages at https://delapape.com (domain at Porkbun)
 
 ## Supabase
 - Project URL: https://mdhpsnfqmokhpctirhnl.supabase.co
