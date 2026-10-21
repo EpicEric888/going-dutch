@@ -161,7 +161,7 @@ function MyClaims({ state, setState, calc, meId, onSwitch, toast, goSummary }) {
           const ids = (state.assignments[it.id] || []).filter(id => P.some(p => p.id === id));
           const names = ids.map(id => P.find(p => p.id === id)?.name || "Someone").join(", ");
           return html`<li key=${it.id} className="flex items-center gap-3 rounded-xl border border-line bg-soft px-3 py-2 opacity-60">
-            <span className="flex -space-x-1.5">${ids.slice(0, 3).map(id => html`<${Avatar} key=${id} name=${P.find(p => p.id === id)?.name} color=${colorFor(P, id)} size=${22} />`)}</span>
+            <span className="flex w-[50px] shrink-0 -space-x-1.5">${ids.slice(0, 3).map(id => html`<${Avatar} key=${id} name=${P.find(p => p.id === id)?.name} color=${colorFor(P, id)} size=${22} />`)}</span>
             <span className="min-w-0 flex-1">
               <span className="block truncate text-sm font-medium ">${it.name || "Untitled item"}</span>
               <span className="block truncate text-[11px] text-muted">${names}</span>
