@@ -88,6 +88,14 @@ function MyClaims({ state, setState, calc, meId, onSwitch, toast, goSummary }) {
   const setPaid = v => setState(s => ({ ...s, participants: s.participants.map(p => p.id === meId ? { ...p, paid: v } : p) }));
   const owedToMe = sum(calc.rows.filter(r => !r.p.isHost).map(r => r.total));
   const note = `${state.receipt.merchant || "Dinner"} via Going Dutch`;
+  // fully claimed by others, none of it mine: shown greyed and compact at the bottom
+  const isTaken = it => {
+    const ids = (state.assignments[it.id] || []).filter(id => P.some(p => p.id === id));
+    if (!ids.length || ids.includes(meId)) return false;
+    return itemQty(it) - sum(ids.map(id => unitsOf(state, it.id, id))) <= FULL;
+  };
+  const takenItems = items.filter(isTaken);
+  const openItems = items.filter(it => !isTaken(it));
 
   return html`<div className="flex flex-col gap-3 pb-72">
     <div className="flex items-center gap-3">
@@ -99,7 +107,7 @@ function MyClaims({ state, setState, calc, meId, onSwitch, toast, goSummary }) {
 
 
     <ul className="flex flex-col gap-2">
-      ${items.map(it => {
+      ${openItems.map(it => {
         const ids = (state.assignments[it.id] || []).filter(id => P.some(p => p.id === id));
         const qty = itemQty(it);
         const u = id => unitsOf(state, it.id, id);
@@ -145,6 +153,25 @@ function MyClaims({ state, setState, calc, meId, onSwitch, toast, goSummary }) {
         </li>`;
       })}
     </ul>
+
+    ${takenItems.length > 0 && html`<div className="mt-2">
+      <p className="px-1 pb-1.5 text-xs font-semibold uppercase tracking-wide text-muted">Already claimed · ${takenItems.length}</p>
+      <ul className="flex flex-col gap-1.5">
+        ${takenItems.map(it => {
+          const ids = (state.assignments[it.id] || []).filter(id => P.some(p => p.id === id));
+          const names = ids.map(id => P.find(p => p.id === id)?.name || "Someone").join(", ");
+          return html`<li key=${it.id} className="flex items-center gap-3 rounded-xl border border-line bg-soft px-3 py-2 opacity-60">
+            <span className="flex -space-x-1.5">${ids.slice(0, 3).map(id => html`<${Avatar} key=${id} name=${P.find(p => p.id === id)?.name} color=${colorFor(P, id)} size=${22} />`)}</span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-medium ">${it.name || "Untitled item"}</span>
+              <span className="block truncate text-[11px] text-muted">${names}</span>
+            </span>
+            <span className="font-mono text-sm tnum text-muted">${fmt(num(it.price))}</span>
+            <button type="button" onClick=${() => { toggle(it); toast("Split with " + names); }} className="rounded-full border border-line bg-card px-2.5 py-1 text-xs font-semibold">Split it</button>
+          </li>`;
+        })}
+      </ul>
+    </div>`}
 
     <div className="above-tabbar fixed inset-x-0 z-30 px-4" style=${{ bottom: "calc(12px + env(safe-area-inset-bottom, 0px))" }}>
       <div className="mx-auto max-w-[640px] rounded-2xl border border-line bg-card p-4 shadow-card">
