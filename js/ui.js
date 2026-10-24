@@ -52,6 +52,9 @@ function UploadZone({ onParsed, onPhoto, sampleState }) {
       const map = {
         not_granted: "Claude access wasn't allowed for this page, so the receipt can't be read. Type it in below.",
         rate_limited: "Too many requests right now. Wait a minute and try again.",
+        guest_limit: "You've hit today's limit for receipt scans as a guest. Sign in for more, or type it in below.",
+        user_limit: "You've hit today's limit for receipt scans. Try again tomorrow, or type it in below.",
+        site_limit: "Receipt reading is taking a break for today. Type the receipt in below.",
         image_rejected: "We couldn't open that image. Try a clearer photo or a different file.",
         invalid_json: "We couldn't make sense of that receipt. Try a sharper, straight-on photo, or type it in below.",
         refused: "We couldn't read that image. Try another photo.",

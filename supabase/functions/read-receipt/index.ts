@@ -41,6 +41,22 @@ Deno.serve(async (req) => {
   const mediaType = /^image\/(jpeg|png|webp|gif)$/.test(body.mediaType ?? "") ? body.mediaType : "image/jpeg";
   if (!image || image.length > 11_000_000) return json({ error: "bad_image" }, 400);
 
+  // Usage cap: checked in the database before every Muse call (limits live in public.scan_limits).
+  const gate = await fetch(`${Deno.env.get("SUPABASE_URL")}/rest/v1/rpc/claim_receipt_scan`, {
+    method: "POST",
+    headers: {
+      "apikey": Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      "Authorization": req.headers.get("Authorization") ?? "",
+      "Content-Type": "application/json",
+    },
+    body: "{}",
+  });
+  const verdict = gate.ok ? await gate.json() : "gate_error";
+  if (verdict !== "ok") {
+    console.warn("scan blocked", verdict);
+    return json({ error: verdict }, verdict === "gate_error" ? 503 : 429);
+  }
+
   const res = await fetch("https://api.meta.ai/v1/chat/completions", {
     method: "POST",
     headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json" },

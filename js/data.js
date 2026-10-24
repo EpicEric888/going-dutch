@@ -133,7 +133,10 @@ async function readReceipt(blob) {
   if (error) {
     const status = error.context?.status;
     if (error.name === "FunctionsFetchError" || status === 404 || status === 503) throw { code: "not_set_up" };
-    if (status === 429) throw { code: "rate_limited" };
+    if (status === 429) {
+      let body = null; try { body = await error.context.json(); } catch (e) {}
+      throw { code: ["guest_limit", "user_limit", "site_limit"].includes(body?.error) ? body.error : "rate_limited" };
+    }
     if (status === 422) throw { code: "invalid_json" };
     if (status === 400) throw { code: "image_rejected" };
     throw { code: "upstream" };
