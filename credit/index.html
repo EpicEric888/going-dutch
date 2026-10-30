@@ -237,7 +237,7 @@ header h1 a{color:inherit;text-decoration:none}
 
   <section id="sec-screen">
     <h2>Screener</h2>
-    <p class="sub">One row per tenant in the current filter. Click a column to sort it and a name to open that tenant's detail. Leverage is the latest stored figure; coverage, margin and dividend cover are the latest fiscal year.</p>
+    <p class="sub">One row per tenant in the current filter. Click a column to sort it and a name to open that tenant's detail. Leverage is the latest stored figure; coverage and margin are the latest fiscal year.</p>
     <div class="panel"><div class="scroll-x tscroll"><table id="screen" class="screen"></table></div><p class="note" id="screennote"></p></div>
   </section>
 
@@ -3185,7 +3185,7 @@ function drawScreener() {
     ['name', 'Tenant', o => o.c.name], ['type', 'Type', o => TYPE(o.c)], ['rating', 'Avg rating', o => o.avgN],
     ['sp', 'S&P', o => o.rt['S&P'] ? notch('S&P', o.rt['S&P'][2]) : null], ['md', "Moody's", o => o.rt["Moody's"] ? notch("Moody's", o.rt["Moody's"][2]) : null], ['fi', 'Fitch', o => o.rt.Fitch ? notch('Fitch', o.rt.Fitch[2]) : null],
     ['outl', 'Outlook', o => o.outl || null], ['lev', 'Net leverage', o => o.lv ? o.lv.value : null], ['cov', 'Interest cover', o => o.cov ? o.cov.p.value : null],
-    ['mg', 'EBITDA margin', o => o.mg ? o.mg.p.value : null], ['fc', 'Dividend cover', o => o.fc ? o.fc.v : null], ['nx', 'Next results', o => o.nxd]];
+    ['mg', 'EBITDA margin', o => o.mg ? o.mg.p.value : null], ['nx', 'Next results', o => o.nxd]];
   const col = cols.find(x => x[0] === scr.key) || cols[2];
   rowsS.sort((a, b) => { const va = col[2](a), vb = col[2](b); if (va == null && vb == null) return a.c.name.localeCompare(b.c.name); if (va == null) return 1; if (vb == null) return -1; return (typeof va === 'string' ? va.localeCompare(vb) : va - vb) * scr.dir || a.c.name.localeCompare(b.c.name); });
   const pill = (ag, r) => { if (!r) return '<span class="nd">–</span>'; const n = notch(ag, r[2]), unv = /unverified/.test(r[5] || ''); return `<span class="pill${n != null && n > 9 ? ' hy' : ''}${unv ? ' unv' : ''}" title="${esc(ag + ' ' + r[2] + (r[3] ? ', ' + r[3] : '') + (r[4] ? ', ' + fdate(r[4]) : '') + (unv ? ' (unverified)' : ''))}">${esc(r[2])}</span>`; };
@@ -3197,12 +3197,11 @@ function drawScreener() {
     <td style="text-align:left"${/neg/i.test(o.outl) ? ' class="warn"' : ''}>${esc(o.outl || '') || '<span class="nd">–</span>'}</td>
     ${o.lv ? `<td${o.lv.value > 4 ? ' class="warn"' : ''} title="${esc(perLabel(o.lv) + ', ' + o.lv.basis)}">${fmt(o.lv.value, 'x')}${o.lv.annualized ? '†' : ''} <span class="nd">${esc(perLabel(o.lv))}</span></td>` : '<td><span class="nd">–</span></td>'}
     ${num(o.cov ? o.cov.p.value : null, 'x', o.cov && o.cov.p.value < 3 ? 'warn' : '')}${num(o.mg ? o.mg.p.value : null, 'pct')}
-    ${o.fc ? (o.fc.v == null ? '<td><span class="nd">no dividend</span></td>' : `<td class="${o.fc.v < 1 ? 'warn' : ''}" title="FY${String(o.fc.y).slice(2)}">${o.fc.v.toFixed(1)}x</td>`) : '<td><span class="nd">–</span></td>'}
     <td>${o.nxd ? fdate(o.nxd) : '<span class="nd">–</span>'}</td></tr>`).join('');
   $('#screen').innerHTML = rowsS.length ? head + '<tbody>' + body + '</tbody>' : '<tbody><tr><td class="nd">No tenants match the filters.</td></tr></tbody>';
   $('#screen').querySelectorAll('th button').forEach(b => b.addEventListener('click', () => { const k = b.dataset.k; scr.dir = scr.key === k ? -scr.dir : (['lev', 'nx', 'rating', 'sp', 'md', 'fi', 'name', 'type', 'outl'].includes(k) ? 1 : -1); scr.key = k; drawScreener(); }));
   $('#screen').querySelectorAll('button.lk').forEach(b => b.addEventListener('click', () => openTenant(b.dataset.co)));
-  $('#screennote').innerHTML = 'Red flags: net leverage above 4x, interest cover below 3x, dividends not covered by cash after capex, or a negative outlook. Hollow rating pills were found by automated search and are not yet verified. Amounts are ratios, so currencies do not matter here. † annualized EBITDA.';
+  $('#screennote').innerHTML = 'Red flags: net leverage above 4x, interest cover below 3x, or a negative outlook. Hollow rating pills were found by automated search and are not yet verified. Amounts are ratios, so currencies do not matter here. † annualized EBITDA.';
 }
 
 /* ---------- Shareable links: #region=…&country=…&type=…&tenant=… ---------- */
