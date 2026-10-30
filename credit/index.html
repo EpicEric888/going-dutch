@@ -152,6 +152,27 @@ section{scroll-margin-top:150px}
 .cal li.more button{font:inherit;font-size:.86rem;border:0;background:none;color:var(--accent);cursor:pointer;padding:0}
 .cohead{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:end;margin-bottom:16px}
 .cohead select{font:inherit;font-size:.95rem;padding:7px 10px;min-width:240px;border:1px solid var(--line);border-radius:7px;background:var(--panel);color:var(--ink)}
+.chgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:900px){.chgrid{grid-template-columns:1fr}}
+.chgrid h4{margin:0 0 8px;font-size:.92rem}
+.chlist{list-style:none;margin:0;padding:0;font-size:.88rem}
+.chlist li{display:flex;gap:8px;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--soft)}
+.chlist li:last-child{border-bottom:0}
+.chlist .t{flex:1;min-width:0}
+.chlist .t small{display:block;color:var(--muted);font-size:.78rem;white-space:normal}
+.chlist .d{color:var(--muted);font-size:.78rem;white-space:nowrap}
+.chlist .ar{font-weight:700;width:12px;text-align:center}
+.chlist button.lk{font:inherit;border:0;background:none;padding:0;color:var(--ink);font-weight:600;cursor:pointer;text-align:left}
+.chlist button.lk:hover{color:var(--accent);text-decoration:underline}
+.screen th button{font:inherit;font-weight:600;font-size:.8rem;color:var(--muted);background:none;border:0;padding:0;cursor:pointer;white-space:nowrap}
+.screen th button[aria-sort]{color:var(--ink)}
+.screen td button.lk{font:inherit;border:0;background:none;padding:0;color:var(--ink);font-weight:600;cursor:pointer;text-align:left}
+.screen td button.lk:hover{color:var(--accent);text-decoration:underline}
+.screen td.warn{color:var(--neg);font-weight:600}
+.screen td.good{color:var(--pos)}
+.screen .pill{display:inline-block;min-width:38px;text-align:center;padding:1px 6px;border-radius:5px;font-size:.82rem;font-weight:600;background:var(--ig)}
+.screen .pill.hy{background:var(--hy)}
+.screen .pill.unv{background:transparent;box-shadow:inset 0 0 0 1px var(--line);font-weight:500}
 .expo .none{grid-column:1 / -1;font-size:.84rem;color:var(--muted);padding-top:6px;border-top:1px solid var(--soft)}
 @media (max-width:700px){.jump{display:none}}
 .filters .chip[aria-pressed="false"]{opacity:1;color:var(--ink)}
@@ -191,8 +212,20 @@ section{scroll-margin-top:150px}
     <div class="fgroup"><span class="flabel">Type</span><div class="chips" id="f-type"></div></div>
     <div class="fgroup srch"><span class="flabel">Search</span><input type="search" id="f-search" placeholder="Tenant, brand or country" aria-label="Search tenants, brands and countries" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="f-results"><ul class="sres" id="f-results" role="listbox" hidden></ul></div>
     <div class="fmeta"><span id="f-count"></span><button id="f-reset" type="button">Clear filters</button><span class="xwrap"><button id="f-export" type="button" hidden aria-expanded="false" aria-controls="xmenu" title="Download an Excel workbook for one tenant, one country or the current view">Export to Excel &#9662;</button><div class="xmenu" id="xmenu" hidden></div></span><span id="f-export-msg" class="fmsg" role="status"></span></div>
-    <nav class="jump" aria-label="Jump to section"><a href="#sec-ratings">Ratings</a><a href="#sec-cal">Calendar</a><a href="#sec-compare">Compare</a><a href="#sec-trends">Trends</a><a href="#sec-lvr">Leverage vs rating</a><a href="#sec-fcf">Cash flow</a><a href="#sec-mix">Revenue mix</a><a href="#sec-expo">Exposure</a><a href="#sec-company">Company detail</a></nav>
+    <nav class="jump" aria-label="Jump to section"><a href="#sec-changes">What changed</a><a href="#sec-screen">Screener</a><a href="#sec-ratings">Ratings</a><a href="#sec-cal">Calendar</a><a href="#sec-compare">Compare</a><a href="#sec-trends">Trends</a><a href="#sec-lvr">Leverage vs rating</a><a href="#sec-fcf">Cash flow</a><a href="#sec-mix">Revenue mix</a><a href="#sec-expo">Exposure</a><a href="#sec-company">Company detail</a></nav>
   </div>
+
+  <section id="sec-changes">
+    <h2>What changed</h2>
+    <p class="sub">The last 30 days for the tenants in view: rating actions, results that came in, and net leverage moves of 0.3x or more against the prior period.</p>
+    <div class="chgrid" id="changes"></div>
+  </section>
+
+  <section id="sec-screen">
+    <h2>Screener</h2>
+    <p class="sub">One row per tenant in the current filter. Click a column to sort it and a name to open that tenant's detail. Leverage is the latest stored figure; coverage, margin and dividend cover are the latest fiscal year.</p>
+    <div class="panel"><div class="scroll-x"><table id="screen" class="screen"></table></div><p class="note" id="screennote"></p></div>
+  </section>
 
   <section id="sec-ratings">
     <h2>Where each tenant sits on the rating scale</h2>
@@ -291,7 +324,7 @@ section{scroll-margin-top:150px}
   <section id="sec-company">
     <h2>Company detail</h2>
     <p class="sub">Every metric row for one tenant. Click a value to open the filing it came from; hover it for basis and method.</p>
-    <div class="cohead"><label class="field">Tenant<select id="cosel" aria-label="Tenant"></select></label><div class="seg"><button type="button" id="coprev" aria-label="Previous tenant">&lsaquo; Prev</button><button type="button" id="conext" aria-label="Next tenant">Next &rsaquo;</button></div></div>
+    <div class="cohead"><label class="field">Tenant<select id="cosel" aria-label="Tenant"></select></label><div class="seg"><button type="button" id="coprev" aria-label="Previous tenant">&lsaquo; Prev</button><button type="button" id="conext" aria-label="Next tenant">Next &rsaquo;</button></div><button type="button" class="pbtn" id="colink" hidden>Copy link to this tenant</button></div>
     <div id="copanel" role="tabpanel"></div>
   </section>
 
@@ -2766,8 +2799,9 @@ function renderTabs() {
   const sel = $('#cosel');
   sel.innerHTML = Object.keys(groups).sort().map(g => `<optgroup label="${esc(g)}">${groups[g].map(c => `<option value="${c.id}"${c.id === activeCo ? ' selected' : ''}>${esc(c.name)}</option>`).join('')}</optgroup>`).join('');
   const flat = () => [...sel.options].map(o => o.value);
-  sel.onchange = () => { activeCo = sel.value; drawCompany(); };
-  const step = d => { const f = flat(), i = f.indexOf(activeCo); if (!f.length) return; activeCo = f[(i + d + f.length) % f.length]; sel.value = activeCo; drawCompany(); };
+  sel.onchange = () => { activeCo = sel.value; deep.co = true; writeHash(); drawCompany(); };
+  const step = d => { const f = flat(), i = f.indexOf(activeCo); if (!f.length) return; activeCo = f[(i + d + f.length) % f.length]; sel.value = activeCo; deep.co = true; writeHash(); drawCompany(); };
+  const cl = $('#colink'); if (cl) { cl.hidden = !!window.claude; cl.onclick = async () => { deep.co = true; writeHash(); try { await navigator.clipboard.writeText(location.href); cl.textContent = 'Link copied'; } catch (e) { cl.textContent = 'Copy the address bar'; } setTimeout(() => { cl.textContent = 'Copy link to this tenant'; }, 2500); }; }
   $('#coprev').onclick = () => step(-1); $('#conext').onclick = () => step(1);
 }
 function drawCompany() {
@@ -3048,6 +3082,122 @@ const flt = {regions: new Set(), country: '', types: new Set()};
 const coCountries = id => COUNTRIES.filter(x => x[0] === id).map(x => x[1]);
 const REGIONS = [...new Set(Object.values(REGION))].sort();
 const TYPES = ['Telecom', 'Fiber', 'Data centers', 'Hyperscalers', 'Other'].filter(t => ALL_COMPANIES.some(c => TYPE(c) === t));
+/* ---------- Shared helpers for What changed and the screener ---------- */
+const deep = {co: false};
+const slugN = t => String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const isoDay = ms => new Date(ms).toISOString().slice(0, 10);
+function levSeries(co) {
+  // net leverage by period end: company-stated first, else the dashboard calculation
+  const pts = {};
+  ['net_leverage', 'net_leverage_calc'].forEach(m => {
+    const byEnd = {};
+    ROWS.filter(r => r.co === co && r.metric === m && r.value != null).forEach(r => (byEnd[r.end] ||= []).push(r));
+    Object.entries(byEnd).forEach(([e, rs]) => { if (!pts[e]) pts[e] = pick(rs, state.prefer); });
+  });
+  return Object.keys(pts).sort().map(e => pts[e]);
+}
+function latestRat(co) { const by = {}; RATINGS.filter(r => r[0] === co).forEach(r => { if (!by[r[1]] || String(r[4] || '') > String(by[r[1]][4] || '')) by[r[1]] = r; }); return by; }
+function openTenant(id) {
+  if (!VIS.has(id)) { flt.regions.clear(); flt.types.clear(); flt.country = ''; renderFilterControls(); applyFilters(); saveFilters(); }
+  activeCo = id; deep.co = true; renderTabs(); drawCompany(); writeHash();
+  $('#sec-company').scrollIntoView({behavior: 'smooth'});
+}
+const perLabel = r => r.b ? r.b.label : r.period;
+
+/* ---------- What changed ---------- */
+function drawChanges() {
+  const today = isoDay(Date.now()), cut = isoDay(Date.now() - 30 * 864e5);
+  const li = (co, main, sub, d, ar) => `<li><span class="ar" style="color:${ar === '▲' ? 'var(--pos)' : ar === '▼' ? 'var(--neg)' : 'var(--muted)'}">${ar || '•'}</span><span class="t"><button type="button" class="lk" data-co="${co}">${esc(CO[co].name)}</button> ${main}${sub ? `<small>${sub}</small>` : ''}</span><span class="d">${d ? fdate(d) : ''}</span></li>`;
+  // rating actions
+  const ra = RATINGS.filter(r => VIS.has(r[0]) && r[4] && r[4] >= cut && r[4] <= today).sort((a, b) => b[4].localeCompare(a[4]));
+  const rHtml = ra.slice(0, 12).map(r => {
+    const n = notch(r[1], r[2]), np = r[6] ? notch(r[1], r[6]) : null;
+    const ar = n != null && np != null && n !== np ? (n < np ? '▲' : '▼') : /negative/i.test(r[3] || '') ? '▼' : /positive/i.test(r[3] || '') ? '▲' : '';
+    return li(r[0], `${esc(r[1])} ${r[6] && r[6] !== r[2] ? esc(r[6]) + ' → ' : ''}<b>${esc(r[2])}</b>${r[3] ? ', ' + esc(r[3].toLowerCase()) : ''}`, esc(String(r[5] || '').replace(/^Auto: /, '')), r[4], ar);
+  }).join('');
+  // results in
+  const ev = EVENTS.filter(e => VIS.has(e[1]) && (e[7] === 'published' || e[7] === 'loaded')).map(e => ({e, d: e[6] || e[5] || e[4]})).filter(o => o.d && o.d >= cut && o.d <= today).sort((a, b) => b.d.localeCompare(a.d));
+  const eHtml = ev.slice(0, 12).map(({e, d}) => { const c = CO[e[1]]; const lab = c.fye !== '12-31' ? `${e[3]} FY${String(e[2]).slice(2)}` : (e[3] === 'FY' ? `FY ${e[2]}` : `${e[3]} ${e[2]}`);
+    const lo = isoDay(new Date(d + 'T00:00:00Z').getTime() - 120 * 864e5), got = e[7] === 'loaded' || ROWS.some(r => r.co === e[1] && r.value != null && r.end > lo && r.end <= d);
+    return li(e[1], `${esc(lab)} results`, got ? 'Figures loaded' : 'Published; figures pending review', d, ''); }).join('');
+  // leverage moves
+  const lm = [];
+  COMPANIES.forEach(c => {
+    const sr = levSeries(c.id); if (sr.length < 2) return;
+    const a = sr[sr.length - 1], b = sr[sr.length - 2];
+    if (a.end < isoDay(Date.now() - 200 * 864e5)) return;
+    const dlt = a.value - b.value; if (Math.abs(dlt) < 0.3) return;
+    lm.push({c, a, b, dlt});
+  });
+  lm.sort((x, y) => Math.abs(y.dlt) - Math.abs(x.dlt));
+  const lHtml = lm.slice(0, 12).map(({c, a, b, dlt}) => li(c.id, `${fmt(b.value, 'x')} → <b>${fmt(a.value, 'x')}</b>`, `${perLabel(b)} to ${perLabel(a)}, ${dlt > 0 ? '+' : ''}${dlt.toFixed(2)}x${a.annualized ? ' (annualized EBITDA)' : ''}`, a.end, dlt > 0 ? '▼' : '▲')).join('');
+  const card = (t, h, empty, more) => `<div class="panel"><h4>${t}</h4><ul class="chlist">${h || `<li><span class="t nd">${empty}</span></li>`}</ul>${more > 12 ? `<p class="note">+${more - 12} more</p>` : ''}</div>`;
+  $('#changes').innerHTML = card('Rating actions', rHtml, 'No rating actions dated in the last 30 days.', ra.length) + card('Results in', eHtml, 'No results published in the last 30 days.', ev.length) + card('Leverage moves', lHtml, 'No moves of 0.3x or more in the latest period.', lm.length);
+  $('#changes').querySelectorAll('button.lk').forEach(b => b.addEventListener('click', () => openTenant(b.dataset.co)));
+}
+
+/* ---------- Screener ---------- */
+const scr = {key: 'rating', dir: 1};
+function drawScreener() {
+  const today = isoDay(Date.now());
+  const rowsS = COMPANIES.map(c => {
+    const rt = latestRat(c.id), ns = Object.values(rt).map(r => notch(r[1], r[2])).filter(n => n != null);
+    const avgN = ns.length ? ns.reduce((a, b) => a + b, 0) / ns.length : null;
+    const outl = Object.values(rt).map(r => r[3] || '').find(o => /neg/i.test(o)) || Object.values(rt).map(r => r[3] || '').find(o => /pos/i.test(o)) || (Object.values(rt)[0] || [])[3] || '';
+    const lv = levSeries(c.id).pop() || null;
+    const last = m => { const a = annual(c.id, m, state.prefer); return a.length ? a[a.length - 1] : null; };
+    const cov = last('interest_coverage'), mg = last('ebitda_margin');
+    const cfo = annual(c.id, 'cfo', 'reported'), cap = annual(c.id, 'capex', 'reported'), dv = annual(c.id, 'dividends_paid', 'reported');
+    const yrs = cfo.map(o => o.y).filter(y => cap.some(o => o.y === y) && dv.some(o => o.y === y));
+    let fc = null; if (yrs.length) { const y = yrs[yrs.length - 1], g = (a) => a.find(o => o.y === y).p.value, d = g(dv); fc = {y, v: d > 0 ? (g(cfo) - g(cap)) / d : null}; }
+    const nx = EVENTS.filter(e => e[1] === c.id && e[7] === 'expected' && (e[5] || e[4]) >= today).sort((a, b) => String(a[5] || a[4]).localeCompare(String(b[5] || b[4])))[0];
+    return {c, rt, avgN, outl, lv, cov, mg, fc, nx, nxd: nx ? (nx[5] || nx[4]) : null};
+  });
+  const cols = [
+    ['name', 'Tenant', o => o.c.name], ['type', 'Type', o => TYPE(o.c)], ['rating', 'Avg rating', o => o.avgN],
+    ['sp', 'S&P', o => o.rt['S&P'] ? notch('S&P', o.rt['S&P'][2]) : null], ['md', "Moody's", o => o.rt["Moody's"] ? notch("Moody's", o.rt["Moody's"][2]) : null], ['fi', 'Fitch', o => o.rt.Fitch ? notch('Fitch', o.rt.Fitch[2]) : null],
+    ['outl', 'Outlook', o => o.outl || null], ['lev', 'Net leverage', o => o.lv ? o.lv.value : null], ['cov', 'Interest cover', o => o.cov ? o.cov.p.value : null],
+    ['mg', 'EBITDA margin', o => o.mg ? o.mg.p.value : null], ['fc', 'Dividend cover', o => o.fc ? o.fc.v : null], ['nx', 'Next results', o => o.nxd]];
+  const col = cols.find(x => x[0] === scr.key) || cols[2];
+  rowsS.sort((a, b) => { const va = col[2](a), vb = col[2](b); if (va == null && vb == null) return a.c.name.localeCompare(b.c.name); if (va == null) return 1; if (vb == null) return -1; return (typeof va === 'string' ? va.localeCompare(vb) : va - vb) * scr.dir || a.c.name.localeCompare(b.c.name); });
+  const pill = (ag, r) => { if (!r) return '<span class="nd">–</span>'; const n = notch(ag, r[2]), unv = /unverified/.test(r[5] || ''); return `<span class="pill${n != null && n > 9 ? ' hy' : ''}${unv ? ' unv' : ''}" title="${esc(ag + ' ' + r[2] + (r[3] ? ', ' + r[3] : '') + (r[4] ? ', ' + fdate(r[4]) : '') + (unv ? ' (unverified)' : ''))}">${esc(r[2])}</span>`; };
+  const avgTxt = o => o.avgN == null ? '<span class="nd">not rated</span>' : `${SP[Math.round(o.avgN)]}`;
+  const num = (v, unit, cls) => v == null ? '<td><span class="nd">–</span></td>' : `<td${cls ? ` class="${cls}"` : ''}>${fmt(v, unit)}</td>`;
+  const head = `<thead><tr>${cols.map(([k, t]) => `<th${k === 'name' || k === 'type' || k === 'outl' ? ' style="text-align:left"' : ''}><button type="button" data-k="${k}"${scr.key === k ? ` aria-sort="${scr.dir > 0 ? 'ascending' : 'descending'}"` : ''}>${t}${scr.key === k ? (scr.dir > 0 ? ' ▲' : ' ▼') : ''}</button></th>`).join('')}</tr></thead>`;
+  const body = rowsS.map(o => `<tr><td><span class="dot" style="background:${color(o.c.id)}"></span> <button type="button" class="lk" data-co="${o.c.id}">${esc(o.c.name)}</button></td><td style="text-align:left" class="nd">${esc(TYPE(o.c))}</td>
+    <td>${avgTxt(o)}</td><td>${pill('S&P', o.rt['S&P'])}</td><td>${pill("Moody's", o.rt["Moody's"])}</td><td>${pill('Fitch', o.rt.Fitch)}</td>
+    <td style="text-align:left"${/neg/i.test(o.outl) ? ' class="warn"' : ''}>${esc(o.outl || '') || '<span class="nd">–</span>'}</td>
+    ${o.lv ? `<td${o.lv.value > 4 ? ' class="warn"' : ''} title="${esc(perLabel(o.lv) + ', ' + o.lv.basis)}">${fmt(o.lv.value, 'x')}${o.lv.annualized ? '†' : ''} <span class="nd">${esc(perLabel(o.lv))}</span></td>` : '<td><span class="nd">–</span></td>'}
+    ${num(o.cov ? o.cov.p.value : null, 'x', o.cov && o.cov.p.value < 3 ? 'warn' : '')}${num(o.mg ? o.mg.p.value : null, 'pct')}
+    ${o.fc ? (o.fc.v == null ? '<td><span class="nd">no dividend</span></td>' : `<td class="${o.fc.v < 1 ? 'warn' : ''}" title="FY${String(o.fc.y).slice(2)}">${o.fc.v.toFixed(1)}x</td>`) : '<td><span class="nd">–</span></td>'}
+    <td>${o.nxd ? fdate(o.nxd) : '<span class="nd">–</span>'}</td></tr>`).join('');
+  $('#screen').innerHTML = rowsS.length ? head + '<tbody>' + body + '</tbody>' : '<tbody><tr><td class="nd">No tenants match the filters.</td></tr></tbody>';
+  $('#screen').querySelectorAll('th button').forEach(b => b.addEventListener('click', () => { const k = b.dataset.k; scr.dir = scr.key === k ? -scr.dir : (['lev', 'nx', 'rating', 'sp', 'md', 'fi', 'name', 'type', 'outl'].includes(k) ? 1 : -1); scr.key = k; drawScreener(); }));
+  $('#screen').querySelectorAll('button.lk').forEach(b => b.addEventListener('click', () => openTenant(b.dataset.co)));
+  $('#screennote').innerHTML = 'Red flags: net leverage above 4x, interest cover below 3x, dividends not covered by cash after capex, or a negative outlook. Hollow rating pills were found by automated search and are not yet verified. Amounts are ratios, so currencies do not matter here. † annualized EBITDA.';
+}
+
+/* ---------- Shareable links: #region=…&country=…&type=…&tenant=… ---------- */
+function applyHash() {
+  let h; try { h = new URLSearchParams(location.hash.replace(/^#/, '')); } catch (e) { return; }
+  const has = k => h.has(k) && h.get(k);
+  if (!['region', 'country', 'type', 'tenant'].some(has)) return;
+  if (['region', 'country', 'type'].some(has) || has('tenant')) { flt.regions.clear(); flt.types.clear(); flt.country = ''; }
+  (h.get('region') || '').split(',').forEach(r => { const m = REGIONS.find(x => slugN(x) === slugN(r)); if (m) flt.regions.add(m); });
+  (h.get('type') || '').split(',').forEach(t => { const m = TYPES.find(x => slugN(x) === slugN(t)); if (m) flt.types.add(m); });
+  if (has('country')) { const m = [...new Set(COUNTRIES.map(x => x[1]))].find(x => slugN(x) === slugN(h.get('country'))); if (m) flt.country = m; }
+  if (has('tenant')) { const q = h.get('tenant'); const m = ALL_COMPANIES.find(c => slugN(c.name) === slugN(q) || c.id.toLowerCase() === q.toLowerCase()); if (m) { activeCo = m.id; deep.co = true; } }
+}
+function writeHash() {
+  const h = new URLSearchParams();
+  if (flt.regions.size) h.set('region', [...flt.regions].map(slugN).join(','));
+  if (flt.country) h.set('country', slugN(flt.country));
+  if (flt.types.size) h.set('type', [...flt.types].map(slugN).join(','));
+  if (deep.co && CO[activeCo]) h.set('tenant', slugN(CO[activeCo].name));
+  const str = h.toString().replace(/%2C/g, ',');
+  try { history.replaceState(null, '', str ? '#' + str : location.pathname + location.search); } catch (e) {}
+}
+
 function passes(c) {
   const cs = coCountries(c.id);
   if (flt.regions.size && !cs.some(x => flt.regions.has(REGION[x]))) return false;
@@ -3055,7 +3205,7 @@ function passes(c) {
   if (flt.types.size && !flt.types.has(TYPE(c))) return false;
   return true;
 }
-function saveFilters() { try { localStorage.setItem('tcm-filters', JSON.stringify({regions: [...flt.regions], country: flt.country, types: [...flt.types]})); } catch (e) {} }
+function saveFilters() { writeHash(); try { localStorage.setItem('tcm-filters', JSON.stringify({regions: [...flt.regions], country: flt.country, types: [...flt.types]})); } catch (e) {} }
 function renderFilterControls() {
   const chip = (v, on) => `<button class="chip" type="button" data-v="${esc(v)}" aria-pressed="${on}">${esc(v)}</button>`;
   $('#f-region').innerHTML = REGIONS.map(r => chip(r, flt.regions.has(r))).join('');
@@ -3076,9 +3226,11 @@ function applyFilters() {
   drawExpo();
   renderTabs(); drawCompany();
   drawTrends(); drawLvr(); drawFcf();
+  drawChanges(); drawScreener();
 }
 (function initFilters() {
   try { const s = JSON.parse(localStorage.getItem('tcm-filters') || 'null'); if (s) { (s.regions || []).forEach(r => REGIONS.includes(r) && flt.regions.add(r)); flt.country = s.country || ''; (s.types || []).forEach(t => TYPES.includes(t) && flt.types.add(t)); } } catch (e) {}
+  applyHash();
   const toggle = (set, v) => set.has(v) ? set.delete(v) : set.add(v);
   $('#f-region').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; toggle(flt.regions, b.dataset.v); renderFilterControls(); applyFilters(); saveFilters(); });
   $('#f-type').addEventListener('click', e => { const b = e.target.closest('.chip'); if (!b) return; toggle(flt.types, b.dataset.v); renderFilterControls(); applyFilters(); saveFilters(); });
@@ -3086,6 +3238,7 @@ function applyFilters() {
   $('#f-reset').addEventListener('click', () => { flt.regions.clear(); flt.types.clear(); flt.country = ''; renderFilterControls(); applyFilters(); saveFilters(); });
   renderFilterControls();
   applyFilters();
+  if (deep.co && VIS.has(activeCo)) setTimeout(() => $('#sec-company').scrollIntoView(), 300);
 })();
 
 /* ---------- Search: tenants, brands, countries ---------- */
@@ -3116,9 +3269,7 @@ function applyFilters() {
       $('#sec-ratings').scrollIntoView({behavior: 'smooth'});
       return;
     }
-    if (!VIS.has(o.id)) { flt.regions.clear(); flt.types.clear(); flt.country = ''; renderFilterControls(); applyFilters(); saveFilters(); }
-    activeCo = o.id; renderTabs(); drawCompany();
-    $('#sec-company').scrollIntoView({behavior: 'smooth'});
+    openTenant(o.id);
   }
   inp.addEventListener('input', show);
   inp.addEventListener('keydown', e => {
