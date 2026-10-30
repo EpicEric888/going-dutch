@@ -137,6 +137,11 @@ h4{margin:0 0 8px;font-size:.95rem;font-weight:600}
 .jump a{color:var(--muted);text-decoration:none;white-space:nowrap}.jump a:hover,.jump a:focus-visible{color:var(--ink);text-decoration:underline}
 section{scroll-margin-top:calc(var(--fh,0px) + 12px)}
 section>h2{position:sticky;top:var(--fh,0px);z-index:5;background:var(--bg);margin-bottom:6px;padding-bottom:6px}
+.totop{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));z-index:20;width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:var(--ink);color:var(--panel);font:inherit;font-size:1.25rem;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.18);opacity:0;pointer-events:none;transform:translateY(8px);transition:opacity .15s,transform .15s}
+.totop.on{opacity:1;pointer-events:auto;transform:none}
+.totop:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+header h1 a{color:inherit;text-decoration:none}
+@media (prefers-reduced-motion:reduce){.totop{transition:none}}
 .tscroll{max-height:max(320px,calc(100vh - var(--fh,0px) - 110px));overflow:auto}
 .tscroll thead th{position:sticky;top:0;z-index:3;background:var(--panel);box-shadow:inset 0 -1px 0 var(--line)}
 .tscroll tbody td:first-child,.tscroll thead th:first-child{position:sticky;left:0;z-index:2;background:var(--panel);box-shadow:inset -1px 0 0 var(--soft)}
@@ -208,7 +213,7 @@ section>h2{position:sticky;top:var(--fh,0px);z-index:5;background:var(--bg);marg
 <body>
 <div class="wrap">
   <header>
-    <h1>Tenant credit monitor</h1>
+    <h1><a href="#top" data-top="1" title="Back to the top">Tenant credit monitor</a></h1>
     <p id="summary"></p>
   </header>
   <div class="panel filters" id="filters" role="region" aria-label="Filters">
@@ -217,7 +222,7 @@ section>h2{position:sticky;top:var(--fh,0px);z-index:5;background:var(--bg);marg
     <div class="fgroup"><span class="flabel">Type</span><div class="chips" id="f-type"></div></div>
     <div class="fgroup srch"><span class="flabel">Search</span><input type="search" id="f-search" placeholder="Tenant, brand or country" aria-label="Search tenants, brands and countries" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="f-results"><ul class="sres" id="f-results" role="listbox" hidden></ul></div>
     <div class="fmeta"><span id="f-count"></span><button id="f-reset" type="button">Clear filters</button><span class="xwrap"><button id="f-export" type="button" hidden aria-expanded="false" aria-controls="xmenu" title="Download an Excel workbook for one tenant, one country or the current view">Export to Excel &#9662;</button><div class="xmenu" id="xmenu" hidden></div></span><span id="f-export-msg" class="fmsg" role="status"></span></div>
-    <nav class="jump" aria-label="Jump to section"><a href="#sec-changes">What changed</a><a href="#sec-screen">Screener</a><a href="#sec-ratings">Ratings</a><a href="#sec-cal">Calendar</a><a href="#sec-compare">Compare</a><a href="#sec-trends">Trends</a><a href="#sec-lvr">Leverage vs rating</a><a href="#sec-fcf">Cash flow</a><a href="#sec-mix">Revenue mix</a><a href="#sec-expo">Exposure</a><a href="#sec-company">Company detail</a></nav>
+    <nav class="jump" aria-label="Jump to section"><a href="#top" data-top="1"><b>&uarr; Top</b></a><a href="#sec-changes">What changed</a><a href="#sec-screen">Screener</a><a href="#sec-ratings">Ratings</a><a href="#sec-cal">Calendar</a><a href="#sec-compare">Compare</a><a href="#sec-trends">Trends</a><a href="#sec-lvr">Leverage vs rating</a><a href="#sec-fcf">Cash flow</a><a href="#sec-mix">Revenue mix</a><a href="#sec-expo">Exposure</a><a href="#sec-company">Company detail</a></nav>
   </div>
 
   <section id="sec-changes">
@@ -340,6 +345,7 @@ section>h2{position:sticky;top:var(--fh,0px);z-index:5;background:var(--bg);marg
   </section>
 </div>
 <div id="tip" role="tooltip"></div>
+<button type="button" class="totop" id="totop" aria-label="Back to the top" title="Back to the top">&uarr;</button>
 
 <script>
 /* ---------- Snapshot of Supabase project dpmtvpyebzesegsecvli, pulled 11 Oct 2026 ---------- */
@@ -3244,6 +3250,16 @@ function applyFilters() {
   renderFilterControls();
   applyFilters();
   if (deep.co && VIS.has(activeCo)) setTimeout(() => $('#sec-company').scrollIntoView(), 300);
+})();
+
+/* ---------- Back to the top: floating button, the Top link and the title ---------- */
+(function initToTop() {
+  const btn = $('#totop');
+  const go = e => { if (e) e.preventDefault(); const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches; window.scrollTo({top: 0, behavior: smooth ? 'smooth' : 'auto'}); };
+  btn.addEventListener('click', go);
+  document.querySelectorAll('[data-top]').forEach(a => a.addEventListener('click', go));
+  const vis = () => btn.classList.toggle('on', scrollY > 600);
+  window.addEventListener('scroll', vis, {passive: true}); vis();
 })();
 
 /* ---------- Pinned section titles sit just below the sticky filter bar ---------- */
