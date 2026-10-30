@@ -135,7 +135,12 @@ h4{margin:0 0 8px;font-size:.95rem;font-weight:600}
 .filters .chip{padding:4px 11px}
 .jump{flex-basis:100%;display:flex;flex-wrap:wrap;gap:4px 16px;font-size:.84rem;padding-top:8px;border-top:1px solid var(--soft)}
 .jump a{color:var(--muted);text-decoration:none;white-space:nowrap}.jump a:hover,.jump a:focus-visible{color:var(--ink);text-decoration:underline}
-section{scroll-margin-top:150px}
+section{scroll-margin-top:calc(var(--fh,0px) + 12px)}
+section>h2{position:sticky;top:var(--fh,0px);z-index:5;background:var(--bg);margin-bottom:6px;padding-bottom:6px}
+.tscroll{max-height:max(320px,calc(100vh - var(--fh,0px) - 110px));overflow:auto}
+.tscroll thead th{position:sticky;top:0;z-index:3;background:var(--panel);box-shadow:inset 0 -1px 0 var(--line)}
+.tscroll tbody td:first-child,.tscroll thead th:first-child{position:sticky;left:0;z-index:2;background:var(--panel);box-shadow:inset -1px 0 0 var(--soft)}
+.tscroll thead th:first-child{z-index:4}
 .ladwrap{max-height:620px;overflow:auto;border-radius:6px}
 .picker{position:relative;display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
 .pbtn{font:inherit;font-size:.9rem;border:1px solid var(--line);border-radius:7px;background:var(--panel);color:var(--ink);padding:7px 12px;cursor:pointer}
@@ -224,7 +229,7 @@ section{scroll-margin-top:150px}
   <section id="sec-screen">
     <h2>Screener</h2>
     <p class="sub">One row per tenant in the current filter. Click a column to sort it and a name to open that tenant's detail. Leverage is the latest stored figure; coverage, margin and dividend cover are the latest fiscal year.</p>
-    <div class="panel"><div class="scroll-x"><table id="screen" class="screen"></table></div><p class="note" id="screennote"></p></div>
+    <div class="panel"><div class="scroll-x tscroll"><table id="screen" class="screen"></table></div><p class="note" id="screennote"></p></div>
   </section>
 
   <section id="sec-ratings">
@@ -239,7 +244,7 @@ section{scroll-margin-top:150px}
           <span><svg width="14" height="14"><path d="M7 1 L13 7 L7 13 L1 7Z" class="mk"/></svg>Fitch</span>
         </div>
       </div>
-      <div class="panel" id="sec-cal" style="scroll-margin-top:150px">
+      <div class="panel" id="sec-cal" style="scroll-margin-top:calc(var(--fh,0px) + 12px)">
         <h4>Coming up</h4>
         <ul class="cal" id="cal"></ul>
       </div>
@@ -2827,7 +2832,7 @@ function drawCompany() {
     <div class="panel"><h4>Footprint</h4><table class="rt"><tbody>${ctry.map(x => `<tr><td>${esc(x[1])}</td><td style="text-align:left">${esc(x[2])}</td><td class="nd">${esc(x[3])}</td></tr>`).join('')}</tbody></table>
     <p class="note">${disclosed} of ${rows.length} metric rows have a value (${pct}%).</p><div class="cov"><i style="width:${pct}%;background:${color(c.id)}"></i></div>
     <p class="note">${lastLoaded ? `Last loaded: ${esc(lastLoaded[3])} ${esc(lastLoaded[2])} (${fdate(lastLoaded[5] || lastLoaded[4])}).` : ''} ${next ? `Next expected: ${esc(next[3])} ${esc(next[2])} on ${fdate(next[4])}.` : ''}</p></div></div>`;
-  h += `<div class="panel"><h4>Metrics</h4><div class="scroll-x"><table><thead><tr><th>Metric</th>${keys.map((k,i) => `<th class="${i===firstQ?'qstart':''}">${k[1]}</th>`).join('')}</tr></thead><tbody>`;
+  h += `<div class="panel"><h4>Metrics</h4><div class="scroll-x tscroll"><table><thead><tr><th>Metric</th>${keys.map((k,i) => `<th class="${i===firstQ?'qstart':''}">${k[1]}</th>`).join('')}</tr></thead><tbody>`;
   let lastCat = null;
   metrics.forEach(m => {
     const dd = DEF[m];
@@ -3239,6 +3244,14 @@ function applyFilters() {
   renderFilterControls();
   applyFilters();
   if (deep.co && VIS.has(activeCo)) setTimeout(() => $('#sec-company').scrollIntoView(), 300);
+})();
+
+/* ---------- Pinned section titles sit just below the sticky filter bar ---------- */
+(function trackFilterBar() {
+  const bar = $('#filters');
+  const set = () => { const sticky = getComputedStyle(bar).position === 'sticky'; document.documentElement.style.setProperty('--fh', (sticky ? bar.offsetHeight : 0) + 'px'); };
+  set(); window.addEventListener('resize', set);
+  try { new ResizeObserver(set).observe(bar); } catch (e) {}
 })();
 
 /* ---------- Search: tenants, brands, countries ---------- */
