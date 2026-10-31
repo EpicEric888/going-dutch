@@ -137,7 +137,13 @@ h4{margin:0 0 8px;font-size:.95rem;font-weight:600}
 .fgroup{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
 .flabel{font-size:.8rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .filters .chip{padding:4px 11px}
-.jump{flex-basis:100%;display:flex;flex-wrap:wrap;gap:4px 16px;font-size:.84rem;padding-top:8px;border-top:1px solid var(--soft)}
+.tabs{flex-basis:100%;display:flex;flex-wrap:nowrap!important;gap:4px;padding-top:6px;border-top:1px solid var(--soft);overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.tabs::-webkit-scrollbar{display:none}
+.tabs button{font:inherit;font-size:.92rem;font-weight:600;border:0;background:none;color:var(--muted);padding:8px 14px 9px;border-bottom:2.5px solid transparent;cursor:pointer;white-space:nowrap;border-radius:6px 6px 0 0}
+.tabs button:hover{color:var(--ink);background:var(--soft)}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tabs button:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+section[data-tab][hidden]{display:none!important}
+@media (max-width:480px){.tabs{gap:0;justify-content:space-between}.tabs button{padding:8px 4px 9px;font-size:.84rem}}
 .jump a{color:var(--muted);text-decoration:none;white-space:nowrap}.jump a:hover,.jump a:focus-visible{color:var(--ink);text-decoration:underline}
 section{scroll-margin-top:calc(var(--fh,0px) + 12px)}
 section>h2{position:sticky;top:var(--fh,0px);z-index:5;background:var(--bg);margin-bottom:6px;padding-bottom:6px}
@@ -231,22 +237,28 @@ details.diag{margin-top:14px}details.diag summary{cursor:pointer;color:var(--mut
     <div class="fgroup"><span class="flabel">Type</span><div class="chips" id="f-type"></div></div>
     <div class="fgroup srch"><span class="flabel">Search</span><input type="search" id="f-search" placeholder="Tenant, brand or country" aria-label="Search tenants, brands and countries" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="f-results"><ul class="sres" id="f-results" role="listbox" hidden></ul></div>
     <div class="fmeta"><span id="f-count"></span><button id="f-reset" type="button">Clear filters</button><span class="xwrap"><button id="f-export" type="button" hidden aria-expanded="false" aria-controls="xmenu" title="Download an Excel workbook for one tenant, one country or the current view">Export to Excel &#9662;</button><div class="xmenu" id="xmenu" hidden></div></span><span id="f-export-msg" class="fmsg" role="status"></span></div>
-    <nav class="jump" aria-label="Jump to section"><a href="#top" data-top="1"><b>&uarr; Top</b></a><a href="#sec-changes">What changed</a><a href="#sec-screen">Screener</a><a href="#sec-ratings">Ratings</a><a href="#sec-cal">Calendar</a><a href="#sec-compare">Compare</a><a href="#sec-trends">Trends</a><a href="#sec-lvr">Leverage vs rating</a><a href="#sec-rates">Rates</a><a href="#sec-fcf">Cash flow</a><a href="#sec-mix">Revenue mix</a><a href="#sec-expo">Exposure</a><a href="#sec-company">Company detail</a></nav>
+    <nav class="tabs" role="tablist" aria-label="Dashboard views">
+      <button type="button" role="tab" data-tab="overview" aria-selected="true">Overview</button>
+      <button type="button" role="tab" data-tab="ratings" aria-selected="false">Ratings</button>
+      <button type="button" role="tab" data-tab="compare" aria-selected="false">Compare</button>
+      <button type="button" role="tab" data-tab="markets" aria-selected="false">Markets</button>
+      <button type="button" role="tab" data-tab="tenant" aria-selected="false">Tenant</button>
+    </nav>
   </div>
 
-  <section id="sec-changes">
+  <section id="sec-changes" data-tab="overview" role="tabpanel">
     <h2>What changed</h2>
     <p class="sub">For the tenants in view, the last 30 days by the date shown on each line: rating actions by action date, results by publication date, and net leverage figures by the date they were added here. Leverage moves of 0.3x or more compare the new figure with the prior one on the same basis; a switch of basis is listed separately. ▲▼ show the direction of the number; green and red show whether that is good or bad for credit.</p>
     <div class="chgrid" id="changes"></div>
   </section>
 
-  <section id="sec-screen">
+  <section id="sec-screen" data-tab="overview" role="tabpanel">
     <h2>Screener</h2>
     <p class="sub">One row per tenant in the current filter. Click a column to sort it and a name to open that tenant's detail. Leverage is the latest stored figure; coverage and margin are the latest fiscal year.</p>
     <div class="panel"><div class="scroll-x tscroll"><table id="screen" class="screen"></table></div><p class="note" id="screennote"></p></div>
   </section>
 
-  <section id="sec-ratings">
+  <section id="sec-ratings" data-tab="ratings" role="tabpanel">
     <h2>Where each tenant sits on the rating scale</h2>
     <p class="sub">Latest S&amp;P, Moody's and Fitch ratings, best rated first. The shaded bar spans the split between agencies. Hover or tab to a marker for the action and date.</p>
     <div class="hero">
@@ -265,7 +277,7 @@ details.diag{margin-top:14px}details.diag summary{cursor:pointer;color:var(--mut
     </div>
   </section>
 
-  <section id="sec-compare">
+  <section id="sec-compare" data-tab="compare" role="tabpanel">
     <h2>Compare a metric</h2>
     <p class="sub">Pick a metric and up to a dozen tenants to compare (the selection also drives Credit trends). Where a company reports both adjusted and reported figures, the basis toggle decides which one shows.</p>
     <div class="panel">
@@ -282,7 +294,7 @@ details.diag{margin-top:14px}details.diag summary{cursor:pointer;color:var(--mut
     </div>
   </section>
 
-  <section id="sec-trends">
+  <section id="sec-trends" data-tab="compare" role="tabpanel">
     <h2>Credit trends</h2>
     <p class="sub">Annual net leverage, interest coverage, EBITDA margin and capex intensity since 2021, for the tenants picked in Compare a metric. Hover a line or a name to pick one tenant out. Basis follows the toggle above.</p>
     <div class="panel">
@@ -292,7 +304,7 @@ details.diag{margin-top:14px}details.diag summary{cursor:pointer;color:var(--mut
     </div>
   </section>
 
-  <section id="sec-lvr">
+  <section id="sec-lvr" data-tab="compare" role="tabpanel">
     <h2>Leverage vs rating</h2>
     <p class="sub">Latest net leverage against the average of each tenant's agency ratings. Further right means more debt per unit of EBITDA; higher means a better rating. Tenants sitting low and left look strong for their rating, high and right look stretched.</p>
     <div class="panel">
@@ -301,7 +313,7 @@ details.diag{margin-top:14px}details.diag summary{cursor:pointer;color:var(--mut
     </div>
   </section>
 
-  <section id="sec-rates">
+  <section id="sec-rates" data-tab="markets" role="tabpanel">
     <h2>Government rates</h2>
     <p class="sub">2, 5 and 10-year government bond yields for each tenant's home country, with the US, Germany and the euro-area AAA curve for reference. Click a row to add it to or remove it from the chart. The filters above narrow the list to the home countries of the tenants shown.</p>
     <div class="panel"><div class="scroll-x tscroll"><table id="rtab"></table></div></div>
@@ -314,7 +326,7 @@ details.diag{margin-top:14px}details.diag summary{cursor:pointer;color:var(--mut
     </div>
   </section>
 
-  <section id="sec-fcf">
+  <section id="sec-fcf" data-tab="compare" role="tabpanel">
     <h2>Free cash flow after dividends</h2>
     <p class="sub">Operating cash flow minus capex minus dividends paid, by fiscal year, in each tenant's own currency. Red bars are years where dividends weren't covered by cash left after capex.</p>
     <div class="panel">
@@ -323,7 +335,7 @@ details.diag{margin-top:14px}details.diag summary{cursor:pointer;color:var(--mut
     </div>
   </section>
 
-  <section id="sec-mix">
+  <section id="sec-mix" data-tab="markets" role="tabpanel">
     <h2>Revenue mix</h2>
     <p class="sub">How each tenant's revenue splits, using the labels the company reports. Nested splits (Equinix services within a region, Vodafone Business within a market, DT customer groups within Germany) sit under their parent.</p>
     <div class="panel">
@@ -338,7 +350,7 @@ details.diag{margin-top:14px}details.diag summary{cursor:pointer;color:var(--mut
     </div>
   </section>
 
-  <section id="sec-expo">
+  <section id="sec-expo" data-tab="markets" role="tabpanel">
     <h2>Exposure to tracked countries</h2>
     <p class="sub">Share of each tenant's latest geographic revenue split that falls in the selected countries. Countries default to each tenant's operating footprint shown in Company detail. Toggle them to model a different set.</p>
     <div class="panel">
@@ -353,14 +365,14 @@ details.diag{margin-top:14px}details.diag summary{cursor:pointer;color:var(--mut
     </div>
   </section>
 
-  <section id="sec-company">
+  <section id="sec-company" data-tab="tenant" role="tabpanel">
     <h2>Company detail</h2>
     <p class="sub">Every figure collected for one tenant. Click a value to open the document it came from; hover it for the basis and how it was derived.</p>
     <div class="cohead"><label class="field">Tenant<select id="cosel" aria-label="Tenant"></select></label><div class="seg"><button type="button" id="coprev" aria-label="Previous tenant">&lsaquo; Prev</button><button type="button" id="conext" aria-label="Next tenant">Next &rsaquo;</button></div><button type="button" class="pbtn" id="colink" hidden>Copy link to this tenant</button></div>
     <div id="copanel" role="tabpanel"></div>
   </section>
 
-  <section id="sec-checks">
+  <section id="sec-checks" data-tab="tenant" role="tabpanel">
     <h2>Data notes</h2>
     <p class="sub">Things to know about specific tenants before comparing them.</p>
     <div class="panel"><ul class="checks" id="checks"></ul>
@@ -3168,8 +3180,8 @@ function levSeries(co) {
 function latestRat(co) { const by = {}; RATINGS.filter(r => r[0] === co).forEach(r => { if (!by[r[1]] || String(r[4] || '') > String(by[r[1]][4] || '')) by[r[1]] = r; }); return by; }
 function openTenant(id) {
   if (!VIS.has(id)) { flt.regions.clear(); flt.types.clear(); flt.country = ''; renderFilterControls(); applyFilters(); saveFilters(); }
-  activeCo = id; deep.co = true; renderTabs(); drawCompany(); writeHash();
-  $('#sec-company').scrollIntoView({behavior: 'smooth'});
+  activeCo = id; deep.co = true; renderTabs(); drawCompany();
+  showTab('tenant');
 }
 const perLabel = r => r.b ? r.b.label : r.period;
 
@@ -3265,9 +3277,27 @@ function drawScreener() {
 }
 
 /* ---------- Shareable links: #region=…&country=…&type=…&tenant=… ---------- */
+/* ---------- Tabs ---------- */
+const TAB_IDS = ['overview', 'ratings', 'compare', 'markets', 'tenant'];
+var curTab = 'overview';
+function showTab(t, opt = {}) {
+  if (!TAB_IDS.includes(t)) t = 'overview';
+  curTab = t;
+  document.querySelectorAll('section[data-tab]').forEach(sec => { sec.hidden = sec.dataset.tab !== t; });
+  document.querySelectorAll('.tabs [data-tab]').forEach(b => { const on = b.dataset.tab === t; b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1; if (on && b.scrollIntoView) b.scrollIntoView({block: 'nearest', inline: 'nearest'}); });
+  if (!opt.keepHash) writeHash();
+  if (!opt.noScroll) { const top = $('#filters').offsetTop - 8; if (scrollY > top) window.scrollTo({top, behavior: 'auto'}); }
+}
+function goToSection(id) {
+  const sec = document.getElementById(id); if (!sec) return;
+  const host = sec.closest('section[data-tab]') || sec;
+  showTab(host.dataset.tab, {noScroll: true});
+  requestAnimationFrame(() => sec.scrollIntoView({behavior: 'smooth'}));
+}
 function applyHash() {
   let h; try { h = new URLSearchParams(location.hash.replace(/^#/, '')); } catch (e) { return; }
   const has = k => h.has(k) && h.get(k);
+  if (has('tab')) deep.tab = h.get('tab');
   if (!['region', 'country', 'type', 'tenant'].some(has)) return;
   if (['region', 'country', 'type'].some(has) || has('tenant')) { flt.regions.clear(); flt.types.clear(); flt.country = ''; }
   (h.get('region') || '').split(',').forEach(r => { const m = REGIONS.find(x => slugN(x) === slugN(r)); if (m) flt.regions.add(m); });
@@ -3281,6 +3311,7 @@ function writeHash() {
   if (flt.country) h.set('country', slugN(flt.country));
   if (flt.types.size) h.set('type', [...flt.types].map(slugN).join(','));
   if (deep.co && CO[activeCo]) h.set('tenant', slugN(CO[activeCo].name));
+  if (typeof curTab !== 'undefined' && curTab !== 'overview' && !(curTab === 'tenant' && h.has('tenant'))) h.set('tab', curTab);
   const str = h.toString().replace(/%2C/g, ',');
   try { history.replaceState(null, '', str ? '#' + str : location.pathname + location.search); } catch (e) {}
 }
@@ -3440,7 +3471,23 @@ function applyFilters() {
   $('#f-reset').addEventListener('click', () => { flt.regions.clear(); flt.types.clear(); flt.country = ''; renderFilterControls(); applyFilters(); saveFilters(); });
   renderFilterControls();
   applyFilters();
-  if (deep.co && VIS.has(activeCo)) setTimeout(() => $('#sec-company').scrollIntoView(), 300);
+  let first = deep.tab;
+  if (!first && deep.co && VIS.has(activeCo)) first = 'tenant';
+  showTab(first || 'overview', {noScroll: true});
+  const bar = $('.tabs');
+  bar.addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) showTab(b.dataset.tab); });
+  bar.addEventListener('keydown', e => {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+    e.preventDefault();
+    let i = TAB_IDS.indexOf(curTab);
+    i = e.key === 'Home' ? 0 : e.key === 'End' ? TAB_IDS.length - 1 : (i + (e.key === 'ArrowRight' ? 1 : -1) + TAB_IDS.length) % TAB_IDS.length;
+    showTab(TAB_IDS[i]); bar.querySelector(`[data-tab="${TAB_IDS[i]}"]`).focus();
+  });
+  // in-page links to a section open its tab first
+  document.addEventListener('click', e => {
+    const a = e.target.closest('a[href^="#sec-"]'); if (!a) return;
+    e.preventDefault(); goToSection(a.getAttribute('href').slice(1));
+  });
 })();
 
 /* ---------- Back to the top: floating button, the Top link and the title ---------- */
@@ -3448,7 +3495,7 @@ function applyFilters() {
   const btn = $('#totop');
   const go = e => { if (e) e.preventDefault(); const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches; window.scrollTo({top: 0, behavior: smooth ? 'smooth' : 'auto'}); };
   btn.addEventListener('click', go);
-  document.querySelectorAll('[data-top]').forEach(a => a.addEventListener('click', go));
+  document.querySelectorAll('[data-top]').forEach(a => a.addEventListener('click', e => { showTab('overview', {noScroll: true}); go(e); }));
   const vis = () => btn.classList.toggle('on', scrollY > 600);
   window.addEventListener('scroll', vis, {passive: true}); vis();
 })();
@@ -3486,7 +3533,7 @@ function applyFilters() {
     if (o.t === 'cty') {
       flt.country = o.id; if (flt.regions.size && !flt.regions.has(REGION[o.id])) flt.regions.clear();
       renderFilterControls(); applyFilters(); saveFilters();
-      $('#sec-ratings').scrollIntoView({behavior: 'smooth'});
+      showTab('overview');
       return;
     }
     openTenant(o.id);
