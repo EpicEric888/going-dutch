@@ -94,6 +94,52 @@ function AccountMenu({ user, toast }) {
 }
 
 /* ---------- home: my bills ---------- */
+/* ---------- landing: mini demo + how it works ---------- */
+const DEMO_PEOPLE = [["Sam", "#2f9e6e"], ["Maya", "#5b5bd6"], ["Jordan", "#d68a1f"]];
+function DemoReceipt() {
+  const av = (i, delay) => html`<span key=${i + "-" + delay} className="gd-pop -ml-1.5 first:ml-0 inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold text-white ring-2 ring-white"
+    style=${{ background: DEMO_PEOPLE[i][1], animationDelay: delay + "s" }}>${DEMO_PEOPLE[i][0][0]}</span>`;
+  const rows = [
+    ["Burger", "16.00", [[0, 0.5]]],
+    ["Fries to share", "9.00", [[1, 1.0], [2, 1.3]]],
+    ["Margarita", "12.00", [[1, 1.7]]],
+  ];
+  const totals = [["Sam", "19.20", 0], ["Maya", "19.80", 1], ["Jordan", "5.40", 2]];
+  return html`<div className="relative mt-4 rounded-xl bg-white p-3 text-[#13241d] shadow-card" aria-label="Example: Sam had the burger, Maya and Jordan shared fries, Maya had a margarita. With tax and tip, Sam owes 19.20, Maya 19.80, Jordan 5.40.">
+    <ul className="flex flex-col divide-y divide-black/5">
+      ${rows.map(([name, price, who]) => html`<li key=${name} className="flex items-center gap-2 py-1.5">
+        <span className="flex-1 text-sm font-medium">${name}</span>
+        <span className="flex min-w-[44px] justify-end">${who.map(([i, d]) => av(i, d))}</span>
+        <span className="w-14 text-right font-mono text-sm tnum">$${price}</span>
+      </li>`)}
+    </ul>
+    <div className="gd-fade mt-1.5 flex items-center justify-between gap-2 rounded-lg bg-[#eef6f1] px-2.5 py-2 text-xs" style=${{ animationDelay: "2.2s" }}>
+      <span className="text-[#4c5f57]">+ tax & tip, split fairly</span>
+      <span className="flex gap-2.5 font-semibold">${totals.map(([n, v, i]) => html`<span key=${n} className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full" style=${{ background: DEMO_PEOPLE[i][1] }}></span>$${v}</span>`)}</span>
+    </div>
+  </div>`;
+}
+function HowItWorks() {
+  const steps = [
+    ["Camera", "Snap the receipt", "We read the items for you"],
+    ["Send", "Share the link", "Text it to the group"],
+    ["Hand", "Everyone taps their items", "Totals update for all"],
+  ];
+  return html`<div>
+    <ol className="grid grid-cols-3 gap-2">
+      ${steps.map(([icon, title, sub], i) => html`<li key=${title} className="flex flex-col items-center rounded-2xl border border-line bg-card px-2 py-3 text-center">
+        <span className="relative inline-flex h-10 w-10 items-center justify-center rounded-full bg-moneysoft text-money">
+          <${Ic} n=${icon} s=${18} />
+          <span className="absolute -right-1 -top-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-ink text-bg font-mono text-[9px] font-bold">${i + 1}</span>
+        </span>
+        <span className="mt-2 text-[13px] font-semibold leading-tight">${title}</span>
+        <span className="mt-0.5 text-[11px] leading-snug text-muted">${sub}</span>
+      </li>`)}
+    </ol>
+    <p className="mt-2 text-center text-xs text-muted"><${Ic} n="ShieldCheck" s=${13} c="inline -mt-0.5 mr-1" />Friends don't need an app or an account.</p>
+  </div>`;
+}
+
 function Home({ user, toast, go }) {
   const [bills, setBills] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -131,13 +177,16 @@ function Home({ user, toast, go }) {
   return html`<div className="flex flex-col gap-4">
     <div className="relative overflow-hidden rounded-2xl p-5 text-white shadow-card" style=${{ background: "linear-gradient(135deg,var(--hero1),var(--hero2))" }}>
       <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10"></div>
-      <p className="font-display text-3xl font-extrabold leading-tight max-w-[18ch]">Split the bill by what everyone actually ordered.</p>
-      <p className="text-sm text-white/80 mt-2 max-w-[42ch]">Snap the receipt, send the link, and friends tap their own items. Tax, fees and tip are shared out fairly.</p>
-      <div className="mt-4 flex flex-wrap gap-2">
-        <button type="button" disabled=${busy} onClick=${() => create(false)} className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 font-semibold disabled:opacity-60" style=${{ color: "var(--hero2)" }}><${Ic} n="Plus" s=${16} />New bill</button>
+      <p className="relative font-display text-3xl font-extrabold leading-tight max-w-[16ch]">Snap the receipt. Everyone taps what they had.</p>
+      <p className="relative text-sm text-white/80 mt-2 max-w-[40ch]">Tax, tip and fees get split fairly. No more dividing by four.</p>
+      <${DemoReceipt} />
+      <div className="relative mt-4 flex flex-wrap gap-2">
+        <button type="button" disabled=${busy} onClick=${() => create(false)} className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 font-semibold disabled:opacity-60" style=${{ color: "var(--hero2)" }}><${Ic} n="Plus" s=${16} />Split a bill</button>
         <button type="button" disabled=${busy} onClick=${() => create(true)} className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 font-semibold disabled:opacity-60" style=${{ background: "rgba(255,255,255,.15)" }}><${Ic} n="Sparkles" s=${16} />Try an example</button>
       </div>
     </div>
+
+    ${!(bills && bills.length) && html`<${HowItWorks} />`}
 
     <${Card} className="p-4">
       <form onSubmit=${openCode} className="flex gap-2">
