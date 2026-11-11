@@ -8,10 +8,11 @@ function payLinks(host, amount, note) {
   const venmo = cleanHandle(p.venmo, /^https?:\/\/(www\.)?venmo\.com\/(u\/)?/i);
   const paypal = cleanHandle(p.paypal, /^https?:\/\/(www\.)?paypal\.me\//i);
   const cashapp = cleanHandle(p.cashapp, /^https?:\/\/(www\.)?cash\.app\//i);
-  if (venmo) links.push({ id: "venmo", label: "Venmo", href: `https://venmo.com/?txn=pay&recipients=${encodeURIComponent(venmo)}&amount=${a}&note=${n}` });
-  if (paypal) links.push({ id: "paypal", label: "PayPal", href: `https://paypal.me/${encodeURIComponent(paypal)}/${a}USD` });
-  if (cashapp) links.push({ id: "cashapp", label: "Cash App", href: `https://cash.app/$${encodeURIComponent(cashapp)}/${a}` });
-  return { links, zelle: String(p.zelle || "").trim() };
+  const usd = CUR.code === "USD";
+  if (venmo && usd) links.push({ id: "venmo", label: "Venmo", href: `https://venmo.com/?txn=pay&recipients=${encodeURIComponent(venmo)}&amount=${a}&note=${n}` });
+  if (paypal) links.push({ id: "paypal", label: "PayPal", href: `https://paypal.me/${encodeURIComponent(paypal)}/${a}${CUR.code}` });
+  if (cashapp && usd) links.push({ id: "cashapp", label: "Cash App", href: `https://cash.app/$${encodeURIComponent(cashapp)}/${a}` });
+  return { links, zelle: usd ? String(p.zelle || "").trim() : "" };
 }
 
 function PayButtons({ host, amount, note, toast }) {

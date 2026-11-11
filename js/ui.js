@@ -110,11 +110,15 @@ function ReceiptEditor({ state, setState, calc }) {
   const mismatch = R.printedTotal != null && Math.abs(R.printedTotal - calc.total) > 0.02;
 
   return html`<div className="flex flex-col gap-5">
-    <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3">
-      <div className="min-w-0"><${Label} htmlFor="merchant">Restaurant</${Label}>
+    <div className="grid grid-cols-2 sm:grid-cols-[1fr_auto_auto] gap-3">
+      <div className="col-span-2 sm:col-span-1 min-w-0"><${Label} htmlFor="merchant">Restaurant</${Label}>
         <input id="merchant" className=${inputCls} value=${R.merchant} placeholder="Where did you eat?" onInput=${e => setR({ merchant: e.target.value })} /></div>
       <div><${Label} htmlFor="date">Date</${Label}>
         <input id="date" type="date" className=${inputCls} value=${R.date} onInput=${e => setR({ date: e.target.value })} /></div>
+      <div><${Label} htmlFor="currency">Currency</${Label}>
+        <select id="currency" className=${inputCls} value=${R.currency || "USD"} onChange=${e => setR({ currency: e.target.value })}>
+          ${[...new Set([R.currency || "USD", ...CURRENCIES])].map(c => html`<option key=${c} value=${c}>${c} ${curSymbol(c) !== c ? curSymbol(c) : ""}</option>`)}
+        </select></div>
     </div>
 
     <div>
@@ -127,7 +131,7 @@ function ReceiptEditor({ state, setState, calc }) {
           <input id=${"name-" + it.id} aria-label="Item name" className=${inputCls + " flex-1"} value=${it.name} placeholder=${"Item " + (idx + 1)} onInput=${e => setItem(it.id, { name: e.target.value })} />
           <input id=${"qty-" + it.id} aria-label="Quantity" inputMode="numeric" className=${inputCls + " !w-12 text-center tnum px-1"} value=${it.quantity} onInput=${e => setItem(it.id, { quantity: e.target.value })} />
           <div className="relative w-24 shrink-0">
-            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted text-sm">$</span>
+            <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted text-sm">${curSymbol()}</span>
             <input id=${"price-" + it.id} aria-label="Line total" inputMode="decimal" className=${inputCls + " pl-6 pr-2 text-right font-mono tnum"} value=${it.price} placeholder="0.00" onInput=${e => setItem(it.id, { price: e.target.value })} />
           </div>
           <button type="button" aria-label="Remove item" onClick=${() => removeItem(it.id)} className="p-2 -mr-1 rounded-lg text-muted hover:text-danger hover:bg-soft"><${Ic} n="Trash2" s=${16} /></button>
@@ -138,7 +142,7 @@ function ReceiptEditor({ state, setState, calc }) {
 
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div><${Label} htmlFor="tax">Tax</${Label}>
-        <div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted text-sm">$</span>
+        <div className="relative"><span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted text-sm">${curSymbol()}</span>
         <input id="tax" inputMode="decimal" className=${inputCls + " pl-7 font-mono tnum"} value=${R.tax} placeholder="0.00" onInput=${e => setR({ tax: e.target.value })} /></div>
         ${calc.subtotal > 0 && num(R.tax) > 0 && html`<p className="text-xs text-muted mt-1 tnum">${(num(R.tax) / calc.subtotal * 100).toFixed(2)}% of subtotal</p>`}
       </div>
@@ -150,11 +154,11 @@ function ReceiptEditor({ state, setState, calc }) {
               if (m === tip.mode) return;
               const v = m === "amount" ? r2(calc.tipAmt).toFixed(2) : (calc.subtotal ? r2(calc.tipAmt / calc.subtotal * 100) : 0).toString();
               setTip({ mode: m, value: v });
-            }} className=${"px-2.5 py-1 rounded-md transition " + (tip.mode === m ? "bg-card shadow-card text-ink" : "text-muted")}>${m === "percent" ? "%" : "$"}</button>`)}
+            }} className=${"px-2.5 py-1 rounded-md transition " + (tip.mode === m ? "bg-card shadow-card text-ink" : "text-muted")}>${m === "percent" ? "%" : curSymbol()}</button>`)}
           </div>
         </div>
         <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted text-sm">${tip.mode === "percent" ? "%" : "$"}</span>
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted text-sm">${tip.mode === "percent" ? "%" : curSymbol()}</span>
           <input id="tip" inputMode="decimal" className=${inputCls + " pl-7 font-mono tnum"} value=${tip.value} placeholder="0" onInput=${e => setTip({ value: e.target.value })} />
         </div>
         <div className="flex flex-wrap gap-1.5 mt-2">
@@ -171,7 +175,7 @@ function ReceiptEditor({ state, setState, calc }) {
       <ul className="flex flex-col gap-2">
         ${R.fees.map(f => html`<li key=${f.id} className="flex items-center gap-2">
           <input id=${"fee-name-" + f.id} aria-label="Fee name" className=${inputCls + " flex-1"} value=${f.name} placeholder="Service fee" onInput=${e => setFee(f.id, { name: e.target.value })} />
-          <div className="relative w-24 shrink-0"><span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted text-sm">$</span>
+          <div className="relative w-24 shrink-0"><span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted text-sm">${curSymbol()}</span>
             <input id=${"fee-amt-" + f.id} aria-label="Fee amount" inputMode="decimal" className=${inputCls + " pl-6 pr-2 text-right font-mono tnum"} value=${f.amount} placeholder="0.00" onInput=${e => setFee(f.id, { amount: e.target.value })} /></div>
           <button type="button" aria-label="Remove fee" onClick=${() => setR({ fees: R.fees.filter(x => x.id !== f.id) })} className="p-2 -mr-1 rounded-lg text-muted hover:text-danger hover:bg-soft"><${Ic} n="Trash2" s=${16} /></button>
         </li>`)}
