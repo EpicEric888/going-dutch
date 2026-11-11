@@ -331,6 +331,12 @@ function Assign({ state, setState, calc, goSummary, toast, meDefault, onPickMe }
     return { ...s, units, assignments: { ...s.assignments, [itemId]: all ? [] : s.participants.map(p => p.id) } };
   });
   const items = state.receipt.items.filter(i => i.name || num(i.price));
+  const allEven = items.length > 0 && items.every(it => (state.assignments[it.id] || []).length === P.length && P.every(p => unitsOf(state, it.id, p.id) === 1));
+  const splitEvenly = () => {
+    const prev = { assignments: state.assignments, units: state.units };
+    setState(s => ({ ...s, units: {}, assignments: Object.fromEntries(s.receipt.items.map(it => [it.id, s.participants.map(p => p.id)])) }));
+    toast("Split evenly " + P.length + " ways", { label: "Undo", fn: () => setState(s => ({ ...s, ...prev })) });
+  };
   const claimedPct = calc.subtotal > 0 ? Math.min(100, (calc.subtotal - calc.unassigned) / calc.subtotal * 100) : 0;
 
   if (P.length < 2) return html`<${Card} className="p-5"><p className="font-display text-lg font-bold">Add at least 2 people first</p><p className="text-sm text-muted mt-0.5 mb-4">Who was at the table?</p><${People} state=${state} setState=${setState} toast=${toast} idPrefix="g" /></${Card}>`;
@@ -350,6 +356,14 @@ function Assign({ state, setState, calc, goSummary, toast, meDefault, onPickMe }
       </div>
       <p className="text-xs text-muted mt-2">${me ? "Tap an item to claim it for yourself. Tap a name chip to assign anyone." : "Pick who you are, or tap the name chips under each item."}</p>
     </${Card}>
+
+    <button type="button" onClick=${splitEvenly} disabled=${allEven}
+      className="flex items-center gap-3 rounded-2xl border border-dashed border-line bg-card px-4 py-3 text-left hover:bg-soft disabled:opacity-60">
+      <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-moneysoft text-money"><${Ic} n="Divide" s=${18} /></span>
+      <span className="min-w-0 flex-1"><span className="block text-sm font-semibold">${allEven ? "Split evenly" : "Just split it evenly"}</span>
+        <span className="block text-xs text-muted">${allEven ? `Everyone pays ${fmt(calc.total / P.length)}. Tap items below to change it.` : `Everyone pays about ${fmt(calc.total / P.length)}. You can still tweak items after.`}</span></span>
+      ${allEven && html`<${Ic} n="Check" s=${18} c="text-money" />`}
+    </button>
 
     ${calc.unassignedItems.length > 0 && html`<div className="flex items-start gap-2 rounded-2xl bg-warnsoft text-warn px-4 py-3 text-sm">
       <${Ic} n="AlertTriangle" s=${18} c="mt-0.5 shrink-0" />

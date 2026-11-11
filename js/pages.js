@@ -178,7 +178,7 @@ function Home({ user, toast, go }) {
     <div className="relative overflow-hidden rounded-2xl p-5 text-white shadow-card" style=${{ background: "linear-gradient(135deg,var(--hero1),var(--hero2))" }}>
       <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10"></div>
       <p className="relative font-display text-3xl font-extrabold leading-tight max-w-[16ch]">Snap the receipt. Everyone taps what they had.</p>
-      <p className="relative text-sm text-white/80 mt-2 max-w-[40ch]">Tax, tip and fees get split fairly. No more dividing by four.</p>
+      <p className="relative text-sm text-white/80 mt-2 max-w-[40ch]">Tax, tip and fees get split fairly.</p>
       <${DemoReceipt} />
       <div className="relative mt-4 flex flex-wrap gap-2">
         <button type="button" disabled=${busy} onClick=${() => create(false)} className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 font-semibold disabled:opacity-60" style=${{ color: "var(--hero2)" }}><${Ic} n="Plus" s=${16} />Split a bill</button>
