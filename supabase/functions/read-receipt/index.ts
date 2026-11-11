@@ -18,6 +18,8 @@ Rules:
 - Put service charges, delivery fees, health mandates, kitchen fees and surcharges in "fees". Never put tax or tip there.
 - Skip modifiers with no price, payment card lines and change due. Include discounts as items with a negative price.
 - "currency" is the ISO 4217 code (USD, EUR, GBP, ...). Work it out from the currency symbol, the address, phone number format, tax names (VAT, BTW, MwSt, IVA) and the language. Default to USD only if nothing points elsewhere.
+- If tax is already included in the item prices (common in Europe: "incl. BTW", "VAT included", "inkl. MwSt", "IVA incluida"), set "tax" to null so it isn't charged twice.
+- Numbers use a dot for decimals in the JSON, even if the receipt prints 12,50.
 - If a value is hard to read, make your best guess. Use null when a field is absent.`;
 
 function parseJson(text: string) {
