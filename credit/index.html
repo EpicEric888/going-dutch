@@ -186,6 +186,8 @@ header h1 a{color:inherit;text-decoration:none}
 .chlist .d{color:var(--muted);font-size:.78rem;white-space:nowrap}
 .chlist .ar{font-weight:700;width:12px;text-align:center}
 .chlist .d b{display:block;font-weight:400;font-size:.7rem;text-transform:uppercase;letter-spacing:.03em}
+table.bridge{width:100%;border-collapse:collapse;font-size:.88rem}table.bridge td{padding:5px 6px;border-bottom:1px solid var(--soft)}table.bridge td:nth-child(2){text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}table.bridge td:nth-child(3){font-size:.78rem}table.bridge tr.tot td{font-weight:700;border-top:1.5px solid var(--line)}
+.gapmk{color:var(--accent);font-weight:700;cursor:help}
 .btag{display:inline-block;font-size:.7rem;line-height:1.3;padding:0 5px;border-radius:4px;border:1px solid var(--line);color:var(--muted);white-space:nowrap;vertical-align:1px}
 .btag.chg{border-color:var(--accent);color:var(--accent)}
 .bchg{color:var(--accent);font-size:.82rem;white-space:nowrap}
@@ -2469,6 +2471,46 @@ function pick(rows, prefer) {
   }
   return withVal[0] || rows[0];
 }
+
+/* ---------- Net debt bridge: company-defined vs full balance-sheet net debt ---------- */
+function netDebtBridge(co) {
+  const at = (m, end) => ROWS.filter(r => r.co === co && r.metric === m && r.end === end && r.value != null);
+  const ends = [...new Set(ROWS.filter(r => r.co === co && r.metric === 'net_debt' && r.value != null).map(r => r.end))].sort().reverse();
+  for (const end of ends) {
+    const nd = at('net_debt', end), cdef = nd.find(r => r.basis === 'adjusted'), others = nd.filter(r => r.basis !== 'adjusted');
+    if (!cdef || !others.length) continue;
+    const full = others.slice().sort((a, b) => b.value - a.value)[0];
+    const gCo = at('gross_debt', end).find(r => r.basis === 'adjusted'), gBs = at('gross_debt', end).find(r => r.basis !== 'adjusted');
+    const lines = [];
+    let explained = 0;
+    if (gCo && gBs && Math.abs(gBs.value - gCo.value) >= 0.5) {
+      const d = gBs.value - gCo.value; explained += d;
+      lines.push({t: d > 0 ? 'Debt on the balance sheet not in the company’s definition' : 'Debt in the company’s definition not on the balance sheet', v: d, how: `balance sheet ${fmt(gBs.value, 'm')} less company figure ${fmt(gCo.value, 'm')}`, src: [gBs, gCo]});
+    }
+    const rest = full.value - cdef.value - explained;
+    if (Math.abs(rest) >= 0.5) lines.push({t: lines.length ? 'Other differences (leases, cash definitions, carrying value vs principal)' : 'Difference (not broken down: no gross debt on both bases for this period)', v: rest, how: 'remainder', src: []});
+    const lv = ROWS.filter(r => r.co === co && r.metric === 'net_leverage' && r.end === end && r.value != null);
+    const lvCo = lv.find(r => r.basis === 'adjusted'), lvFull = lv.filter(r => r.basis !== 'adjusted').sort((a, b) => b.value - a.value)[0];
+    // no stated full-debt leverage: scale the company's own ratio (same EBITDA, full net debt)
+    const lvImplied = !lvFull && lvCo && cdef.value > 0 ? Math.round(full.value / (cdef.value / lvCo.value) * 100) / 100 : null;
+    return {end, label: perLabel(cdef), cdef, full, lines, lvCo, lvFull, lvImplied, diff: full.value - cdef.value};
+  }
+  return null;
+}
+function bridgePanel(c) {
+  const b = netDebtBridge(c.id); if (!b) return '';
+  const ccy = c.ccy ? ' ' + esc(c.ccy) + ' m' : '';
+  const cell = (r, v) => r ? srcLink(r, fmt(v ?? r.value, 'm')) : fmt(v, 'm');
+  const srcNames = rs => rs.map(r => (SOURCES[r.src] || [r.src])[0]).filter(Boolean);
+  let h = `<div class="panel"><h4>Net debt bridge, ${esc(b.label)} (${fdate(b.end)})</h4>
+    <table class="bridge"><tbody>
+    <tr><td>Company-defined net debt</td><td>${cell(b.cdef)}</td><td class="nd">${esc(srcNames([b.cdef]).join(''))}</td></tr>`;
+  b.lines.forEach(l => { h += `<tr><td>${l.v >= 0 ? '+ ' : '− '}${esc(l.t)}</td><td>${fmt(Math.abs(l.v), 'm')}</td><td class="nd">${esc(l.how)}</td></tr>`; });
+  h += `<tr class="tot"><td>Full net debt (shown as headline)</td><td>${cell(b.full)}</td><td class="nd">${esc(srcNames([b.full]).join(''))}</td></tr></tbody></table>`;
+  if (b.lvCo || b.lvFull) h += `<p class="note">Net leverage: ${b.lvCo ? srcLink(b.lvCo, fmt(b.lvCo.value, 'x')) + ' company-defined' : ''}${b.lvCo && (b.lvFull || b.lvImplied) ? ' → ' : ''}${b.lvFull ? srcLink(b.lvFull, '<b>' + fmt(b.lvFull.value, 'x') + '</b>') + ' on full net debt' : b.lvImplied ? '<b>' + fmt(b.lvImplied, 'x') + '</b> on full net debt (same EBITDA as the company’s ratio)' : ''}.</p>`;
+  h += `<p class="note">Amounts in${ccy || ' millions'}. The dashboard uses the higher, fully sourced figure; the company’s own definition is kept for reference.${b.lines.some(l => /not in the company/.test(l.t)) ? ' Debt the company leaves out of its own leverage is often securitization or non-recourse financing; check the release footnotes for what is excluded.' : ''}</p></div>`;
+  return h;
+}
 function altTxt(r) { return (r && r.alts && r.alts.length) ? ' Also on file: ' + r.alts.map(a => `${basisOf(a).s} ${fmt(a.value, a.metric === 'net_leverage' ? 'x' : 'm')}`).join(', ') + '. The higher figure is shown.' : ''; }
 function srcLink(r, text) {
   const s = SOURCES[r.src];
@@ -2913,7 +2955,7 @@ function drawCompany() {
     `</tbody></table></div>
     <div class="panel"><h4>Footprint</h4><table class="rt"><tbody>${ctry.map(x => `<tr><td>${esc(x[1])}</td><td style="text-align:left">${esc(x[2])}</td><td class="nd">${esc(x[3])}</td></tr>`).join('')}</tbody></table>
     <p class="note">${disclosed} of ${rows.length} figures available (${pct}%).</p><div class="cov"><i style="width:${pct}%;background:${color(c.id)}"></i></div>
-    <p class="note">${lastLoaded ? `Last loaded: ${esc(lastLoaded[3])} ${esc(lastLoaded[2])} (${fdate(lastLoaded[5] || lastLoaded[4])}).` : ''} ${next ? `Next expected: ${esc(next[3])} ${esc(next[2])} on ${fdate(next[4])}.` : ''}</p></div>${ratesPanel(c)}</div>`;
+    <p class="note">${lastLoaded ? `Last loaded: ${esc(lastLoaded[3])} ${esc(lastLoaded[2])} (${fdate(lastLoaded[5] || lastLoaded[4])}).` : ''} ${next ? `Next expected: ${esc(next[3])} ${esc(next[2])} on ${fdate(next[4])}.` : ''}</p></div>${bridgePanel(c)}${ratesPanel(c)}</div>`;
   h += `<div class="panel"><h4>Metrics</h4><div class="scroll-x tscroll"><table><thead><tr><th>Metric</th>${keys.map((k,i) => `<th class="${i===firstQ?'qstart':''}">${k[1]}</th>`).join('')}</tr></thead><tbody>`;
   let lastCat = null;
   metrics.forEach(m => {
@@ -3280,7 +3322,7 @@ function drawScreener() {
   const body = rowsS.map(o => `<tr><td><span class="dot" style="background:${color(o.c.id)}"></span> <button type="button" class="lk" data-co="${o.c.id}">${esc(o.c.name)}</button></td><td style="text-align:left" class="nd">${esc(TYPE(o.c))}</td>
     <td>${avgTxt(o)}</td><td>${pill('S&P', o.rt['S&P'])}</td><td>${pill("Moody's", o.rt["Moody's"])}</td><td>${pill('Fitch', o.rt.Fitch)}</td>
     <td style="text-align:left"${/neg/i.test(o.outl) ? ' class="warn"' : ''}>${esc(o.outl || '') || '<span class="nd">–</span>'}</td>
-    ${o.lv ? `<td${o.lv.value > 4 ? ' class="warn"' : ''} style="white-space:nowrap" title="${esc(perLabel(o.lv) + ', period ended ' + fdate(o.lv.end) + '. ' + basisOf(o.lv).t + '.' + altTxt(o.lv))}">${fmt(o.lv.value, 'x')} <span class="nd">${esc(perLabel(o.lv))}</span> ${btag(o.lv)}</td>` : '<td><span class="nd">–</span></td>'}
+    ${o.lv ? `<td${o.lv.value > 4 ? ' class="warn"' : ''} style="white-space:nowrap" title="${esc(perLabel(o.lv) + ', period ended ' + fdate(o.lv.end) + '. ' + basisOf(o.lv).t + '.' + altTxt(o.lv))}">${fmt(o.lv.value, 'x')}${(o.lv.alts || []).some(a => Math.abs(a.value - o.lv.value) > 0.5) ? ' <span class="gapmk" title="The company\u2019s own leverage figure differs by more than 0.5x. See the net debt bridge on the Tenant tab.">\u25C6</span>' : ''} <span class="nd">${esc(perLabel(o.lv))}</span> ${btag(o.lv)}</td>` : '<td><span class="nd">–</span></td>'}
     ${o.cov ? `<td${o.cov.p.value < 3 ? ' class="warn"' : ''} style="white-space:nowrap">${fmt(o.cov.p.value, 'x')} <span class="nd">FY${String(o.cov.y).slice(2)}</span> ${btag(o.cov.p)}</td>` : '<td><span class="nd">–</span></td>'}${o.mg ? `<td style="white-space:nowrap">${fmt(o.mg.p.value, 'pct')} <span class="nd">FY${String(o.mg.y).slice(2)}</span> ${btag(o.mg.p)}</td>` : '<td><span class="nd">–</span></td>'}
     <td>${o.nxd ? fdate(o.nxd) : '<span class="nd">–</span>'}</td></tr>`).join('');
   $('#screen').innerHTML = rowsS.length ? head + '<tbody>' + body + '</tbody>' : '<tbody><tr><td class="nd">No tenants match the filters.</td></tr></tbody>';
@@ -3717,6 +3759,16 @@ function applyFilters() {
       if (ags.length) ags.forEach(a => { const r = rat[a]; R.push([a, {v: r[2], s: ST.bold}, r[3] || '', dShort(r[4]), r[7] ? {v: 'Link', link: r[7]} : '', r[5] || '']); });
       else R.push([{v: 'No public rating found', s: ST.note}]);
       R.push([]);
+      const br = netDebtBridge(c.id);
+      if (br) {
+        R.push([{v: `Net debt bridge, ${br.label} (${dShort(br.end)})`, s: ST.section}, {v: '', s: ST.section}, {v: '', s: ST.section}]);
+        R.push([{v: 'Item', s: ST.head}, {v: c.ccy ? c.ccy + ' m' : 'm', s: ST.headR}, {v: 'How', s: ST.head}]);
+        R.push(['Company-defined net debt', br.cdef.value, (SOURCES[br.cdef.src] || [''])[0]]);
+        br.lines.forEach(l => R.push([(l.v >= 0 ? '+ ' : '- ') + l.t, Math.abs(l.v), l.how]));
+        R.push([{v: 'Full net debt (headline)', s: ST.bold}, {v: br.full.value, s: ST.bold}, (SOURCES[br.full.src] || [''])[0]]);
+        if (br.lvCo || br.lvFull) R.push(['Net leverage', br.lvCo ? br.lvCo.value + 'x company-defined' : '', br.lvFull ? br.lvFull.value + 'x on full net debt' : br.lvImplied ? br.lvImplied + 'x on full net debt (same EBITDA)' : '']);
+        R.push([]);
+      }
       // metrics table laid out like Company detail on the dashboard: metrics down, every period across
       const crow = ROWS.filter(r => r.co === c.id && DEF[r.metric]);
       const keys = [...new Map(crow.map(r => [r.b.key, r.b])).entries()].sort((a, b) => a[0].localeCompare(b[0]));
