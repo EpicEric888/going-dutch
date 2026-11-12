@@ -97,7 +97,6 @@ function AccountMenu({ user, toast }) {
 /* ---------- landing: mini demo + how it works ---------- */
 const DEMO_PEOPLE = [["Sam", "#2f9e6e"], ["Maya", "#5b5bd6"], ["Jordan", "#d68a1f"]];
 function DemoReceipt() {
-  const cur = guessCurrency();
   const av = (i, delay) => html`<span key=${i + "-" + delay} className="gd-pop -ml-1.5 first:ml-0 inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold text-white ring-2 ring-white"
     style=${{ background: DEMO_PEOPLE[i][1], animationDelay: delay + "s" }}>${DEMO_PEOPLE[i][0][0]}</span>`;
   const rows = [
@@ -111,12 +110,12 @@ function DemoReceipt() {
       ${rows.map(([name, price, who]) => html`<li key=${name} className="flex items-center gap-2 py-1.5">
         <span className="flex-1 text-sm font-medium">${name}</span>
         <span className="flex min-w-[44px] justify-end">${who.map(([i, d]) => av(i, d))}</span>
-        <span className="w-16 text-right font-mono text-sm tnum">${fmt(+price, cur)}</span>
+        <span className="w-14 text-right font-mono text-sm tnum">$${price}</span>
       </li>`)}
     </ul>
     <div className="gd-fade mt-1.5 flex items-center justify-between gap-2 rounded-lg bg-[#eef6f1] px-2.5 py-2 text-xs" style=${{ animationDelay: "2.2s" }}>
       <span className="text-[#4c5f57]">+ tax & tip, split fairly</span>
-      <span className="flex gap-2.5 font-semibold">${totals.map(([n, v, i]) => html`<span key=${n} className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full" style=${{ background: DEMO_PEOPLE[i][1] }}></span>${fmt(+v, cur)}</span>`)}</span>
+      <span className="flex gap-2.5 font-semibold">${totals.map(([n, v, i]) => html`<span key=${n} className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full" style=${{ background: DEMO_PEOPLE[i][1] }}></span>$${v}</span>`)}</span>
     </div>
   </div>`;
 }
@@ -228,12 +227,12 @@ function Home({ user, toast, go }) {
               <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-moneysoft text-money"><${Ic} n="Receipt" s=${20} /></span>
               <div className="min-w-0 flex-1">
                 <p className="font-semibold truncate">${R.merchant || "Untitled bill"}${R.isDemo ? html`<span className="ml-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">Example</span>` : null}${b.locked ? html`<span className="ml-2 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted"><${Ic} n="Lock" s=${10} />Settled</span>` : null}</p>
-                <p className="text-xs text-muted tnum">${R.date ? new Date(R.date + "T12:00").toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "No date"} · ${P.length} ${P.length === 1 ? "person" : "people"} · ${fmt(b.calc.total, R.currency || "USD")}</p>
+                <p className="text-xs text-muted tnum">${R.date ? new Date(R.date + "T12:00").toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "No date"} · ${P.length} ${P.length === 1 ? "person" : "people"} · ${fmt(b.calc.total)}</p>
               </div>
               <div className="text-right">
-                ${mine?.isHost ? html`<p className="text-[10px] uppercase tracking-[0.08em] text-muted">Owed to you</p><p className="font-display font-bold text-money tnum">${fmt(owedToMe, R.currency || "USD")}</p>`
-                  : row && mine.paid ? html`<p className="text-[10px] uppercase tracking-[0.08em] text-muted">You paid</p><p className="font-display font-bold text-muted tnum">${fmt(row.total, R.currency || "USD")}</p>`
-                  : row ? html`<p className="text-[10px] uppercase tracking-[0.08em] text-muted">You owe</p><p className="font-display font-bold text-money tnum">${fmt(row.total, R.currency || "USD")}</p>`
+                ${mine?.isHost ? html`<p className="text-[10px] uppercase tracking-[0.08em] text-muted">Owed to you</p><p className="font-display font-bold text-money tnum">${fmt(owedToMe)}</p>`
+                  : row && mine.paid ? html`<p className="text-[10px] uppercase tracking-[0.08em] text-muted">You paid</p><p className="font-display font-bold text-muted tnum">${fmt(row.total)}</p>`
+                  : row ? html`<p className="text-[10px] uppercase tracking-[0.08em] text-muted">You owe</p><p className="font-display font-bold text-money tnum">${fmt(row.total)}</p>`
                   : html`<${Ic} n="ChevronRight" s=${18} c="text-muted" />`}
               </div>
             </div>
@@ -360,7 +359,6 @@ function BillPage({ code, user, toast, go }) {
   if (status === "error") return html`<${Card} className="p-6 text-center"><p className="font-display text-lg font-bold">Couldn't open this bill</p>
     <p className="text-sm text-muted mt-1">Check your connection and reload the page.</p></${Card}>`;
   if (!state) return html`<${Card} className="p-6 text-center text-muted text-sm"><${Ic} n="Loader2" s=${18} c="animate-spin inline mr-2" />Opening the bill…</${Card}>`;
-  CUR.code = state.receipt.currency || "USD";
 
   const onParsed = d => setState(s => {
     const items = (d.items || []).map(i => ({ id: uid(), name: String(i.name || ""), price: i.price != null ? String(r2(num(i.price))) : "", quantity: String(num(i.quantity) || 1) }));
@@ -368,7 +366,6 @@ function BillPage({ code, user, toast, go }) {
     return {
       ...s, isDemo: false, assignments: {},
       receipt: {
-        currency: validCurrency(d.currency) ? d.currency.trim().toUpperCase() : (s.receipt.currency || "USD"),
         merchant: d.merchant || "", date: /^\d{4}-\d{2}-\d{2}$/.test(d.date || "") ? d.date : s.receipt.date, items: items.length ? items : s.receipt.items,
         tax: d.tax != null ? String(r2(num(d.tax))) : "", fees: (d.fees || []).map(f => ({ id: uid(), name: String(f.name || "Fee"), amount: String(r2(num(f.amount))) })),
         printedSubtotal: d.subtotal ?? null, printedTotal: d.total ?? null, photo: s.receipt.photo || null

@@ -8,29 +8,7 @@ const STORE = "goingdutch.local.v1";
 const uid = () => Math.random().toString(36).slice(2, 9);
 const num = v => { const n = parseFloat(String(v ?? "").replace(/[^0-9.\-]/g, "")); return isFinite(n) ? n : 0; };
 const r2 = n => Math.round((n + Number.EPSILON) * 100) / 100;
-/* currency: each bill stores receipt.currency (ISO code). BillPage sets CUR.code while a bill is open. */
-const CUR = { code: "USD" };
-const CURRENCIES = ["USD", "EUR", "GBP", "CAD", "MXN", "CHF", "DKK", "SEK", "NOK", "PLN", "CZK", "HUF", "RON", "TRY", "AUD", "NZD", "JPY", "KRW", "CNY", "HKD", "SGD", "THB", "INR", "AED", "ILS", "ZAR", "BRL", "ARS", "CLP", "COP"];
-const EURO = "AT BE CY DE EE ES FI FR GR HR IE IT LT LU LV MT NL PT SI SK".split(" ");
-const REGION_CUR = { US: "USD", PR: "USD", GB: "GBP", CA: "CAD", MX: "MXN", CH: "CHF", LI: "CHF", DK: "DKK", SE: "SEK", NO: "NOK", PL: "PLN", CZ: "CZK", HU: "HUF", RO: "RON", TR: "TRY", AU: "AUD", NZ: "NZD", JP: "JPY", KR: "KRW", CN: "CNY", HK: "HKD", SG: "SGD", TH: "THB", IN: "INR", AE: "AED", IL: "ILS", ZA: "ZAR", BR: "BRL", AR: "ARS", CL: "CLP", CO: "COP" };
-EURO.forEach(r => { REGION_CUR[r] = "EUR"; });
-function guessCurrency() {
-  try {
-    for (const l of navigator.languages || [navigator.language]) {
-      const region = new Intl.Locale(l).maximize().region;
-      if (REGION_CUR[region]) return REGION_CUR[region];
-    }
-  } catch (e) {}
-  return "USD";
-}
-const validCurrency = c => typeof c === "string" && /^[A-Za-z]{3}$/.test(c.trim()) && (() => { try { new Intl.NumberFormat("en", { style: "currency", currency: c.trim() }); return true; } catch (e) { return false; } })();
-const fmtCache = {};
-const fmt = (n, code = CUR.code) => {
-  const c = code || "USD";
-  const f = fmtCache[c] || (fmtCache[c] = (() => { try { return new Intl.NumberFormat(undefined, { style: "currency", currency: c, currencyDisplay: "narrowSymbol" }); } catch (e) { return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD" }); } })());
-  return f.format(r2(n) || 0);
-};
-const curSymbol = (code = CUR.code) => { try { return new Intl.NumberFormat(undefined, { style: "currency", currency: code || "USD", currencyDisplay: "narrowSymbol" }).formatToParts(0).find(p => p.type === "currency").value; } catch (e) { return "$"; } };
+const fmt = n => (n < 0 ? "-$" : "$") + Math.abs(r2(n)).toFixed(2);
 const sum = a => a.reduce((x, y) => x + y, 0);
 const initials = name => (name || "").trim().split(/\s+/).filter(w => /^[\p{L}\p{N}]/u.test(w)).slice(0, 2).map(w => w[0].toUpperCase()).join("") || "?";
 const COLORS = ["#0f9f6e", "#5b5bd6", "#d98a05", "#d6407e", "#0b8fc4", "#8a54d6", "#d4483b", "#0d9488", "#e06d14", "#5f9c12", "#0891b2", "#b34bc9"];
@@ -100,7 +78,7 @@ function demoState() {
   };
   return {
     isDemo: true, mode: "host-setup",
-    receipt: { currency: guessCurrency(), merchant: "Osteria Lupa", date: "2026-10-10", items, tax: "18.83", fees: [{ id: uid(), name: "SD health mandate 4%", amount: "9.72" }], printedSubtotal: 243, printedTotal: null },
+    receipt: { merchant: "Osteria Lupa", date: "2026-10-10", items, tax: "18.83", fees: [{ id: uid(), name: "SD health mandate 4%", amount: "9.72" }], printedSubtotal: 243, printedTotal: null },
     tip: { mode: "percent", value: "20" },
     participants: ppl, assignments, shareCode: null
   };
@@ -108,7 +86,7 @@ function demoState() {
 function blankState() {
   return {
     isDemo: false, mode: "host-setup",
-    receipt: { currency: guessCurrency(), merchant: "", date: new Date().toISOString().slice(0, 10), items: [{ id: uid(), name: "", price: "", quantity: "1" }], tax: "", fees: [], printedSubtotal: null, printedTotal: null },
+    receipt: { merchant: "", date: new Date().toISOString().slice(0, 10), items: [{ id: uid(), name: "", price: "", quantity: "1" }], tax: "", fees: [], printedSubtotal: null, printedTotal: null },
     tip: { mode: "percent", value: "18" },
     participants: [{ id: uid(), name: "", isHost: true }], assignments: {}, shareCode: null
   };

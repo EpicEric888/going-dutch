@@ -1,19 +1,17 @@
 /* ---------- paying the host ---------- */
 const cleanHandle = (v, re) => String(v || "").trim().replace(re, "").replace(/^[@$]/, "");
-const isTikkie = v => /^https:\/\/(www\.)?tikkie\.me\/\S+$/i.test(String(v || "").trim());
 function payLinks(host, amount, note) {
   const p = host?.pay || {};
   const a = r2(Math.max(0, amount)).toFixed(2);
   const n = encodeURIComponent(note || "Going Dutch");
   const links = [];
   const venmo = cleanHandle(p.venmo, /^https?:\/\/(www\.)?venmo\.com\/(u\/)?/i);
+  const paypal = cleanHandle(p.paypal, /^https?:\/\/(www\.)?paypal\.me\//i);
   const cashapp = cleanHandle(p.cashapp, /^https?:\/\/(www\.)?cash\.app\//i);
-  const usd = CUR.code === "USD";
-  if (venmo && usd) links.push({ id: "venmo", label: "Venmo", href: `https://venmo.com/?txn=pay&recipients=${encodeURIComponent(venmo)}&amount=${a}&note=${n}` });
-  const tikkie = String(p.tikkie || "").trim();
-  if (CUR.code === "EUR" && isTikkie(tikkie)) links.push({ id: "tikkie", label: "Tikkie", href: tikkie, hint: `Tikkie will ask for the amount. Enter ${fmt(amount)}.` });
-  if (cashapp && usd) links.push({ id: "cashapp", label: "Cash App", href: `https://cash.app/$${encodeURIComponent(cashapp)}/${a}` });
-  return { links, zelle: usd ? String(p.zelle || "").trim() : "" };
+  if (venmo) links.push({ id: "venmo", label: "Venmo", href: `https://venmo.com/?txn=pay&recipients=${encodeURIComponent(venmo)}&amount=${a}&note=${n}` });
+  if (paypal) links.push({ id: "paypal", label: "PayPal", href: `https://paypal.me/${encodeURIComponent(paypal)}/${a}USD` });
+  if (cashapp) links.push({ id: "cashapp", label: "Cash App", href: `https://cash.app/$${encodeURIComponent(cashapp)}/${a}` });
+  return { links, zelle: String(p.zelle || "").trim() };
 }
 
 function PayButtons({ host, amount, note, toast }) {
@@ -22,9 +20,8 @@ function PayButtons({ host, amount, note, toast }) {
   return html`<div className="flex flex-col gap-2">
     ${links.length > 0 && html`<div className="grid gap-2" style=${{ gridTemplateColumns: `repeat(${Math.min(links.length, 3)}, minmax(0, 1fr))` }}>
       ${links.map(l => html`<a key=${l.id} href=${l.href} target="_blank" rel="noopener"
-        className="inline-flex items-center justify-center rounded-xl py-2.5 text-sm font-semibold text-moneyink" style=${{ background: "var(--money)" }}>${l.id === "tikkie" ? "Pay with Tikkie" : l.label}</a>`)}
+        className="inline-flex items-center justify-center rounded-xl py-2.5 text-sm font-semibold text-moneyink" style=${{ background: "var(--money)" }}>${l.label}</a>`)}
     </div>`}
-    ${links.filter(l => l.hint).map(l => html`<p key=${l.id + "-hint"} className="text-xs text-muted">${l.hint}</p>`)}
     ${zelle && html`<div className="flex items-center gap-2 rounded-xl bg-soft px-3 py-2 text-sm">
       <span className="font-semibold">Zelle</span><span className="flex-1 min-w-0 truncate font-mono text-xs select-all">${zelle}</span>
       <button type="button" onClick=${async () => toast(await copyText(zelle) ? "Copied" : "Copy blocked")} className="text-money font-semibold">Copy</button>
@@ -40,23 +37,10 @@ function PaySetup({ state, setState, user, toast }) {
   const iAmHost = host.userId === user.id;
   const remember = async () => {
     if (!iAmHost) return;
-    const { tikkie, ...keep } = host.pay || {}; // Tikkie links expire, so they stay with this bill only
-    const { error } = await supa.auth.updateUser({ data: { pay: keep } });
+    const { error } = await supa.auth.updateUser({ data: { pay: host.pay || {} } });
     if (!error) toast("Saved for your next bills too");
   };
-  const cur = state.receipt.currency || "USD";
-  if (cur === "EUR") {
-    const v = pay.tikkie || "";
-    const bad = v.trim() && !isTikkie(v);
-    return html`<div className="flex flex-col gap-2">
-      <${Label} htmlFor="pay-tikkie">Tikkie link</${Label}>
-      <input id="pay-tikkie" className=${inputCls} value=${v} placeholder="https://tikkie.me/pay/..." onInput=${e => set("tikkie", e.target.value.trim())} autocomplete="off" inputMode="url" />
-      ${bad ? html`<p className="text-xs text-danger">That doesn't look like a Tikkie link. It should start with https://tikkie.me/</p>`
-        : html`<p className="text-xs text-muted">In the Tikkie app, make one Tikkie for this dinner and leave the amount open. Paste its link here. Friends get a "Pay with Tikkie" button and see exactly how much to enter.</p>`}
-    </div>`;
-  }
-  if (cur !== "USD") return html`<p className="text-sm text-muted">Pay buttons are available for dollar and euro bills. For ${cur}, friends will see what they owe and can pay you however you usually do.</p>`;
-  const fields = [["venmo", "Venmo", "@username"], ["cashapp", "Cash App", "$cashtag"], ["zelle", "Zelle", "email or phone"]];
+  const fields = [["venmo", "Venmo", "@username"], ["paypal", "PayPal.me", "username"], ["cashapp", "Cash App", "$cashtag"], ["zelle", "Zelle", "email or phone"]];
   return html`<div className="flex flex-col gap-3">
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       ${fields.map(([k, label, ph]) => html`<div key=${k}><${Label} htmlFor=${"pay-" + k}>${label}</${Label}>
