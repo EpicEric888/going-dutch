@@ -297,7 +297,7 @@ function ThemePicker({ theme, setTheme }) {
 function Share({ state, toast, goGuest, shareUrl }) {
   const ready = state.participants.length >= 2;
   const host = state.participants.find(p => p.isHost);
-  const invite = L(`Our bill from ${state.receipt.merchant || "dinner"} is on Going Dutch. Tap your name, then tap what you had: ${shareUrl}${host?.name ? " - " + host.name : ""}`, `Onze rekening van ${state.receipt.merchant || "het etentje"} staat op Going Dutch. Tik op je naam en dan op wat je had: ${shareUrl}${host?.name ? " - " + host.name : ""}`);
+  const invite = tl(`Our bill from ${state.receipt.merchant || "dinner"} is on Going Dutch. Tap your name, then tap what you had: ${shareUrl}${host?.name ? " - " + host.name : ""}`, `Onze rekening van ${state.receipt.merchant || "het etentje"} staat op Going Dutch. Tik op je naam en dan op wat je had: ${shareUrl}${host?.name ? " - " + host.name : ""}`);
   const share = async () => {
     if (navigator.share) { try { await navigator.share({ title: "Going Dutch", text: invite }); return; } catch (e) { if (e?.name === "AbortError") return; } }
     toast(await copyText(invite) ? "Invite copied. Paste it in your group chat." : "Copy blocked. Select the link instead.");
@@ -487,16 +487,16 @@ function PersonCard({ r, calc, P, hostName }) {
 function settleText(r, R, host) {
   const items = r.items.map(i => i.label ? `${i.name} (${i.label})` : i.name).join(", ");
   const pay = typeof payLinks === "function" ? payLinks(host, r.total, `${R.merchant || "Dinner"} via Going Dutch`) : { links: [], zelle: "" };
-  const how = pay.links[0] ? L(` Pay here: ${pay.links[0].href}`, ` Betalen kan hier: ${pay.links[0].href}`) : pay.zelle ? ` Zelle: ${pay.zelle}` : "";
-  return L(`Hey ${r.p.name}, you owe ${fmt(r.total)} for ${R.merchant || "dinner"}${items ? " - " + items : ""}.${how}`,
+  const how = pay.links[0] ? tl(` Pay here: ${pay.links[0].href}`, ` Betalen kan hier: ${pay.links[0].href}`) : pay.zelle ? ` Zelle: ${pay.zelle}` : "";
+  return tl(`Hey ${r.p.name}, you owe ${fmt(r.total)} for ${R.merchant || "dinner"}${items ? " - " + items : ""}.${how}`,
     `Hoi ${r.p.name}, je moet nog ${fmt(r.total)} betalen voor ${R.merchant || "het etentje"}${items ? " - " + items : ""}.${how}`);
 }
 function summaryText(state, calc) {
   const R = state.receipt, host = state.participants.find(p => p.isHost);
-  const lines = [`${R.merchant || "Dinner"}${R.date ? " · " + R.date : ""}`, L(`Total ${fmt(calc.total)} (tax ${fmt(calc.tax)}, fees ${fmt(calc.fees)}, tip ${fmt(calc.tipAmt)})`, `Totaal ${fmt(calc.total)} (btw ${fmt(calc.tax)}, kosten ${fmt(calc.fees)}, fooi ${fmt(calc.tipAmt)})`), ""];
-  calc.rows.forEach(r => lines.push(`${r.p.name}${r.p.isHost ? L(" (paid)", " (betaalde)") : ""}: ${fmt(r.total)}${r.items.length ? "  [" + r.items.map(i => i.label ? `${i.name} ${i.label}` : i.name).join(", ") + "]" : ""}`));
-  if (calc.unassigned > 0) lines.push("", L(`Unassigned: ${fmt(calc.unassigned)} in items`, `Niet toegewezen: ${fmt(calc.unassigned)} aan items`));
-  lines.push("", L(`Pay ${host?.name || "the host"} back. Split with Going Dutch.`, `Betaal ${host?.name || "de betaler"} terug. Gesplitst met Going Dutch.`));
+  const lines = [`${R.merchant || "Dinner"}${R.date ? " · " + R.date : ""}`, tl(`Total ${fmt(calc.total)} (tax ${fmt(calc.tax)}, fees ${fmt(calc.fees)}, tip ${fmt(calc.tipAmt)})`, `Totaal ${fmt(calc.total)} (btw ${fmt(calc.tax)}, kosten ${fmt(calc.fees)}, fooi ${fmt(calc.tipAmt)})`), ""];
+  calc.rows.forEach(r => lines.push(`${r.p.name}${r.p.isHost ? tl(" (paid)", " (betaalde)") : ""}: ${fmt(r.total)}${r.items.length ? "  [" + r.items.map(i => i.label ? `${i.name} ${i.label}` : i.name).join(", ") + "]" : ""}`));
+  if (calc.unassigned > 0) lines.push("", tl(`Unassigned: ${fmt(calc.unassigned)} in items`, `Niet toegewezen: ${fmt(calc.unassigned)} aan items`));
+  lines.push("", tl(`Pay ${host?.name || "the host"} back. Split with Going Dutch.`, `Betaal ${host?.name || "de betaler"} terug. Gesplitst met Going Dutch.`));
   return lines.join("\n");
 }
 
@@ -511,23 +511,23 @@ function drawPng(state, calc) {
   x.font = "800 34px 'Bricolage Grotesque', sans-serif"; x.textAlign = "center";
   x.fillText(R.merchant || "Dinner", W / 2, pad);
   x.font = "400 16px 'JetBrains Mono', monospace"; x.fillStyle = "#5d6e67";
-  x.fillText(`${R.date || ""}  ·  ${rows.length} ${L("people", "mensen")}`, W / 2, pad + 46);
+  x.fillText(`${R.date || ""}  ·  ${rows.length} ${tl("people", "mensen")}`, W / 2, pad + 46);
   const dash = y => { x.strokeStyle = "#c9d3ce"; x.setLineDash([6, 6]); x.beginPath(); x.moveTo(pad, y); x.lineTo(W - pad, y); x.stroke(); x.setLineDash([]); };
   let y = pad + 90; dash(y); y += 20;
   const lr = (l, r, font, color) => { x.font = font; x.fillStyle = color; x.textAlign = "left"; x.fillText(l, pad, y); x.textAlign = "right"; x.fillText(r, W - pad, y); };
   rows.forEach((r, i) => {
     x.fillStyle = COLORS[i % COLORS.length]; x.beginPath(); x.arc(pad + 10, y + 12, 10, 0, 7); x.fill();
-    x.font = "700 20px 'Figtree', sans-serif"; x.fillStyle = "#0f1f19"; x.textAlign = "left"; x.fillText(r.p.name + (r.p.isHost ? L(" (paid)", " (betaalde)") : ""), pad + 30, y + 1);
+    x.font = "700 20px 'Figtree', sans-serif"; x.fillStyle = "#0f1f19"; x.textAlign = "left"; x.fillText(r.p.name + (r.p.isHost ? tl(" (paid)", " (betaalde)") : ""), pad + 30, y + 1);
     x.font = "700 22px 'JetBrains Mono', monospace"; x.fillStyle = "#078554"; x.textAlign = "right"; x.fillText(fmt(r.total), W - pad, y);
     y += lh + 4;
     r.items.forEach(it => { lr("  " + it.name + (it.label ? ` ${it.label}` : ""), fmt(it.share), "400 15px 'JetBrains Mono', monospace", "#5d6e67"); y += 24; });
     y += 22;
   });
   dash(y); y += 20;
-  [[L("Subtotal", "Subtotaal"), calc.subtotal], [L("Tax", "Btw"), calc.tax], [L("Fees", "Kosten"), calc.fees], [L("Tip", "Fooi"), calc.tipAmt]].forEach(([k, v]) => { lr(k, fmt(v), "400 16px 'JetBrains Mono', monospace", "#5d6e67"); y += 26; });
-  lr(L("TOTAL", "TOTAAL"), fmt(calc.total), "700 22px 'JetBrains Mono', monospace", "#0f1f19"); y += 40;
-  if (calc.unassigned > 0) { lr(L("Unassigned", "Niet toegewezen"), fmt(calc.unassigned), "400 16px 'JetBrains Mono', monospace", "#a85a06"); y += 30; }
-  x.textAlign = "center"; x.font = "500 14px 'Figtree', sans-serif"; x.fillStyle = "#93a39c"; x.fillText(L("split with Going Dutch", "gesplitst met Going Dutch"), W / 2, H - 40);
+  [[tl("Subtotal", "Subtotaal"), calc.subtotal], [tl("Tax", "Btw"), calc.tax], [tl("Fees", "Kosten"), calc.fees], [tl("Tip", "Fooi"), calc.tipAmt]].forEach(([k, v]) => { lr(k, fmt(v), "400 16px 'JetBrains Mono', monospace", "#5d6e67"); y += 26; });
+  lr(tl("TOTAL", "TOTAAL"), fmt(calc.total), "700 22px 'JetBrains Mono', monospace", "#0f1f19"); y += 40;
+  if (calc.unassigned > 0) { lr(tl("Unassigned", "Niet toegewezen"), fmt(calc.unassigned), "400 16px 'JetBrains Mono', monospace", "#a85a06"); y += 30; }
+  x.textAlign = "center"; x.font = "500 14px 'Figtree', sans-serif"; x.fillStyle = "#93a39c"; x.fillText(tl("split with Going Dutch", "gesplitst met Going Dutch"), W / 2, H - 40);
   return c;
 }
 

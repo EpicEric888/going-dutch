@@ -317,7 +317,7 @@ function BillHeader({ state, calc, shareUrl, toast, menu }) {
   const guestCount = state.participants.filter(p => !p.isHost).length;
   const dateLabel = R.date ? new Date(R.date + "T12:00").toLocaleDateString(LOCALE(), { month: "short", day: "numeric" }) : "";
   const share = async () => {
-    const text = L(`Our bill from ${R.merchant || "dinner"} is on Going Dutch. Tap your name, then what you had: ${shareUrl}`, `Onze rekening van ${R.merchant || "het etentje"} staat op Going Dutch. Tik op je naam en dan op wat je had: ${shareUrl}`);
+    const text = tl(`Our bill from ${R.merchant || "dinner"} is on Going Dutch. Tap your name, then what you had: ${shareUrl}`, `Onze rekening van ${R.merchant || "het etentje"} staat op Going Dutch. Tik op je naam en dan op wat je had: ${shareUrl}`);
     if (navigator.share) { try { await navigator.share({ title: "Going Dutch", text }); return; } catch (e) { if (e?.name === "AbortError") return; } }
     toast(await copyText(shareUrl) ? "Link copied" : "Copy blocked");
   };

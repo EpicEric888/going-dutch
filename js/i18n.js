@@ -1,14 +1,14 @@
 /* ---------- language: English / Dutch ----------
    The app is written in English. In Dutch mode, every text node and placeholder/aria-label/title
    on the page is translated as React renders it, using NL (exact text) and NL_PATTERNS (text with
-   numbers or names in it). Copied/shared text uses L(en, nl) directly. */
+   numbers or names in it). Copied/shared text uses tl(en, nl) directly. */
 const LANG_STORE = "goingdutch.lang";
 const LANG = { code: (() => {
   try { const s = localStorage.getItem(LANG_STORE); if (s === "en" || s === "nl") return s; } catch (e) {}
   const first = (navigator.languages || [navigator.language || "en"])[0] || "en";
   return /^nl\b/i.test(first) ? "nl" : "en";
 })() };
-const L = (en, nl) => (LANG.code === "nl" ? nl : en);
+const tl = (en, nl) => (LANG.code === "nl" ? nl : en);
 const LOCALE = () => (LANG.code === "nl" ? "nl-NL" : undefined);
 function setLang(code) {
   try { localStorage.setItem(LANG_STORE, code); } catch (e) {}
