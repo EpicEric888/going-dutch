@@ -85,5 +85,11 @@ tailwind.config={theme:{extend:{
 <script src="js/data.js?v=202611130821"></script>
 <script src="js/pages.js?v=202611130821"></script>
 <script src="js/app.js?v=202611130821"></script>
+<script>
+  // GoatCounter (no cookies). Bill links hold private codes, so bills are counted as "/bill" only.
+  window.goatcounter = { path: function () { return /^#\/b\//.test(location.hash) ? "/bill" : "/"; } };
+  window.addEventListener("hashchange", function () { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count(); });
+</script>
+<script data-goatcounter="https://delapape.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>
