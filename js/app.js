@@ -31,6 +31,7 @@ function App() {
         <span className="min-w-0"><span className="block font-display text-2xl font-extrabold leading-none tracking-tight">Going Dutch</span>
           <span className="block text-xs text-muted mt-1 leading-snug">Pay for what you had. Share the rest fairly.</span></span>
       </a>
+      <${LangToggle} />
       <${ThemePicker} theme=${theme} setTheme=${setTheme} />
       <${AccountMenu} user=${user} toast=${toast} />
     </header>

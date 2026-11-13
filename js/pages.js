@@ -227,7 +227,7 @@ function Home({ user, toast, go }) {
               <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-moneysoft text-money"><${Ic} n="Receipt" s=${20} /></span>
               <div className="min-w-0 flex-1">
                 <p className="font-semibold truncate">${R.merchant || "Untitled bill"}${R.isDemo ? html`<span className="ml-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted">Example</span>` : null}${b.locked ? html`<span className="ml-2 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted"><${Ic} n="Lock" s=${10} />Settled</span>` : null}</p>
-                <p className="text-xs text-muted tnum">${R.date ? new Date(R.date + "T12:00").toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "No date"} · ${P.length} ${P.length === 1 ? "person" : "people"} · ${fmt(b.calc.total)}</p>
+                <p className="text-xs text-muted tnum">${R.date ? new Date(R.date + "T12:00").toLocaleDateString(LOCALE(), { month: "short", day: "numeric", year: "numeric" }) : "No date"} · ${P.length} ${P.length === 1 ? "person" : "people"} · ${fmt(b.calc.total)}</p>
               </div>
               <div className="text-right">
                 ${mine?.isHost ? html`<p className="text-[10px] uppercase tracking-[0.08em] text-muted">Owed to you</p><p className="font-display font-bold text-money tnum">${fmt(owedToMe)}</p>`
@@ -315,9 +315,9 @@ function BillHeader({ state, calc, shareUrl, toast, menu }) {
   const allClaimed = calc.subtotal > 0 && calc.unassignedItems.length === 0;
   const paidCount = state.participants.filter(p => !p.isHost && p.paid).length;
   const guestCount = state.participants.filter(p => !p.isHost).length;
-  const dateLabel = R.date ? new Date(R.date + "T12:00").toLocaleDateString(undefined, { month: "short", day: "numeric" }) : "";
+  const dateLabel = R.date ? new Date(R.date + "T12:00").toLocaleDateString(LOCALE(), { month: "short", day: "numeric" }) : "";
   const share = async () => {
-    const text = `Our bill from ${R.merchant || "dinner"} is on Going Dutch. Tap your name, then what you had: ${shareUrl}`;
+    const text = L(`Our bill from ${R.merchant || "dinner"} is on Going Dutch. Tap your name, then what you had: ${shareUrl}`, `Onze rekening van ${R.merchant || "het etentje"} staat op Going Dutch. Tik op je naam en dan op wat je had: ${shareUrl}`);
     if (navigator.share) { try { await navigator.share({ title: "Going Dutch", text }); return; } catch (e) { if (e?.name === "AbortError") return; } }
     toast(await copyText(shareUrl) ? "Link copied" : "Copy blocked");
   };
