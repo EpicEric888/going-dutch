@@ -180,17 +180,17 @@ function GroupsSection({ user, toast, go }) {
       <form onSubmit=${create} className="flex flex-col gap-2">
         <${Label} htmlFor="group-name">Group name</${Label}>
         <div className="flex gap-2">
-          <input id="group-name" autoFocus className=${inputCls} value=${name} maxLength=${60} onInput=${e => setName(e.target.value)} placeholder="Lisbon trip, Roommates, Friday dinners…" />
+          <input id="group-name" autoFocus className=${inputCls} value=${name} maxLength=${60} onInput=${e => setName(e.target.value)} placeholder="Lisbon trip, Friday dinners, Ski weekend…" />
           <button type="submit" disabled=${busy || !name.trim()} className="shrink-0 rounded-xl bg-ink text-bg px-4 font-semibold disabled:opacity-50">${busy ? "…" : "Create"}</button>
         </div>
-        <p className="text-xs text-muted">Put several bills in one group and see who's up or down overall. Great for trips and roommates.</p>
+        <p className="text-xs text-muted">Put several bills in one group and see who's up or down overall. Great for trips and regular dinners.</p>
         <button type="button" onClick=${() => { setNaming(false); setName(""); }} className="self-start text-xs font-semibold text-muted">Cancel</button>
       </form>
     </${Card}>`}
     ${groups === null ? null
       : groups.length === 0 ? (!naming && html`<button type="button" onClick=${() => setNaming(true)} className="flex items-center gap-3 rounded-2xl border border-dashed border-line bg-card px-4 py-3 text-left hover:bg-soft">
           <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-moneysoft text-money"><${Ic} n="Users" s=${18} /></span>
-          <span className="min-w-0"><span className="block text-sm font-semibold">Going on a trip, or sharing a house?</span>
+          <span className="min-w-0"><span className="block text-sm font-semibold">Going on a trip, or out with the same friends a lot?</span>
             <span className="block text-xs text-muted">Start a group to keep a running tab across bills.</span></span>
         </button>`)
       : html`<ul className="flex flex-col gap-3">${groups.map(g => {

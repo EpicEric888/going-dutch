@@ -183,9 +183,9 @@ const NL = {
 
   // groups
   "Groups": "Groepen", "New group": "Nieuwe groep", "Group name": "Naam van de groep", "Create": "Maken",
-  "Lisbon trip, Roommates, Friday dinners…": "Weekendje Lissabon, Huisgenoten, Vrijdagborrel…",
-  "Put several bills in one group and see who's up or down overall. Great for trips and roommates.": "Zet meerdere rekeningen in één groep en zie wie er in totaal voor of achter staat. Handig voor reizen en huisgenoten.",
-  "Going on a trip, or sharing a house?": "Op reis, of een huis delen?",
+  "Lisbon trip, Friday dinners, Ski weekend…": "Weekendje Lissabon, Vrijdagborrel, Skivakantie…",
+  "Put several bills in one group and see who's up or down overall. Great for trips and regular dinners.": "Zet meerdere rekeningen in één groep en zie wie er in totaal voor of achter staat. Handig voor reizen en vaste etentjes.",
+  "Going on a trip, or out with the same friends a lot?": "Op reis, of vaak uit met dezelfde vrienden?",
   "Start a group to keep a running tab across bills.": "Start een groep en houd een lopende rekening bij.",
   "Untitled group": "Naamloze groep", "bill": "rekening", "bills": "rekeningen",
   "All square": "Alles quitte", "You're owed": "Jij krijgt nog", "Your balance": "Jouw saldo",
