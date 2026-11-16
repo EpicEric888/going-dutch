@@ -180,6 +180,31 @@ const NL = {
   " · gets back": " · krijgt terug", "· gets back": "· krijgt terug", "· you paid": "· jij betaalde",
   "in items still unclaimed": "aan items nog niet geclaimd",
   "people": "mensen", "person": "persoon", "No date": "Geen datum",
+
+  // groups
+  "Groups": "Groepen", "New group": "Nieuwe groep", "Group name": "Naam van de groep", "Create": "Maken",
+  "Lisbon trip, Roommates, Friday dinners…": "Weekendje Lissabon, Huisgenoten, Vrijdagborrel…",
+  "Put several bills in one group and see who's up or down overall. Great for trips and roommates.": "Zet meerdere rekeningen in één groep en zie wie er in totaal voor of achter staat. Handig voor reizen en huisgenoten.",
+  "Going on a trip, or sharing a house?": "Op reis, of een huis delen?",
+  "Start a group to keep a running tab across bills.": "Start een groep en houd een lopende rekening bij.",
+  "Untitled group": "Naamloze groep", "bill": "rekening", "bills": "rekeningen",
+  "All square": "Alles quitte", "You're owed": "Jij krijgt nog", "Your balance": "Jouw saldo",
+  "Opening the group…": "Groep openen…", "This group doesn't exist": "Deze groep bestaat niet",
+  "The link may be mistyped, or the group was deleted.": "De link is misschien verkeerd, of de groep is verwijderd.",
+  "Couldn't open this group": "Kon deze groep niet openen", "Couldn't create the group. Try again.": "Kon de groep niet maken. Probeer het opnieuw.",
+  "Share group link": "Groepslink delen", "Which one are you?": "Wie ben jij?",
+  "Tap your name so we can show your balance.": "Tik op je naam, dan laten we je saldo zien.",
+  "Add a bill to this group": "Rekening toevoegen aan deze groep", "Creating…": "Bezig…",
+  "The fewest payments to get everyone square.": "Zo min mogelijk betalingen om iedereen quitte te krijgen.",
+  "Everyone's square. Nice.": "Iedereen staat quitte. Mooi.", "Add a bill and balances show up here.": "Voeg een rekening toe, dan zie je hier de saldi.",
+  "pays": "betaalt", "paid": "betaalde", "paid by": "betaald door", "Copy reminder": "Herinnering kopiëren",
+  "Bills in different currencies are settled separately for now.": "Rekeningen in verschillende valuta worden voorlopig apart verrekend.",
+  "Balances": "Saldi", "Across every bill in the group, after payments.": "Over alle rekeningen in de groep, na betalingen.",
+  "(you)": "(jij)", "Bills": "Rekeningen", "Tap one to claim items or check the math.": "Tik erop om items te claimen of de berekening te checken.",
+  "No bills yet.": "Nog geen rekeningen.", "someone": "iemand",
+  "Payments": "Betalingen", "Recorded in this group. Tap × if one was a mistake.": "Genoteerd in deze groep. Tik op × als er een fout is.",
+  "Remove payment": "Betaling verwijderen", "People": "Mensen", "New bills in this group start with everyone here.": "Nieuwe rekeningen in deze groep beginnen met iedereen hier.",
+  "Group name": "Naam van de groep", "Part of": "Onderdeel van", "a group": "een groep",
 };
 
 const NL_PATTERNS = [
@@ -208,6 +233,7 @@ const NL_PATTERNS = [
   [/^Claimed by (.+)$/, "Geclaimd door $1"],
   [/^Also: (.+)$/, "Ook: $1"],
   [/^Hi (.+)$/, "Hoi $1"],
+  [/^Name for (.+)$/, "Naam van $1"],
   [/^(.+) of 12 people · tap the wallet to change who paid$/, "$1 van 12 mensen · tik op de portemonnee om te wijzigen wie betaalde"],
 ];
 

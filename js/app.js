@@ -1,7 +1,9 @@
 /* ---------- app shell: routing, theme, toasts ---------- */
 const parseRoute = () => {
   const m = location.hash.match(/^#\/b\/([a-z0-9]{6,32})/i);
-  return m ? { page: "bill", code: m[1].toLowerCase() } : { page: "home" };
+  if (m) return { page: "bill", code: m[1].toLowerCase() };
+  const g = location.hash.match(/^#\/g\/([a-z0-9]{6,32})/i);
+  return g ? { page: "group", code: g[1].toLowerCase() } : { page: "home" };
 };
 
 function App() {
@@ -41,6 +43,7 @@ function App() {
           <p className="text-sm text-muted mt-1">${/anonymous/i.test(error) ? "Guest access is turned off for this site. The owner needs to allow anonymous sign-ins in Supabase." : error}</p></${Card}>`
         : !user ? html`<${Card} className="p-6 text-center text-muted text-sm"><${Ic} n="Loader2" s=${18} c="animate-spin inline mr-2" />Getting things ready…</${Card}>`
         : route.page === "bill" ? html`<${BillPage} key=${route.code} code=${route.code} user=${user} toast=${toast} go=${go} />`
+        : route.page === "group" ? html`<${GroupPage} key=${route.code} code=${route.code} user=${user} toast=${toast} go=${go} />`
         : html`<${Home} user=${user} toast=${toast} go=${go} />`}
       <footer className="pt-6 text-center text-xs text-muted"><a href="privacy.html" className="hover:underline">Privacy</a> · <a href="terms.html" className="hover:underline">Terms</a></footer>
     </main>

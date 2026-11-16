@@ -245,7 +245,7 @@ function useBill(code, user, toast) {
       if (e1 || !row) { setStatus("error"); return; }
       claimsRef.current = claimsFromRows(cl);
       const s = withClaims({ receipt: row.receipt, tip: row.tip, participants: row.participants || [], isDemo: !!row.receipt?.isDemo, locked: !!row.locked, mode: row.created_by === user.id ? "host-setup" : "guest-split" }, claimsRef.current);
-      apply(s); setMeta({ id: bid, createdBy: row.created_by, shareCode: row.share_code }); setStatus("ready");
+      apply(s); setMeta({ id: bid, createdBy: row.created_by, shareCode: row.share_code, groupId: row.group_id || null }); setStatus("ready");
 
       channel = supa.channel("bill-" + bid)
         .on("postgres_changes", { event: "UPDATE", schema: "public", table: "bills", filter: `id=eq.${bid}` }, p => {

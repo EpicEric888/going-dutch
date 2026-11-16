@@ -196,6 +196,8 @@ function Home({ user, toast, go }) {
       </form>
     </${Card}>
 
+    <${GroupsSection} user=${user} toast=${toast} go=${go} />
+
     <div className="flex items-baseline justify-between">
       <h2 className="font-display text-xl font-bold">My bills</h2>
       ${bills && bills.length > 0 && html`<button type="button" onClick=${() => { setManaging(m => !m); setConfirmId(null); }} className="text-sm font-semibold text-money">${managing ? "Done" : "Edit"}</button>`}
@@ -411,6 +413,7 @@ function BillPage({ code, user, toast, go }) {
       </div>
 
     </nav>
+    ${meta?.groupId && html`<${GroupChip} groupId=${meta.groupId} />`}
     ${state.isDemo && html`<div className="flex items-center gap-3 rounded-2xl border border-dashed bg-moneysoft px-4 py-2.5 text-sm" style=${{ borderColor: "var(--money)" }}>
       <${Ic} n="Sparkles" s=${16} c="text-money shrink-0" /><span className="flex-1">This is an example bill. Play with it, then start a real one.</span>
       <button type="button" onClick=${newBill} className="font-semibold text-money whitespace-nowrap">New bill</button></div>`}
