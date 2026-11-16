@@ -337,7 +337,7 @@ function GroupPage({ code, user, toast, go }) {
       <${StepHead} n="2" title="Balances" sub="Across every bill in the group, after payments." />
       <ul className="mt-3 flex flex-col divide-y divide-line">${people.map(p => html`<li key=${p.id} className="flex items-center gap-3 py-2">
         <${Avatar} name=${p.name} color=${colorFor(people, p.id)} size=${30} />
-        <span className="min-w-0 flex-1 truncate font-medium" translate="no">${p.name}${p.userId === user.id ? html` <span className="text-xs font-normal text-muted">(you)</span>` : null}</span>
+        <span className="min-w-0 flex-1 truncate font-medium"><span translate="no">${p.name}</span>${p.userId === user.id ? html` <span className="text-xs font-normal text-muted">(you)</span>` : null}</span>
         <span className="text-right">${currencies.length === 0 ? html`<span className="text-sm text-muted">–</span>` : currencies.map(cur => {
           const v = nets[cur][p.id] || 0;
           return html`<span key=${cur} className=${"block font-mono text-sm tnum " + (v > 0.004 ? "text-money font-semibold" : v < -0.004 ? "text-danger" : "text-muted")}>${v > 0.004 ? "+" : ""}${fmt(v, cur)}</span>`;
