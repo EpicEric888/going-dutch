@@ -205,6 +205,23 @@ const NL = {
   "Payments": "Betalingen", "Recorded in this group. Tap × if one was a mistake.": "Genoteerd in deze groep. Tik op × als er een fout is.",
   "Remove payment": "Betaling verwijderen", "People": "Mensen", "New bills in this group start with everyone here.": "Nieuwe rekeningen in deze groep beginnen met iedereen hier.",
   "Group name": "Naam van de groep", "Part of": "Onderdeel van", "a group": "een groep",
+
+  // expenses + landing
+  "Add an expense": "Uitgave toevoegen", "Gas, tickets, groceries": "Benzine, tickets, boodschappen",
+  "Add a receipt": "Bon toevoegen", "Restaurant, split by item": "Restaurant, per item verdeeld",
+  "What was it?": "Wat was het?", "Gas, museum tickets, groceries…": "Benzine, museumtickets, boodschappen…",
+  "Gas": "Benzine", "Groceries": "Boodschappen", "Tickets": "Tickets", "Hotel": "Hotel", "Taxi": "Taxi", "Drinks": "Drankjes",
+  "Amount": "Bedrag", "Paid by": "Betaald door", "Split between": "Verdelen over", "Clear": "Wissen",
+  "Saving…": "Opslaan…", "Add expense": "Uitgave toevoegen",
+  "Expenses": "Uitgaven", "Every bill and expense in the group. Tap one to see or change it.": "Alle rekeningen en uitgaven in de groep. Tik erop om te bekijken of te wijzigen.",
+  "Nothing added yet.": "Nog niets toegevoegd.",
+  "Not just for dinner": "Niet alleen voor etentjes", "Dinner out": "Uit eten",
+  "Snap the receipt. Everyone taps what they had. Tax and tip get split by what you ordered, not evenly.": "Maak een foto van de bon. Iedereen tikt aan wat hij had. Btw en fooi worden verdeeld naar wat je bestelde, niet gelijk.",
+  "Trips and weekends": "Reizen en weekendjes weg",
+  "Make a group and share the link. Anyone can add what they paid. At the end you see who owes who, in as few payments as possible.": "Maak een groep en deel de link. Iedereen kan toevoegen wat hij betaalde. Aan het eind zie je wie wie moet betalen, met zo min mogelijk betalingen.",
+  "Gas, tickets, groceries": "Benzine, tickets, boodschappen",
+  "No receipt needed. Add the amount, pick who paid and who's in, done.": "Geen bon nodig. Vul het bedrag in, kies wie betaalde en wie meedoet, klaar.",
+  "Start a group": "Start een groep",
 };
 
 const NL_PATTERNS = [
@@ -234,6 +251,7 @@ const NL_PATTERNS = [
   [/^Also: (.+)$/, "Ook: $1"],
   [/^Hi (.+)$/, "Hoi $1"],
   [/^Name for (.+)$/, "Naam van $1"],
+  [/^(.+) each$/, "$1 per persoon"],
   [/^(.+) of 12 people · tap the wallet to change who paid$/, "$1 van 12 mensen · tik op de portemonnee om te wijzigen wie betaalde"],
 ];
 

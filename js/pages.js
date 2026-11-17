@@ -141,6 +141,24 @@ function HowItWorks() {
   </div>`;
 }
 
+function UseCases({ onExample }) {
+  const startGroup = () => window.dispatchEvent(new CustomEvent("gd:newgroup"));
+  const cases = [
+    { icon: "UtensilsCrossed", title: "Dinner out", text: "Snap the receipt. Everyone taps what they had. Tax and tip get split by what you ordered, not evenly.", cta: "Try an example", on: onExample },
+    { icon: "Plane", title: "Trips and weekends", text: "Make a group and share the link. Anyone can add what they paid. At the end you see who owes who, in as few payments as possible.", cta: "Start a group", on: startGroup },
+    { icon: "Fuel", title: "Gas, tickets, groceries", text: "No receipt needed. Add the amount, pick who paid and who's in, done.", cta: "Start a group", on: startGroup },
+  ];
+  return html`<section aria-labelledby="uses" className="flex flex-col gap-3">
+    <h2 id="uses" className="font-display text-xl font-bold">Not just for dinner</h2>
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">${cases.map(c => html`<${Card} key=${c.title} className="flex flex-col p-4">
+      <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-moneysoft text-money"><${Ic} n=${c.icon} s=${19} /></span>
+      <p className="mt-3 font-semibold">${c.title}</p>
+      <p className="mt-1 flex-1 text-sm text-muted leading-snug">${c.text}</p>
+      <button type="button" onClick=${c.on} className="mt-3 inline-flex items-center gap-1 self-start text-sm font-semibold text-money">${c.cta}<${Ic} n="ArrowRight" s=${14} /></button>
+    </${Card}>`)}</div>
+  </section>`;
+}
+
 function Home({ user, toast, go }) {
   const [bills, setBills] = useState(null);
   const [busy, setBusy] = useState(false);
@@ -188,6 +206,7 @@ function Home({ user, toast, go }) {
     </div>
 
     ${!(bills && bills.length) && html`<${HowItWorks} />`}
+    ${!(bills && bills.length) && html`<${UseCases} onExample=${() => create(true)} />`}
 
     <${Card} className="p-4">
       <form onSubmit=${openCode} className="flex gap-2">

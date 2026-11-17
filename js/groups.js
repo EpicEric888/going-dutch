@@ -95,6 +95,77 @@ async function createBillInGroup(user, group, meId) {
   return data.share_code;
 }
 
+/* a quick expense is a one-item bill, split evenly among the people picked, no tax or tip */
+const EXPENSE_KINDS = [["Gas", "Fuel"], ["Groceries", "ShoppingCart"], ["Tickets", "Ticket"], ["Hotel", "BedDouble"], ["Taxi", "Car"], ["Drinks", "Wine"]];
+const expenseIcon = R => (EXPENSE_KINDS.find(([k]) => k === R?.category) || [null, R?.kind === "expense" ? "Wallet" : "Receipt"])[1];
+
+async function createExpenseInGroup(user, group, { what, amount, payerId, ids, category }) {
+  const participants = group.people.map(p => ({
+    id: p.id, name: p.name, isHost: p.id === payerId,
+    ...(p.userId ? { userId: p.userId } : {}),
+    ...(p.userId === user.id && p.id === payerId ? { pay: user.user_metadata?.pay || {} } : {})
+  }));
+  const item = { id: uid(), name: what, price: String(amount), quantity: "1" };
+  const today = new Date(); const d = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const { data, error } = await supa.from("bills").insert({
+    created_by: user.id, group_id: group.id,
+    receipt: { kind: "expense", category: category || null, merchant: what, date: d, currency: group.currency || "USD", items: [item], tax: "", fees: [] },
+    tip: { mode: "percent", value: "0" }, participants
+  }).select("id").single();
+  if (error) throw error;
+  const { error: e2 } = await supa.from("claims").insert(ids.map(pid => ({ bill_id: data.id, participant_id: pid, item_id: item.id })));
+  if (e2) throw e2;
+}
+
+function ExpenseForm({ user, group, people, me, onDone, toast }) {
+  const [what, setWhat] = useState("");
+  const [category, setCategory] = useState(null);
+  const [amount, setAmount] = useState("");
+  const [payer, setPayer] = useState(me?.id || people[0]?.id);
+  const [ids, setIds] = useState(people.map(p => p.id));
+  const [busy, setBusy] = useState(false);
+  const cur = group.currency || "USD";
+  const amt = num(amount);
+  const ok = what.trim() && amt > 0 && payer && ids.length > 0;
+  const toggle = id => setIds(v => v.includes(id) ? v.filter(x => x !== id) : [...v, id]);
+  const submit = async e => {
+    e.preventDefault(); if (!ok) return;
+    setBusy(true);
+    try { await createExpenseInGroup(user, group, { what: what.trim(), amount: r2(amt), payerId: payer, ids, category }); toast(tl("Expense added", "Uitgave toegevoegd")); onDone(true); }
+    catch (err) { toast("Couldn't save that change. Check your connection."); setBusy(false); }
+  };
+  const chip = (active, onClick, children, key) => html`<button key=${key} type="button" onClick=${onClick}
+    className=${"inline-flex items-center gap-1.5 rounded-full border py-1 pl-1 pr-3 text-sm font-semibold " + (active ? "border-transparent bg-ink text-bg" : "border-line bg-card hover:bg-soft")}>${children}</button>`;
+  return html`<${Card} className="p-4">
+    <form onSubmit=${submit} className="flex flex-col gap-4">
+      <div className="flex items-center justify-between"><p className="font-display text-lg font-bold">Add an expense</p>
+        <button type="button" onClick=${() => onDone(false)} aria-label="Close" className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted hover:bg-soft"><${Ic} n="X" s=${16} /></button></div>
+      <div>
+        <${Label} htmlFor="exp-what">What was it?</${Label}>
+        <input id="exp-what" className=${inputCls} value=${what} maxLength=${60} placeholder="Gas, museum tickets, groceries…" onInput=${e => { setWhat(e.target.value); setCategory(null); }} />
+        <div className="mt-2 flex flex-wrap gap-1.5">${EXPENSE_KINDS.map(([k, icon]) => html`<button key=${k} type="button" onClick=${() => { setWhat(tl(k, NL[k] || k)); setCategory(k); }}
+          className=${"inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold " + (category === k ? "border-transparent bg-moneysoft text-money" : "border-line bg-card text-muted hover:bg-soft")}><${Ic} n=${icon} s=${13} />${k}</button>`)}</div>
+      </div>
+      <div>
+        <${Label} htmlFor="exp-amt">Amount</${Label}>
+        <div className="relative"><span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted text-sm">${curSymbol(cur)}</span>
+          <input id="exp-amt" className=${inputCls + " pl-8 font-mono"} inputMode="decimal" value=${amount} placeholder="0.00" onInput=${e => setAmount(e.target.value.replace(",", "."))} /></div>
+      </div>
+      <div>
+        <p className="mb-1.5 text-sm font-semibold">Paid by</p>
+        <div className="flex flex-wrap gap-1.5">${people.map(p => chip(payer === p.id, () => setPayer(p.id), html`<${Avatar} name=${p.name} color=${colorFor(people, p.id)} size=${24} /><span translate="no">${p.name}</span>`, p.id))}</div>
+      </div>
+      <div>
+        <div className="mb-1.5 flex items-baseline justify-between"><p className="text-sm font-semibold">Split between</p>
+          <button type="button" onClick=${() => setIds(ids.length === people.length ? [] : people.map(p => p.id))} className="text-xs font-semibold text-money">${ids.length === people.length ? "Clear" : "Everyone"}</button></div>
+        <div className="flex flex-wrap gap-1.5">${people.map(p => chip(ids.includes(p.id), () => toggle(p.id), html`<${Avatar} name=${p.name} color=${colorFor(people, p.id)} size=${24} /><span translate="no">${p.name}</span>`, p.id))}</div>
+        ${ok && html`<p className="mt-2 text-xs text-muted">${tl(`${fmt(amt / ids.length, cur)} each`, `${fmt(amt / ids.length, cur)} per persoon`)}</p>`}
+      </div>
+      <button type="submit" disabled=${!ok || busy} className="rounded-xl bg-ink text-bg px-4 py-2.5 font-semibold disabled:opacity-50">${busy ? "Saving…" : "Add expense"}</button>
+    </form>
+  </${Card}>`;
+}
+
 function useGroup(code, user, toast) {
   const [group, setGroup] = useState(null);
   const [bills, setBills] = useState([]);
@@ -157,6 +228,12 @@ function GroupsSection({ user, toast, go }) {
   const [naming, setNaming] = useState(false);
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  const boxRef = useRef(null);
+  useEffect(() => {
+    const open = () => { setNaming(true); setTimeout(() => boxRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 50); };
+    window.addEventListener("gd:newgroup", open);
+    return () => window.removeEventListener("gd:newgroup", open);
+  }, []);
   useEffect(() => {
     let alive = true;
     listMyGroups().then(g => alive && setGroups(g)).catch(() => alive && setGroups([]));
@@ -171,7 +248,7 @@ function GroupsSection({ user, toast, go }) {
     catch (err) { toast("Couldn't create the group. Try again."); setBusy(false); }
   };
 
-  return html`<div className="flex flex-col gap-3">
+  return html`<div ref=${boxRef} className="flex flex-col gap-3">
     <div className="flex items-baseline justify-between">
       <h2 className="font-display text-xl font-bold">Groups</h2>
       ${!naming && html`<button type="button" onClick=${() => setNaming(true)} className="inline-flex items-center gap-1 text-sm font-semibold text-money"><${Ic} n="Plus" s=${15} />New group</button>`}
@@ -228,8 +305,9 @@ function GroupChip({ groupId }) {
 }
 
 function GroupPage({ code, user, toast, go }) {
-  const { group, bills, status, save } = useGroup(code, user, toast);
+  const { group, bills, status, save, reload } = useGroup(code, user, toast);
   const [busy, setBusy] = useState(false);
+  const [adding, setAdding] = useState(false);
   const [newName, setNewName] = useState("");
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState("");
@@ -310,8 +388,13 @@ function GroupPage({ code, user, toast, go }) {
         <${Avatar} name=${p.name} color=${colorFor(people, p.id)} size=${26} /><span translate="no">${p.name}</span></button>`)}</div>
     </${Card}>`}
 
-    <button type="button" disabled=${busy} onClick=${addBill} className="flex items-center justify-center gap-2 rounded-2xl px-4 py-3 font-semibold text-moneyink shadow-card disabled:opacity-60" style=${{ background: "var(--money)" }}>
-      <${Ic} n="Plus" s=${18} />${busy ? "Creating…" : "Add a bill to this group"}</button>
+    ${adding ? html`<${ExpenseForm} user=${user} group=${group} people=${people} me=${me} toast=${toast} onDone=${saved => { setAdding(false); if (saved) reload(); }} />`
+      : html`<div className="grid grid-cols-2 gap-2">
+        <button type="button" disabled=${busy || people.length === 0} onClick=${() => setAdding(true)} className="flex flex-col items-center justify-center gap-0.5 rounded-2xl px-3 py-3 font-semibold text-moneyink shadow-card disabled:opacity-60" style=${{ background: "var(--money)" }}>
+          <span className="inline-flex items-center gap-1.5"><${Ic} n="Plus" s=${17} />Add an expense</span><span className="text-[11px] font-medium opacity-80">Gas, tickets, groceries</span></button>
+        <button type="button" disabled=${busy} onClick=${addBill} className="flex flex-col items-center justify-center gap-0.5 rounded-2xl border border-line bg-card px-3 py-3 font-semibold shadow-card hover:bg-soft disabled:opacity-60">
+          <span className="inline-flex items-center gap-1.5"><${Ic} n="Receipt" s=${17} />${busy ? "Creating…" : "Add a receipt"}</span><span className="text-[11px] font-medium text-muted">Restaurant, split by item</span></button>
+      </div>`}
 
     <${Card} className="p-4">
       <${StepHead} n="1" title="Settle up" sub="The fewest payments to get everyone square." />
@@ -346,12 +429,12 @@ function GroupPage({ code, user, toast, go }) {
     </${Card}>
 
     <${Card} className="p-4">
-      <${StepHead} n="3" title="Bills" sub="Tap one to claim items or check the math." />
-      ${realBills.length === 0 ? html`<p className="mt-3 text-sm text-muted">No bills yet.</p>`
+      <${StepHead} n="3" title="Expenses" sub="Every bill and expense in the group. Tap one to see or change it." />
+      ${realBills.length === 0 ? html`<p className="mt-3 text-sm text-muted">Nothing added yet.</p>`
         : html`<ul className="mt-3 flex flex-col gap-2">${realBills.map(b => {
             const R = b.receipt || {}, host = b.state.participants.find(p => p.isHost);
             return html`<li key=${b.id}><a href=${"#/b/" + b.share_code} className="flex items-center gap-3 rounded-xl bg-soft p-3 hover:opacity-90">
-              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-card text-money"><${Ic} n="Receipt" s=${17} /></span>
+              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-card text-money"><${Ic} n=${expenseIcon(R)} s=${17} /></span>
               <span className="min-w-0 flex-1"><span className="block truncate font-semibold" translate="no">${R.merchant || "Untitled bill"}</span>
                 <span className="block text-xs text-muted">${R.date ? new Date(R.date + "T12:00").toLocaleDateString(LOCALE(), { month: "short", day: "numeric" }) : "No date"} · <span>paid by</span> <span translate="no">${host?.name || "someone"}</span></span></span>
               <span className="font-mono text-sm tnum">${fmt(b.calc.total, R.currency || "USD")}</span>
