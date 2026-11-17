@@ -103,6 +103,14 @@ function ReceiptArt() {
   </svg>`;
 }
 
+function ScanIcon({ s = 34 }) {
+  return html`<svg width=${s} height=${s} viewBox="0 0 48 48" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M6 15V9a3 3 0 0 1 3-3h6M33 6h6a3 3 0 0 1 3 3v6M42 33v6a3 3 0 0 1-3 3h-6M15 42H9a3 3 0 0 1-3-3v-6" />
+    <path d="M16 13h16v22l-2.7-1.8-2.6 1.8-2.7-1.8-2.6 1.8-2.7-1.8-2.7 1.8z" />
+    <path d="M20 19.5h8M20 24h8M20 28.5h5" />
+  </svg>`;
+}
+
 function Chooser({ busy, onScan, onCreate, onExpense, onGroup, onExample, onOpenCode }) {
   const fileRef = useRef(null);
   const [linkOpen, setLinkOpen] = useState(false);
@@ -127,7 +135,7 @@ function Chooser({ busy, onScan, onCreate, onExpense, onGroup, onExample, onOpen
 
     <div className="grid grid-cols-2 gap-3 lg:hidden">
       <button type="button" disabled=${busy} onClick=${pickFile} className=${"col-span-2 flex items-center gap-4 rounded-3xl border p-4 " + btn} style=${featuredBg}>
-        <span className="inline-flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-2xl text-money" style=${{ background: "color-mix(in srgb, var(--money) 14%, transparent)" }}><${Ic} n="ScanLine" s=${34} /></span>
+        <span className="inline-flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-2xl text-money" style=${{ background: "color-mix(in srgb, var(--money) 14%, transparent)" }}><${ScanIcon} s=${40} /></span>
         <span className="min-w-0 flex-1"><span className="block font-display text-xl font-bold">Scan a receipt</span>
           <span className="mt-0.5 block text-sm text-muted leading-snug">Upload a receipt and let everyone claim what they had.</span></span>
         <${Ic} n="ChevronRight" s=${20} c="shrink-0 text-muted" />
@@ -147,17 +155,17 @@ function Chooser({ busy, onScan, onCreate, onExpense, onGroup, onExample, onOpen
 
     <div className="hidden lg:grid grid-cols-[1.7fr_1fr_1fr_1fr] gap-4">
       <button type="button" disabled=${busy} onClick=${pickFile} className=${"relative flex min-h-[290px] flex-col overflow-hidden rounded-3xl border p-7 " + btn} style=${featuredBg}>
-        <span className="text-money"><${Ic} n="ScanLine" s=${64} /></span>
-        <span className="relative z-10 mt-auto max-w-[62%]"><span className="block font-display text-3xl font-bold">Scan a receipt</span>
+        <span className="text-money"><${ScanIcon} s=${76} /></span>
+        <span className="relative z-10 mt-5 max-w-[62%]"><span className="block font-display text-3xl font-bold">Scan a receipt</span>
           <span className="mt-2 block text-[15px] text-muted leading-snug">Upload a receipt and let everyone claim what they had.</span></span>
-        <span className="relative z-10 mt-5">${arrow(true)}</span>
+        <span className="relative z-10 mt-auto pt-5">${arrow(true)}</span>
         <${ReceiptArt} />
       </button>
       ${cards.map(c => html`<button key=${c.key} type="button" disabled=${busy} onClick=${c.on} className=${"flex min-h-[290px] flex-col rounded-3xl border border-line bg-card p-6 " + btn}>
         <span className="text-money"><${Ic} n=${c.icon} s=${44} /></span>
-        <span className="mt-auto block font-display text-2xl font-bold leading-tight">${c.title}</span>
+        <span className="mt-7 block font-display text-2xl font-bold leading-tight">${c.title}</span>
         <span className="mt-2 block text-[15px] text-muted leading-snug">${c.text}</span>
-        <span className="mt-5">${arrow(false)}</span>
+        <span className="mt-auto pt-5">${arrow(false)}</span>
       </button>`)}
     </div>
 
