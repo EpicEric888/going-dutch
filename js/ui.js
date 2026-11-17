@@ -20,6 +20,17 @@ function UploadZone({ onParsed, onPhoto, sampleState }) {
   const [status, setStatus] = useState({ kind: "idle" });
   const [preview, setPreview] = useState(null);
   const inputRef = useRef(null);
+  // hand-off from the home page: a photo picked there, or where to scroll to
+  useEffect(() => {
+    const p = window.__gdPending; if (!p) return;
+    window.__gdPending = null;
+    if (p.file) { inputRef.current?.closest("section,div")?.scrollIntoView?.({ block: "start" }); handle(p.file); }
+    else if (p.focus) setTimeout(() => {
+      const el = document.getElementById(p.focus === "share" ? "share-step" : "merchant");
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (p.focus === "items") el?.focus?.({ preventScroll: true });
+    }, 300);
+  }, []);
 
   async function pdfToBlob(file) {
     if (!window.pdfjsLib) {

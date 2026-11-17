@@ -223,9 +223,9 @@ function useGroup(code, user, toast) {
 /* ---------- UI ---------- */
 const personName = (people, id) => people.find(p => p.id === id)?.name || "Someone";
 
-function GroupsSection({ user, toast, go }) {
+function GroupsSection({ user, toast, go, hideEmpty = false, startOpen = false }) {
   const [groups, setGroups] = useState(null);
-  const [naming, setNaming] = useState(false);
+  const [naming, setNaming] = useState(startOpen);
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
   const boxRef = useRef(null);
@@ -248,6 +248,7 @@ function GroupsSection({ user, toast, go }) {
     catch (err) { toast("Couldn't create the group. Try again."); setBusy(false); }
   };
 
+  if (hideEmpty && !naming && (!groups || groups.length === 0)) return html`<div ref=${boxRef}></div>`;
   return html`<div ref=${boxRef} className="flex flex-col gap-3">
     <div className="flex items-baseline justify-between">
       <h2 className="font-display text-xl font-bold">Groups</h2>

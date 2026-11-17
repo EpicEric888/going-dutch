@@ -94,75 +94,93 @@ function AccountMenu({ user, toast }) {
 }
 
 /* ---------- home: my bills ---------- */
-/* ---------- landing: mini demo + how it works ---------- */
-const DEMO_PEOPLE = [["Sam", "#2f9e6e"], ["Maya", "#5b5bd6"], ["Jordan", "#d68a1f"]];
-function DemoReceipt() {
-  const cur = guessCurrency();
-  const av = (i, delay) => html`<span key=${i + "-" + delay} className="gd-pop -ml-1.5 first:ml-0 inline-flex h-6 w-6 items-center justify-center rounded-full text-[10px] font-bold text-white ring-2 ring-white"
-    style=${{ background: DEMO_PEOPLE[i][1], animationDelay: delay + "s" }}>${DEMO_PEOPLE[i][0][0]}</span>`;
-  const rows = [
-    ["Burger", "16.00", [[0, 0.5]]],
-    ["Fries to share", "9.00", [[1, 1.0], [2, 1.3]]],
-    ["Margarita", "12.00", [[1, 1.7]]],
-  ];
-  const totals = [["Sam", "19.20", 0], ["Maya", "19.80", 1], ["Jordan", "5.40", 2]];
-  return html`<div className="relative mt-4 rounded-xl bg-white p-3 text-[#13241d] shadow-card" aria-label="Example: Sam had the burger, Maya and Jordan shared fries, Maya had a margarita. With tax and tip, Sam owes 19.20, Maya 19.80, Jordan 5.40.">
-    <ul className="flex flex-col divide-y divide-black/5">
-      ${rows.map(([name, price, who]) => html`<li key=${name} className="flex items-center gap-2 py-1.5">
-        <span className="flex-1 text-sm font-medium">${name}</span>
-        <span className="flex min-w-[44px] justify-end">${who.map(([i, d]) => av(i, d))}</span>
-        <span className="w-16 text-right font-mono text-sm tnum">${fmt(+price, cur)}</span>
-      </li>`)}
-    </ul>
-    <div className="gd-fade mt-1.5 flex items-center justify-between gap-2 rounded-lg bg-[#eef6f1] px-2.5 py-2 text-xs" style=${{ animationDelay: "2.2s" }}>
-      <span className="text-[#4c5f57]">+ tax & tip, split fairly</span>
-      <span className="flex gap-2.5 font-semibold">${totals.map(([n, v, i]) => html`<span key=${n} className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full" style=${{ background: DEMO_PEOPLE[i][1] }}></span>${fmt(+v, cur)}</span>`)}</span>
-    </div>
-  </div>`;
-}
-function HowItWorks() {
-  const steps = [
-    ["Camera", "Snap the receipt", "We read the items for you"],
-    ["Send", "Share the link", "Text it to the group"],
-    ["Hand", "Everyone taps their items", "Totals update for all"],
-  ];
-  return html`<div>
-    <ol className="grid grid-cols-3 gap-2">
-      ${steps.map(([icon, title, sub], i) => html`<li key=${title} className="flex flex-col items-center rounded-2xl border border-line bg-card px-2 py-3 text-center">
-        <span className="relative inline-flex h-10 w-10 items-center justify-center rounded-full bg-moneysoft text-money">
-          <${Ic} n=${icon} s=${18} />
-          <span className="absolute -right-1 -top-1 inline-flex h-4 w-4 items-center justify-center rounded-full bg-ink text-bg font-mono text-[9px] font-bold">${i + 1}</span>
-        </span>
-        <span className="mt-2 text-[13px] font-semibold leading-tight">${title}</span>
-        <span className="mt-0.5 text-[11px] leading-snug text-muted">${sub}</span>
-      </li>`)}
-    </ol>
-    <p className="mt-2 text-center text-xs text-muted"><${Ic} n="ShieldCheck" s=${13} c="inline -mt-0.5 mr-1" />Friends don't need an app or an account.</p>
-  </div>`;
+/* ---------- home: "What are we splitting?" ---------- */
+function ReceiptArt() {
+  return html`<svg viewBox="0 0 150 190" className="pointer-events-none absolute -right-2 bottom-4 h-[170px] w-[134px] rotate-[8deg] drop-shadow-xl" aria-hidden="true">
+    <path d="M10 8 h130 v160 l-10 8 l-10 -8 l-10 8 l-10 -8 l-10 8 l-10 -8 l-10 8 l-10 -8 l-10 8 l-10 -8 l-10 8 l-10 -8 l-10 8 z" fill="var(--card)" stroke="var(--line)" />
+    ${[[32, 70], [48, 92], [64, 58], [80, 80], [104, 66], [120, 88], [146, 92]].map(([y, w], i) => html`<rect key=${i} x=${i === 6 ? 24 : 24} y=${y} width=${w} height="6" rx="3" fill="var(--line)" />`)}
+    <rect x="112" y="104" width="14" height="6" rx="3" fill="var(--line)" />
+  </svg>`;
 }
 
-function UseCases({ onExample }) {
-  const startGroup = () => window.dispatchEvent(new CustomEvent("gd:newgroup"));
-  const cases = [
-    { icon: "UtensilsCrossed", title: "Dinner out", text: "Snap the receipt. Everyone taps what they had. Tax and tip get split by what you ordered, not evenly.", cta: "Try an example", on: onExample },
-    { icon: "Plane", title: "Trips and weekends", text: "Make a group and share the link. Anyone can add what they paid. At the end you see who owes who, in as few payments as possible.", cta: "Start a group", on: startGroup },
-    { icon: "Fuel", title: "Gas, tickets, groceries", text: "No receipt needed. Add the amount, pick who paid and who's in, done.", cta: "Start a group", on: startGroup },
+function Chooser({ busy, onScan, onCreate, onExpense, onGroup, onExample, onOpenCode }) {
+  const fileRef = useRef(null);
+  const [linkOpen, setLinkOpen] = useState(false);
+  const [code, setCode] = useState("");
+  const pickFile = () => fileRef.current?.click();
+  const arrow = (solid) => html`<span className=${"inline-flex h-11 w-11 items-center justify-center rounded-full " + (solid ? "" : "bg-moneysoft text-money")}
+    style=${solid ? { background: "var(--money)", color: "var(--moneyink)" } : null}><${Ic} n="ArrowRight" s=${19} /></span>`;
+  const cards = [
+    { key: "create", icon: "PlusCircle", title: "Create a bill", text: "Add items manually and share the bill.", on: onCreate },
+    { key: "expense", icon: "Coins", title: "Split an expense", text: "Divide a single amount between friends.", on: onExpense },
+    { key: "group", icon: "Users", title: "Start a group", text: "Track shared expenses across a trip or weekend.", on: onGroup },
   ];
-  return html`<section aria-labelledby="uses" className="flex flex-col gap-3">
-    <h2 id="uses" className="font-display text-xl font-bold">Not just for dinner</h2>
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">${cases.map(c => html`<${Card} key=${c.title} className="flex flex-col p-4">
-      <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-moneysoft text-money"><${Ic} n=${c.icon} s=${19} /></span>
-      <p className="mt-3 font-semibold">${c.title}</p>
-      <p className="mt-1 flex-1 text-sm text-muted leading-snug">${c.text}</p>
-      <button type="button" onClick=${c.on} className="mt-3 inline-flex items-center gap-1 self-start text-sm font-semibold text-money">${c.cta}<${Ic} n="ArrowRight" s=${14} /></button>
-    </${Card}>`)}</div>
+  const featuredBg = { background: "linear-gradient(135deg, color-mix(in srgb, var(--money) 16%, var(--card)), color-mix(in srgb, var(--money) 5%, var(--card)))", borderColor: "color-mix(in srgb, var(--money) 28%, var(--line))" };
+  const btn = "text-left transition hover:-translate-y-0.5 hover:shadow-card disabled:opacity-60 disabled:hover:translate-y-0";
+
+  return html`<section aria-labelledby="choose" className="flex flex-col gap-5">
+    <input ref=${fileRef} type="file" accept="image/*,application/pdf" className="hidden" onChange=${e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) onScan(f); }} />
+    <div className="lg:text-center">
+      <h1 id="choose" className="font-display text-[34px] leading-[1.05] font-extrabold tracking-tight sm:text-5xl">What are we splitting?</h1>
+      <p className="mt-2 text-muted sm:text-lg">Choose how you'd like to get started.</p>
+    </div>
+
+    <div className="grid grid-cols-2 gap-3 lg:hidden">
+      <button type="button" disabled=${busy} onClick=${pickFile} className=${"col-span-2 flex items-center gap-4 rounded-3xl border p-4 " + btn} style=${featuredBg}>
+        <span className="inline-flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-2xl text-money" style=${{ background: "color-mix(in srgb, var(--money) 14%, transparent)" }}><${Ic} n="ScanLine" s=${34} /></span>
+        <span className="min-w-0 flex-1"><span className="block font-display text-xl font-bold">Scan a receipt</span>
+          <span className="mt-0.5 block text-sm text-muted leading-snug">Upload a receipt and let everyone claim what they had.</span></span>
+        <${Ic} n="ChevronRight" s=${20} c="shrink-0 text-muted" />
+      </button>
+      ${cards.slice(0, 2).map(c => html`<button key=${c.key} type="button" disabled=${busy} onClick=${c.on} className=${"flex flex-col rounded-3xl border border-line bg-card p-4 " + btn}>
+        <span className="text-money"><${Ic} n=${c.icon} s=${30} /></span>
+        <span className="mt-3 flex items-center gap-1"><span className="flex-1 font-display text-lg font-bold leading-tight">${c.title}</span><${Ic} n="ChevronRight" s=${18} c="shrink-0 text-muted" /></span>
+        <span className="mt-1 text-sm text-muted leading-snug">${c.text}</span>
+      </button>`)}
+      <button type="button" disabled=${busy} onClick=${onGroup} className=${"col-span-2 flex items-center gap-4 rounded-3xl border border-line bg-card p-4 " + btn}>
+        <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-moneysoft text-money"><${Ic} n="Users" s=${26} /></span>
+        <span className="min-w-0 flex-1"><span className="block font-display text-lg font-bold">Start a group</span>
+          <span className="block text-sm text-muted leading-snug">Track shared expenses across a trip or weekend.</span></span>
+        <${Ic} n="ChevronRight" s=${20} c="shrink-0 text-muted" />
+      </button>
+    </div>
+
+    <div className="hidden lg:grid grid-cols-[1.7fr_1fr_1fr_1fr] gap-4">
+      <button type="button" disabled=${busy} onClick=${pickFile} className=${"relative flex min-h-[290px] flex-col overflow-hidden rounded-3xl border p-7 " + btn} style=${featuredBg}>
+        <span className="text-money"><${Ic} n="ScanLine" s=${64} /></span>
+        <span className="relative z-10 mt-auto max-w-[62%]"><span className="block font-display text-3xl font-bold">Scan a receipt</span>
+          <span className="mt-2 block text-[15px] text-muted leading-snug">Upload a receipt and let everyone claim what they had.</span></span>
+        <span className="relative z-10 mt-5">${arrow(true)}</span>
+        <${ReceiptArt} />
+      </button>
+      ${cards.map(c => html`<button key=${c.key} type="button" disabled=${busy} onClick=${c.on} className=${"flex min-h-[290px] flex-col rounded-3xl border border-line bg-card p-6 " + btn}>
+        <span className="text-money"><${Ic} n=${c.icon} s=${44} /></span>
+        <span className="mt-auto block font-display text-2xl font-bold leading-tight">${c.title}</span>
+        <span className="mt-2 block text-[15px] text-muted leading-snug">${c.text}</span>
+        <span className="mt-5">${arrow(false)}</span>
+      </button>`)}
+    </div>
+
+    <div className="rounded-3xl border border-line bg-card">
+      <button type="button" onClick=${() => setLinkOpen(o => !o)} aria-expanded=${linkOpen} className="flex w-full items-center gap-4 p-4 text-left lg:p-5">
+        <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-moneysoft text-money lg:h-16 lg:w-16"><${Ic} n="Link" s=${26} /></span>
+        <span className="hidden h-10 w-px bg-line lg:block"></span>
+        <span className="min-w-0 flex-1"><span className="block font-display text-lg font-bold lg:text-2xl">Have a bill link?</span>
+          <span className="block text-sm text-muted lg:text-base">Join a split someone shared with you.</span></span>
+        <span className="lg:hidden"><${Ic} n=${linkOpen ? "ChevronDown" : "ChevronRight"} s=${20} c="text-muted" /></span>
+        <span className="hidden lg:block">${arrow(false)}</span>
+      </button>
+      ${linkOpen && html`<form onSubmit=${e => { e.preventDefault(); onOpenCode(code); }} className="flex gap-2 px-4 pb-4 lg:px-5 lg:pb-5">
+        <input autoFocus aria-label="Paste a bill link" className=${inputCls} value=${code} onInput=${e => setCode(e.target.value)} placeholder="Paste a bill or group link" />
+        <button type="submit" className="shrink-0 rounded-xl bg-ink text-bg px-4 font-semibold">Open</button>
+      </form>`}
+    </div>
+
+    <p className="text-center text-sm text-muted">New here? <button type="button" disabled=${busy} onClick=${onExample} className="font-semibold text-money underline-offset-2 hover:underline">Try an example bill</button></p>
   </section>`;
 }
 
-function Home({ user, toast, go }) {
-  const [bills, setBills] = useState(null);
-  const [busy, setBusy] = useState(false);
-  const [code, setCode] = useState("");
+function BillsList({ user, toast, bills, setBills, title = "My bills" }) {
   const [managing, setManaging] = useState(false);
   const [confirmId, setConfirmId] = useState(null);
   const [removing, setRemoving] = useState(null);
@@ -175,50 +193,9 @@ function Home({ user, toast, go }) {
     } catch (e) { toast("Couldn't remove that bill. Try again."); }
     setRemoving(null); setConfirmId(null);
   };
-  useEffect(() => {
-    if (!user) return;
-    let alive = true;
-    listMyBills().then(b => alive && setBills(b)).catch(() => alive && setBills([]));
-    return () => { alive = false; };
-  }, [user?.id]);
-
-  const create = async demo => {
-    setBusy(true);
-    try { go("/b/" + await createBill(user, demo)); }
-    catch (e) { toast("Couldn't create the bill. Try again."); setBusy(false); }
-  };
-  const openCode = e => {
-    e.preventDefault();
-    const m = code.trim().match(/([a-f0-9]{16})\s*$/i);
-    if (m) go("/b/" + m[1].toLowerCase()); else toast("That doesn't look like a Going Dutch link");
-  };
-
-  return html`<div className="flex flex-col gap-4">
-    <div className="relative overflow-hidden rounded-2xl p-5 text-white shadow-card" style=${{ background: "linear-gradient(135deg,var(--hero1),var(--hero2))" }}>
-      <div className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-white/10"></div>
-      <p className="relative font-display text-3xl font-extrabold leading-tight max-w-[16ch]">Snap the receipt. Everyone taps what they had.</p>
-      <p className="relative text-sm text-white/80 mt-2 max-w-[40ch]">Tax, tip and fees get split fairly.</p>
-      <${DemoReceipt} />
-      <div className="relative mt-4 flex flex-wrap gap-2">
-        <button type="button" disabled=${busy} onClick=${() => create(false)} className="inline-flex items-center gap-2 rounded-xl bg-white px-4 py-2.5 font-semibold disabled:opacity-60" style=${{ color: "var(--hero2)" }}><${Ic} n="Plus" s=${16} />Split a bill</button>
-        <button type="button" disabled=${busy} onClick=${() => create(true)} className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 font-semibold disabled:opacity-60" style=${{ background: "rgba(255,255,255,.15)" }}><${Ic} n="Sparkles" s=${16} />Try an example</button>
-      </div>
-    </div>
-
-    ${!(bills && bills.length) && html`<${HowItWorks} />`}
-    ${!(bills && bills.length) && html`<${UseCases} onExample=${() => create(true)} />`}
-
-    <${Card} className="p-4">
-      <form onSubmit=${openCode} className="flex gap-2">
-        <input id="open-link" aria-label="Paste a bill link" className=${inputCls} value=${code} onInput=${e => setCode(e.target.value)} placeholder="Paste a bill link from a friend" />
-        <button type="submit" className="shrink-0 rounded-xl bg-ink text-bg px-4 font-semibold">Open</button>
-      </form>
-    </${Card}>
-
-    <${GroupsSection} user=${user} toast=${toast} go=${go} />
-
+  return html`<div className="flex flex-col gap-3">
     <div className="flex items-baseline justify-between">
-      <h2 className="font-display text-xl font-bold">My bills</h2>
+      <h2 className="font-display text-xl font-bold">${title}</h2>
       ${bills && bills.length > 0 && html`<button type="button" onClick=${() => { setManaging(m => !m); setConfirmId(null); }} className="text-sm font-semibold text-money">${managing ? "Done" : "Edit"}</button>`}
     </div>
     ${bills === null ? html`<${Card} className="p-6 text-center text-muted text-sm"><${Ic} n="Loader2" s=${18} c="animate-spin inline mr-2" />Loading your bills…</${Card}>`
@@ -260,6 +237,49 @@ function Home({ user, toast, go }) {
             </div>
           </${Card}></a></li>`;
         })}</ul>`}
+  </div>`;
+}
+
+function Home({ user, toast, go, view = "home" }) {
+  const [bills, setBills] = useState(null);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    if (!user) return;
+    let alive = true;
+    listMyBills().then(b => alive && setBills(b)).catch(() => alive && setBills([]));
+    return () => { alive = false; };
+  }, [user?.id]);
+
+  const create = async (demo, pending) => {
+    setBusy(true);
+    try { const c = await createBill(user, demo); window.__gdPending = pending || null; go("/b/" + c); }
+    catch (e) { toast("Couldn't create the bill. Try again."); setBusy(false); }
+  };
+  const openCode = raw => {
+    const v = String(raw || "").trim();
+    const g = v.match(/#\/g\/([a-f0-9]{16})/i); if (g) return go("/g/" + g[1].toLowerCase());
+    const m = v.match(/([a-f0-9]{16})\s*$/i);
+    if (m) go("/b/" + m[1].toLowerCase()); else toast("That doesn't look like a Going Dutch link");
+  };
+  const startGroup = () => { if (view === "home") window.dispatchEvent(new CustomEvent("gd:newgroup")); else go("/groups/new"); };
+
+  if (view === "activity") return html`<div className="mx-auto flex w-full max-w-[720px] flex-col gap-4">${bills === null || bills.length > 0
+    ? html`<${BillsList} user=${user} toast=${toast} bills=${bills} setBills=${setBills} title="Activity" />`
+    : html`<h2 className="font-display text-xl font-bold">Activity</h2><${Card} className="p-6 text-center"><p className="font-semibold">No bills yet</p><p className="text-sm text-muted mt-1">Start a new bill, or open a link a friend sent you. Bills you join show up here.</p></${Card}>`}</div>`;
+  if (view === "groups" || view === "groups-new") return html`<div className="mx-auto flex w-full max-w-[720px] flex-col gap-4"><${GroupsSection} user=${user} toast=${toast} go=${go} startOpen=${view === "groups-new"} /></div>`;
+
+  return html`<div className="flex flex-col gap-8">
+    <${Chooser} busy=${busy}
+      onScan=${f => create(false, { file: f })}
+      onCreate=${() => create(false, { focus: "items" })}
+      onExpense=${() => go("/new/expense")}
+      onGroup=${startGroup}
+      onExample=${() => create(true)}
+      onOpenCode=${openCode} />
+    <div className="mx-auto flex w-full max-w-[720px] flex-col gap-6">
+      <${GroupsSection} user=${user} toast=${toast} go=${go} hideEmpty=${true} />
+      ${bills && bills.length > 0 && html`<${BillsList} user=${user} toast=${toast} bills=${bills} setBills=${setBills} />`}
+    </div>
   </div>`;
 }
 
@@ -445,7 +465,7 @@ function BillPage({ code, user, toast, go }) {
       <${Card} className="p-5"><${StepHead} n="2" title="Who's splitting?" sub="2 to 12 people, including you. Rename, add or remove anyone." /><${People} state=${state} setState=${setState} toast=${toast} /></${Card}>
       <${Card} className="p-5"><${StepHead} n="3" title="Check the numbers" sub="Everything is editable. Claims stay put when you edit an item." /><${ReceiptEditor} state=${state} setState=${setState} calc=${calc} /></${Card}>
       <${Card} className="p-5"><${StepHead} n="4" title="How should people pay you?" sub="Optional. Adds one-tap pay buttons for your friends." /><${PaySetup} state=${state} setState=${setState} user=${user} toast=${toast} /></${Card}>
-      <${Card} className="p-5"><${StepHead} n="5" title="Send it to the table" /><${Share} state=${state} toast=${toast} shareUrl=${shareUrl} goGuest=${() => setMode("guest-split")} /></${Card}>`}
+      <div id="share-step"><${Card} className="p-5"><${StepHead} n="5" title="Send it to the table" /><${Share} state=${state} toast=${toast} shareUrl=${shareUrl} goGuest=${() => setMode("guest-split")} /></${Card}></div>`}
     ${state.mode === "guest-split" && html`
       <${ViewSwitch} />
       ${view === "all"

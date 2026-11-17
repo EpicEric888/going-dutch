@@ -222,6 +222,20 @@ const NL = {
   "Gas, tickets, groceries": "Benzine, tickets, boodschappen",
   "No receipt needed. Add the amount, pick who paid and who's in, done.": "Geen bon nodig. Vul het bedrag in, kies wie betaalde en wie meedoet, klaar.",
   "Start a group": "Start een groep",
+
+  // home chooser
+  "What are we splitting?": "Wat gaan we verdelen?", "Choose how you'd like to get started.": "Kies hoe je wilt beginnen.",
+  "Scan a receipt": "Scan een bon", "Upload a receipt and let everyone claim what they had.": "Upload een bon en laat iedereen claimen wat hij had.",
+  "Create a bill": "Maak een rekening", "Add items manually and share the bill.": "Voeg items zelf toe en deel de rekening.",
+  "Split an expense": "Verdeel een uitgave", "Divide a single amount between friends.": "Verdeel één bedrag tussen vrienden.",
+  "Track shared expenses across a trip or weekend.": "Houd gedeelde kosten bij tijdens een reis of weekend.",
+  "Have a bill link?": "Heb je een link?", "Join a split someone shared with you.": "Doe mee met een rekening die iemand met je deelde.",
+  "Paste a bill or group link": "Plak een link naar een rekening of groep",
+  "New here?": "Nieuw hier?", "Try an example bill": "Probeer een voorbeeld",
+  "Home": "Home", "Activity": "Activiteit", "Main": "Hoofdmenu",
+  "One amount, shared evenly. No receipt needed.": "Eén bedrag, gelijk verdeeld. Geen bon nodig.",
+  "Who's in?": "Wie doen er mee?", "Add at least one more person.": "Voeg nog minstens één persoon toe.",
+  "Fill in what it was and the amount.": "Vul in wat het was en het bedrag.", "Create and share": "Maken en delen",
 };
 
 const NL_PATTERNS = [
