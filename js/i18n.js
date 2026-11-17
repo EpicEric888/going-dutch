@@ -223,6 +223,17 @@ const NL = {
   "No receipt needed. Add the amount, pick who paid and who's in, done.": "Geen bon nodig. Vul het bedrag in, kies wie betaalde en wie meedoet, klaar.",
   "Start a group": "Start een groep",
 
+  // group page v2
+  "Total spent": "Totaal uitgegeven", "Pick your name below": "Kies hieronder je naam",
+  "Edit expense": "Uitgave bewerken", "Yes, delete": "Ja, verwijderen", "Delete expense": "Uitgave verwijderen", "Save changes": "Wijzigingen opslaan",
+  "What everyone spent and where they stand.": "Wat iedereen uitgaf en hoe ze ervoor staan.", "Copy summary": "Overzicht kopiëren",
+  "Person": "Persoon", "Their share": "Hun deel", "Balance": "Saldo",
+  "+ gets money back, − owes. Counts every expense and every payment marked as paid.": "+ krijgt geld terug, − moet betalen. Telt alle uitgaven en betalingen die als betaald zijn gemarkeerd.",
+  "Tap one to change it.": "Tik erop om te wijzigen.", "Add an expense and this fills in.": "Voeg een uitgave toe, dan vult dit zich.",
+  "receipt": "bon", "expense": "uitgave", "expenses": "uitgaven",
+  "Add, rename or remove people": "Mensen toevoegen, hernoemen of verwijderen",
+  "New expenses include everyone here. People already on an expense can't be removed.": "Nieuwe uitgaven gelden voor iedereen hier. Wie al op een uitgave staat kan niet verwijderd worden.",
+
   // home chooser
   "What are we splitting?": "Wat gaan we verdelen?", "Choose how you'd like to get started.": "Kies hoe je wilt beginnen.",
   "Scan a receipt": "Scan een bon", "Upload a receipt and let everyone claim what they had.": "Upload een bon en laat iedereen claimen wat hij had.",

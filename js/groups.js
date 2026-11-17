@@ -117,28 +117,56 @@ async function createExpenseInGroup(user, group, { what, amount, payerId, ids, c
   if (e2) throw e2;
 }
 
-function ExpenseForm({ user, group, people, me, onDone, toast }) {
-  const [what, setWhat] = useState("");
-  const [category, setCategory] = useState(null);
-  const [amount, setAmount] = useState("");
-  const [payer, setPayer] = useState(me?.id || people[0]?.id);
-  const [ids, setIds] = useState(people.map(p => p.id));
+async function updateExpense(group, bill, { what, amount, payerId, ids, category }) {
+  const R = bill.receipt || {};
+  const item = (R.items || [])[0] || { id: uid() };
+  const byId = new Map((bill.participants || []).map(p => [p.id, p]));
+  (group.people || []).forEach(p => { if (!byId.has(p.id)) byId.set(p.id, { id: p.id, name: p.name, ...(p.userId ? { userId: p.userId } : {}) }); });
+  const participants = [...byId.values()].map(p => ({ ...p, isHost: p.id === payerId }));
+  const receipt = { ...R, merchant: what, category: category || null, items: [{ ...item, name: what, price: String(amount), quantity: "1" }] };
+  const { error } = await supa.from("bills").update({ receipt, participants }).eq("id", bill.id);
+  if (error) throw error;
+  await supa.from("claims").delete().eq("bill_id", bill.id);
+  const { error: e2 } = await supa.from("claims").insert(ids.map(pid => ({ bill_id: bill.id, participant_id: pid, item_id: item.id })));
+  if (e2) throw e2;
+}
+
+function ExpenseForm({ user, group, people, me, onDone, toast, bill = null }) {
+  const R0 = bill?.receipt || {};
+  const host0 = bill?.state.participants.find(p => p.isHost)?.id;
+  const ids0 = bill ? ((bill.state.assignments || {})[(R0.items || [])[0]?.id] || []) : null;
+  const [what, setWhat] = useState(R0.merchant || "");
+  const [category, setCategory] = useState(R0.category || null);
+  const [amount, setAmount] = useState(bill ? String(num((R0.items || [])[0]?.price)) : "");
+  const [payer, setPayer] = useState(host0 || me?.id || people[0]?.id);
+  const [ids, setIds] = useState(ids0 && ids0.length ? ids0.filter(id => people.some(p => p.id === id)) : people.map(p => p.id));
   const [busy, setBusy] = useState(false);
-  const cur = group.currency || "USD";
+  const [confirmDel, setConfirmDel] = useState(false);
+  const cur = R0.currency || group.currency || "USD";
   const amt = num(amount);
   const ok = what.trim() && amt > 0 && payer && ids.length > 0;
   const toggle = id => setIds(v => v.includes(id) ? v.filter(x => x !== id) : [...v, id]);
   const submit = async e => {
     e.preventDefault(); if (!ok) return;
     setBusy(true);
-    try { await createExpenseInGroup(user, group, { what: what.trim(), amount: r2(amt), payerId: payer, ids, category }); toast(tl("Expense added", "Uitgave toegevoegd")); onDone(true); }
-    catch (err) { toast("Couldn't save that change. Check your connection."); setBusy(false); }
+    const data = { what: what.trim(), amount: r2(amt), payerId: payer, ids, category };
+    try {
+      if (bill) { await updateExpense(group, bill, data); toast(tl("Expense updated", "Uitgave bijgewerkt")); }
+      else { await createExpenseInGroup(user, group, data); toast(tl("Expense added", "Uitgave toegevoegd")); }
+      onDone(true);
+    } catch (err) { toast("Couldn't save that change. Check your connection."); setBusy(false); }
+  };
+  const remove = async () => {
+    setBusy(true);
+    const { error } = await supa.from("bills").delete().eq("id", bill.id);
+    if (error) { toast("Couldn't remove that bill. Try again."); setBusy(false); return; }
+    toast(tl("Expense deleted", "Uitgave verwijderd")); onDone(true);
   };
   const chip = (active, onClick, children, key) => html`<button key=${key} type="button" onClick=${onClick}
     className=${"inline-flex items-center gap-1.5 rounded-full border py-1 pl-1 pr-3 text-sm font-semibold " + (active ? "border-transparent bg-ink text-bg" : "border-line bg-card hover:bg-soft")}>${children}</button>`;
-  return html`<${Card} className="p-4">
+  return html`<${Card} className="p-4 ring-2 ring-money/40">
     <form onSubmit=${submit} className="flex flex-col gap-4">
-      <div className="flex items-center justify-between"><p className="font-display text-lg font-bold">Add an expense</p>
+      <div className="flex items-center justify-between"><p className="font-display text-lg font-bold">${bill ? "Edit expense" : "Add an expense"}</p>
         <button type="button" onClick=${() => onDone(false)} aria-label="Close" className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted hover:bg-soft"><${Ic} n="X" s=${16} /></button></div>
       <div>
         <${Label} htmlFor="exp-what">What was it?</${Label}>
@@ -161,7 +189,12 @@ function ExpenseForm({ user, group, people, me, onDone, toast }) {
         <div className="flex flex-wrap gap-1.5">${people.map(p => chip(ids.includes(p.id), () => toggle(p.id), html`<${Avatar} name=${p.name} color=${colorFor(people, p.id)} size=${24} /><span translate="no">${p.name}</span>`, p.id))}</div>
         ${ok && html`<p className="mt-2 text-xs text-muted">${tl(`${fmt(amt / ids.length, cur)} each`, `${fmt(amt / ids.length, cur)} per persoon`)}</p>`}
       </div>
-      <button type="submit" disabled=${!ok || busy} className="rounded-xl bg-ink text-bg px-4 py-2.5 font-semibold disabled:opacity-50">${busy ? "Saving…" : "Add expense"}</button>
+      <div className="flex gap-2">
+        ${bill && (confirmDel
+          ? html`<button type="button" disabled=${busy} onClick=${remove} className="rounded-xl px-4 py-2.5 font-semibold text-white disabled:opacity-50" style=${{ background: "var(--danger)" }}>Yes, delete</button>`
+          : html`<button type="button" onClick=${() => setConfirmDel(true)} aria-label="Delete expense" className="inline-flex items-center justify-center rounded-xl border border-line px-3 text-danger hover:bg-soft"><${Ic} n="Trash2" s=${17} /></button>`)}
+        <button type="submit" disabled=${!ok || busy} className="flex-1 rounded-xl bg-ink text-bg px-4 py-2.5 font-semibold disabled:opacity-50">${busy ? "Saving…" : bill ? "Save changes" : "Add expense"}</button>
+      </div>
     </form>
   </${Card}>`;
 }
@@ -309,9 +342,11 @@ function GroupPage({ code, user, toast, go }) {
   const { group, bills, status, save, reload } = useGroup(code, user, toast);
   const [busy, setBusy] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [editBill, setEditBill] = useState(null);
   const [newName, setNewName] = useState("");
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState("");
+  const formRef = useRef(null);
 
   if (status === "loading") return html`<${Card} className="p-6 text-center text-muted text-sm"><${Ic} n="Loader2" s=${18} c="animate-spin inline mr-2" />Opening the group…</${Card}>`;
   if (status === "notfound") return html`<${Card} className="p-6 text-center"><p className="font-semibold">This group doesn't exist</p>
@@ -322,9 +357,20 @@ function GroupPage({ code, user, toast, go }) {
   const people = group.people || [];
   const me = people.find(p => p.userId === user.id);
   const nets = groupLedger(group, bills);
-  const currencies = Object.keys(nets);
-  const shareUrl = location.origin + location.pathname + "#/g/" + group.share_code;
   const realBills = bills.filter(b => !b.state.receipt?.isDemo);
+  const shareUrl = location.origin + location.pathname + "#/g/" + group.share_code;
+
+  // per currency: total spent and each person's share
+  const totals = {};
+  realBills.forEach(b => {
+    const cur = b.receipt?.currency || "USD";
+    const t = totals[cur] || (totals[cur] = { total: 0, share: {} });
+    t.total += b.calc.total;
+    b.calc.rows.forEach(r => { t.share[r.p.id] = (t.share[r.p.id] || 0) + r.total; });
+  });
+  const currencies = [...new Set([...Object.keys(totals), ...Object.keys(nets)])];
+  const plans = Object.fromEntries(currencies.map(cur => [cur, settleUp(nets[cur] || {})]));
+  const anyToSettle = currencies.some(cur => plans[cur].length);
 
   const claimMe = pid => save({ people: people.map(p => p.id === pid ? { ...p, userId: user.id } : p.userId === user.id ? (({ userId, ...rest }) => rest)(p) : p) });
   const addPerson = e => {
@@ -346,13 +392,15 @@ function GroupPage({ code, user, toast, go }) {
     try { go("/b/" + await createBillInGroup(user, g, meId)); }
     catch (e) { toast("Couldn't create the bill. Try again."); setBusy(false); }
   };
+  const openForm = b => { setEditBill(b); setAdding(!b); setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 30); };
+  const closeForm = saved => { setAdding(false); setEditBill(null); if (saved) reload(); };
   const recordPayment = (t, cur) => {
     const pm = { id: uid(), from: t.from, to: t.to, amount: t.amount, currency: cur, at: new Date().toISOString() };
-    save({ payments: [...(group.payments || []), pm] });
+    const before = group.payments || [];
+    save({ payments: [...before, pm] });
     toast(tl(`Recorded: ${personName(people, t.from)} paid ${personName(people, t.to)} ${fmt(t.amount, cur)}`, `Genoteerd: ${personName(people, t.from)} betaalde ${personName(people, t.to)} ${fmt(t.amount, cur)}`),
-      { label: tl("Undo", "Ongedaan maken"), fn: () => save({ payments: (gRefPayments(group, pm.id)) }) });
+      { label: tl("Undo", "Ongedaan maken"), fn: () => save({ payments: before }) });
   };
-  const gRefPayments = (g, id) => [...(g.payments || [])].filter(p => p.id !== id);
   const removePayment = id => save({ payments: (group.payments || []).filter(p => p.id !== id) });
   const share = async () => {
     const text = tl(`Join our group "${group.name}" on Going Dutch to see who owes what: ${shareUrl}`, `Doe mee met onze groep "${group.name}" op Going Dutch en zie wie wat moet betalen: ${shareUrl}`);
@@ -361,6 +409,24 @@ function GroupPage({ code, user, toast, go }) {
   };
   const settleMsg = (t, cur) => tl(`Hey ${personName(people, t.from)}, for ${group.name} you owe ${personName(people, t.to)} ${fmt(t.amount, cur)}. Details: ${shareUrl}`,
     `Hoi ${personName(people, t.from)}, voor ${group.name} moet je ${personName(people, t.to)} nog ${fmt(t.amount, cur)} betalen. Details: ${shareUrl}`);
+  const summaryText = () => {
+    const lines = [group.name || tl("Our group", "Onze groep")];
+    currencies.forEach(cur => {
+      const t = totals[cur] || { total: 0, share: {} };
+      lines.push("", tl(`Total spent: ${fmt(t.total, cur)} (${fmt(t.total / Math.max(1, people.length), cur)} per person)`, `Totaal uitgegeven: ${fmt(t.total, cur)} (${fmt(t.total / Math.max(1, people.length), cur)} per persoon)`));
+      people.forEach(p => {
+        const v = (nets[cur] || {})[p.id] || 0;
+        const bal = v > 0.004 ? tl(`gets back ${fmt(v, cur)}`, `krijgt ${fmt(v, cur)} terug`) : v < -0.004 ? tl(`owes ${fmt(-v, cur)}`, `moet ${fmt(-v, cur)} betalen`) : tl("all square", "quitte");
+        lines.push(`${p.name}: ${tl("share", "deel")} ${fmt(t.share[p.id] || 0, cur)}, ${bal}`);
+      });
+      if (plans[cur].length) { lines.push("", tl("To settle up:", "Afrekenen:")); plans[cur].forEach(x => lines.push(`${personName(people, x.from)} → ${personName(people, x.to)}: ${fmt(x.amount, cur)}`)); }
+    });
+    lines.push("", shareUrl);
+    return lines.join("\n");
+  };
+  const copySummary = async () => toast(await copyText(summaryText()) ? "Summary copied" : "Copy blocked. Select the text instead.");
+
+  const myLine = me && currencies.map(cur => [cur, (nets[cur] || {})[me.id] || 0]).filter(([, v]) => Math.abs(v) >= 0.01);
 
   return html`<div className="flex flex-col gap-4">
     <${Card} className="p-4">
@@ -371,15 +437,21 @@ function GroupPage({ code, user, toast, go }) {
               <input autoFocus aria-label="Group name" className=${inputCls} value=${title} maxLength=${60} onInput=${e => setTitle(e.target.value)} />
               <button type="submit" className="shrink-0 rounded-xl bg-ink text-bg px-3 text-sm font-semibold">Save</button></form>`
             : html`<button type="button" onClick=${() => { setTitle(group.name); setEditing(true); }} className="block max-w-full truncate text-left font-display text-2xl font-extrabold leading-tight" translate="no">${group.name || "Untitled group"}</button>`}
-          <p className="text-xs text-muted mt-0.5">${people.length} ${people.length === 1 ? "person" : "people"} · ${realBills.length} ${realBills.length === 1 ? "bill" : "bills"}</p>
+          <p className="text-xs text-muted mt-0.5">${people.length} ${people.length === 1 ? "person" : "people"} · ${realBills.length} ${realBills.length === 1 ? "expense" : "expenses"}</p>
         </div>
         <button type="button" onClick=${share} aria-label="Share group link" className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-line bg-card hover:bg-soft"><${Ic} n="Share2" s=${17} /></button>
       </div>
-      ${me && html`<div className="mt-4 flex flex-wrap gap-2">${(() => {
-          const mine = currencies.map(cur => [cur, nets[cur][me.id] || 0]).filter(([, v]) => Math.abs(v) >= 0.01);
-          if (!mine.length) return html`<div className="rounded-xl bg-soft px-3 py-2"><p className="text-[10px] uppercase tracking-[0.08em] text-muted">Your balance</p><p className="font-display text-2xl font-extrabold">All square</p></div>`;
-          return mine.map(([cur, v]) => html`<div key=${cur} className="rounded-xl bg-soft px-3 py-2"><p className="text-[10px] uppercase tracking-[0.08em] text-muted">${v > 0 ? "You're owed" : "You owe"}</p><p className="font-display text-2xl font-extrabold text-money tnum">${fmt(Math.abs(v), cur)}</p></div>`);
-        })()}</div>`}
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <div className="rounded-xl bg-soft px-3 py-2">
+          <p className="text-[10px] uppercase tracking-[0.08em] text-muted">Total spent</p>
+          ${currencies.length ? currencies.map(cur => html`<p key=${cur} className="font-display text-xl font-extrabold tnum">${fmt((totals[cur] || {}).total || 0, cur)}</p>`) : html`<p className="font-display text-xl font-extrabold tnum">${fmt(0, group.currency)}</p>`}
+        </div>
+        <div className="rounded-xl bg-soft px-3 py-2">
+          ${!me ? html`<p className="text-[10px] uppercase tracking-[0.08em] text-muted">Your balance</p><p className="text-sm text-muted">Pick your name below</p>`
+            : !myLine.length ? html`<p className="text-[10px] uppercase tracking-[0.08em] text-muted">Your balance</p><p className="font-display text-xl font-extrabold">All square</p>`
+            : myLine.map(([cur, v]) => html`<div key=${cur}><p className="text-[10px] uppercase tracking-[0.08em] text-muted">${v > 0 ? "You're owed" : "You owe"}</p><p className=${"font-display text-xl font-extrabold tnum " + (v > 0 ? "text-money" : "text-danger")}>${fmt(Math.abs(v), cur)}</p></div>`)}
+        </div>
+      </div>
     </${Card}>
 
     ${!me && people.length > 0 && html`<${Card} className="p-4">
@@ -389,19 +461,22 @@ function GroupPage({ code, user, toast, go }) {
         <${Avatar} name=${p.name} color=${colorFor(people, p.id)} size=${26} /><span translate="no">${p.name}</span></button>`)}</div>
     </${Card}>`}
 
-    ${adding ? html`<${ExpenseForm} user=${user} group=${group} people=${people} me=${me} toast=${toast} onDone=${saved => { setAdding(false); if (saved) reload(); }} />`
+    <div ref=${formRef}>${(adding || editBill)
+      ? html`<${ExpenseForm} key=${editBill?.id || "new"} user=${user} group=${group} people=${people} me=${me} toast=${toast} bill=${editBill} onDone=${closeForm} />`
       : html`<div className="grid grid-cols-2 gap-2">
-        <button type="button" disabled=${busy || people.length === 0} onClick=${() => setAdding(true)} className="flex flex-col items-center justify-center gap-0.5 rounded-2xl px-3 py-3 font-semibold text-moneyink shadow-card disabled:opacity-60" style=${{ background: "var(--money)" }}>
+        <button type="button" disabled=${busy || people.length === 0} onClick=${() => openForm(null)} className="flex flex-col items-center justify-center gap-0.5 rounded-2xl px-3 py-3 font-semibold text-moneyink shadow-card disabled:opacity-60" style=${{ background: "var(--money)" }}>
           <span className="inline-flex items-center gap-1.5"><${Ic} n="Plus" s=${17} />Add an expense</span><span className="text-[11px] font-medium opacity-80">Gas, tickets, groceries</span></button>
         <button type="button" disabled=${busy} onClick=${addBill} className="flex flex-col items-center justify-center gap-0.5 rounded-2xl border border-line bg-card px-3 py-3 font-semibold shadow-card hover:bg-soft disabled:opacity-60">
           <span className="inline-flex items-center gap-1.5"><${Ic} n="Receipt" s=${17} />${busy ? "Creating…" : "Add a receipt"}</span><span className="text-[11px] font-medium text-muted">Restaurant, split by item</span></button>
-      </div>`}
+      </div>`}</div>
 
     <${Card} className="p-4">
-      <${StepHead} n="1" title="Settle up" sub="The fewest payments to get everyone square." />
-      ${currencies.every(cur => !settleUp(nets[cur]).length)
-        ? html`<p className="mt-3 rounded-xl bg-soft px-3 py-3 text-sm text-muted">${realBills.length ? "Everyone's square. Nice." : "Add a bill and balances show up here."}</p>`
-        : currencies.map(cur => html`<ul key=${cur} className="mt-3 flex flex-col gap-2">${settleUp(nets[cur]).map((t, i) => html`<li key=${cur + i} className="rounded-xl bg-soft p-3">
+      <div className="flex items-start justify-between gap-2">
+        <div><h2 className="font-display text-lg font-bold">Settle up</h2><p className="text-sm text-muted">The fewest payments to get everyone square.</p></div>
+      </div>
+      ${!anyToSettle
+        ? html`<p className="mt-3 rounded-xl bg-soft px-3 py-3 text-sm text-muted">${realBills.length ? "Everyone's square. Nice." : "Add an expense and this fills in."}</p>`
+        : currencies.map(cur => html`<ul key=${cur} className="mt-3 flex flex-col gap-2">${plans[cur].map((t, i) => html`<li key=${cur + i} className="rounded-xl bg-soft p-3">
             <div className="flex items-center gap-2">
               <${Avatar} name=${personName(people, t.from)} color=${colorFor(people, t.from)} size=${28} />
               <${Ic} n="ArrowRight" s=${15} c="text-muted" />
@@ -414,37 +489,58 @@ function GroupPage({ code, user, toast, go }) {
               <button type="button" onClick=${async () => toast(await copyText(settleMsg(t, cur)) ? "Message copied" : "Copy blocked. Select the text instead.")} className="inline-flex items-center gap-1 rounded-full border border-line bg-card px-2.5 py-1 text-xs font-semibold hover:bg-soft"><${Ic} n="Copy" s=${13} />Copy reminder</button>
             </div>
           </li>`)}</ul>`)}
-      ${currencies.length > 1 && html`<p className="mt-2 text-xs text-muted">Bills in different currencies are settled separately for now.</p>`}
     </${Card}>
 
-    <${Card} className="p-4">
-      <${StepHead} n="2" title="Balances" sub="Across every bill in the group, after payments." />
-      <ul className="mt-3 flex flex-col divide-y divide-line">${people.map(p => html`<li key=${p.id} className="flex items-center gap-3 py-2">
-        <${Avatar} name=${p.name} color=${colorFor(people, p.id)} size=${30} />
-        <span className="min-w-0 flex-1 truncate font-medium"><span translate="no">${p.name}</span>${p.userId === user.id ? html` <span className="text-xs font-normal text-muted">(you)</span>` : null}</span>
-        <span className="text-right">${currencies.length === 0 ? html`<span className="text-sm text-muted">–</span>` : currencies.map(cur => {
-          const v = nets[cur][p.id] || 0;
-          return html`<span key=${cur} className=${"block font-mono text-sm tnum " + (v > 0.004 ? "text-money font-semibold" : v < -0.004 ? "text-danger" : "text-muted")}>${v > 0.004 ? "+" : ""}${fmt(v, cur)}</span>`;
-        })}</span>
-      </li>`)}</ul>
-    </${Card}>
+    ${realBills.length > 0 && html`<${Card} className="p-4">
+      <div className="flex items-start justify-between gap-2">
+        <div><h2 className="font-display text-lg font-bold">Summary</h2><p className="text-sm text-muted">What everyone spent and where they stand.</p></div>
+        <button type="button" onClick=${copySummary} className="inline-flex shrink-0 items-center gap-1 rounded-full border border-line bg-card px-3 py-1.5 text-xs font-semibold hover:bg-soft"><${Ic} n="Copy" s=${13} />Copy summary</button>
+      </div>
+      ${currencies.map(cur => {
+        const t = totals[cur] || { total: 0, share: {} };
+        return html`<div key=${cur} className="mt-3">
+          <p className="text-xs text-muted">${tl(`${fmt(t.total, cur)} total · about ${fmt(t.total / Math.max(1, people.length), cur)} per person`, `${fmt(t.total, cur)} totaal · ongeveer ${fmt(t.total / Math.max(1, people.length), cur)} per persoon`)}</p>
+          <div className="mt-2 grid grid-cols-[1fr_auto_auto] items-center gap-x-4 gap-y-0 text-sm">
+            <span className="pb-1 text-[10px] uppercase tracking-[0.08em] text-muted">Person</span>
+            <span className="pb-1 text-right text-[10px] uppercase tracking-[0.08em] text-muted">Their share</span>
+            <span className="pb-1 text-right text-[10px] uppercase tracking-[0.08em] text-muted">Balance</span>
+            ${people.map(p => {
+              const v = (nets[cur] || {})[p.id] || 0;
+              return html`<${React.Fragment} key=${p.id}>
+                <span className="flex min-w-0 items-center gap-2 border-t border-line py-2"><${Avatar} name=${p.name} color=${colorFor(people, p.id)} size=${26} /><span className="truncate font-medium"><span translate="no">${p.name}</span>${p.userId === user.id ? html` <span className="text-xs font-normal text-muted">(you)</span>` : null}</span></span>
+                <span className="border-t border-line py-2 text-right font-mono tnum">${fmt(t.share[p.id] || 0, cur)}</span>
+                <span className=${"border-t border-line py-2 text-right font-mono tnum " + (v > 0.004 ? "text-money font-semibold" : v < -0.004 ? "text-danger" : "text-muted")}>${v > 0.004 ? "+" : ""}${Math.abs(v) < 0.005 ? fmt(0, cur) : fmt(v, cur)}</span>
+              </${React.Fragment}>`;
+            })}
+          </div>
+        </div>`;
+      })}
+      <p className="mt-2 text-xs text-muted">+ gets money back, − owes. Counts every expense and every payment marked as paid.</p>
+    </${Card}>`}
 
     <${Card} className="p-4">
-      <${StepHead} n="3" title="Expenses" sub="Every bill and expense in the group. Tap one to see or change it." />
+      <h2 className="font-display text-lg font-bold">Expenses</h2>
+      <p className="text-sm text-muted">Tap one to change it.</p>
       ${realBills.length === 0 ? html`<p className="mt-3 text-sm text-muted">Nothing added yet.</p>`
         : html`<ul className="mt-3 flex flex-col gap-2">${realBills.map(b => {
             const R = b.receipt || {}, host = b.state.participants.find(p => p.isHost);
-            return html`<li key=${b.id}><a href=${"#/b/" + b.share_code} className="flex items-center gap-3 rounded-xl bg-soft p-3 hover:opacity-90">
+            const isExp = R.kind === "expense";
+            const itemIds = isExp ? ((b.state.assignments || {})[(R.items || [])[0]?.id] || []) : [];
+            const inner = html`
               <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-card text-money"><${Ic} n=${expenseIcon(R)} s=${17} /></span>
               <span className="min-w-0 flex-1"><span className="block truncate font-semibold" translate="no">${R.merchant || "Untitled bill"}</span>
-                <span className="block text-xs text-muted">${R.date ? new Date(R.date + "T12:00").toLocaleDateString(LOCALE(), { month: "short", day: "numeric" }) : "No date"} · <span>paid by</span> <span translate="no">${host?.name || "someone"}</span></span></span>
+                <span className="block truncate text-xs text-muted">${R.date ? new Date(R.date + "T12:00").toLocaleDateString(LOCALE(), { month: "short", day: "numeric" }) : "No date"} · <span>paid by</span> <span translate="no">${host?.name || "someone"}</span>${isExp ? html` · <span>${itemIds.length === people.length ? tl("everyone", "iedereen") : tl(`${itemIds.length} people`, `${itemIds.length} mensen`)}</span>` : html` · <span>receipt</span>`}</span></span>
               <span className="font-mono text-sm tnum">${fmt(b.calc.total, R.currency || "USD")}</span>
-            </a></li>`;
+              <${Ic} n=${isExp ? "Pencil" : "ChevronRight"} s=${15} c="shrink-0 text-muted" />`;
+            return html`<li key=${b.id}>${isExp
+              ? html`<button type="button" onClick=${() => openForm(b)} className=${"flex w-full items-center gap-3 rounded-xl p-3 text-left hover:opacity-90 " + (editBill?.id === b.id ? "bg-moneysoft" : "bg-soft")}>${inner}</button>`
+              : html`<a href=${"#/b/" + b.share_code} className="flex items-center gap-3 rounded-xl bg-soft p-3 hover:opacity-90">${inner}</a>`}</li>`;
           })}</ul>`}
     </${Card}>
 
     ${(group.payments || []).length > 0 && html`<${Card} className="p-4">
-      <${StepHead} n="4" title="Payments" sub="Recorded in this group. Tap × if one was a mistake." />
+      <h2 className="font-display text-lg font-bold">Payments</h2>
+      <p className="text-sm text-muted">Recorded in this group. Tap × if one was a mistake.</p>
       <ul className="mt-3 flex flex-col gap-1.5">${[...group.payments].reverse().map(pm => html`<li key=${pm.id} className="flex items-center gap-2 text-sm">
         <span className="min-w-0 flex-1"><span className="font-semibold" translate="no">${personName(people, pm.from)}</span> <span>paid</span> <span className="font-semibold" translate="no">${personName(people, pm.to)}</span></span>
         <span className="font-mono tnum">${fmt(pm.amount, pm.currency)}</span>
@@ -452,17 +548,24 @@ function GroupPage({ code, user, toast, go }) {
       </li>`)}</ul>
     </${Card}>`}
 
-    <${Card} className="p-4">
-      <${StepHead} n=${(group.payments || []).length ? "5" : "4"} title="People" sub="New bills in this group start with everyone here." />
-      <ul className="mt-3 flex flex-col gap-2">${people.map(p => html`<li key=${p.id} className="flex items-center gap-2">
-        <${Avatar} name=${p.name} color=${colorFor(people, p.id)} size=${30} />
-        <input aria-label=${"Name for " + p.name} className=${inputCls} defaultValue=${p.name} onBlur=${e => { const v = e.target.value.trim(); if (v && v !== p.name) renamePerson(p.id, v); }} />
-        ${!usedIds.has(p.id) && p.userId !== user.id && html`<button type="button" onClick=${() => removePerson(p.id)} aria-label=${"Remove " + p.name} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-muted hover:bg-soft"><${Ic} n="X" s=${16} /></button>`}
-      </li>`)}</ul>
-      <form onSubmit=${addPerson} className="mt-3 flex gap-2">
-        <input aria-label="New person's name" className=${inputCls} value=${newName} maxLength=${40} onInput=${e => setNewName(e.target.value)} placeholder="Add someone" />
-        <button type="submit" disabled=${!newName.trim()} className="shrink-0 rounded-xl bg-ink text-bg px-4 font-semibold disabled:opacity-50">Add</button>
-      </form>
-    </${Card}>
+    <details className="group rounded-2xl border border-line bg-card shadow-card">
+      <summary className="flex cursor-pointer list-none items-center gap-3 p-4">
+        <span className="flex -space-x-1.5">${people.slice(0, 5).map(p => html`<span key=${p.id} className="rounded-full ring-2 ring-[var(--card)]"><${Avatar} name=${p.name} color=${colorFor(people, p.id)} size=${26} /></span>`)}</span>
+        <span className="min-w-0 flex-1"><span className="block font-semibold">People</span><span className="block text-xs text-muted">Add, rename or remove people</span></span>
+        <${Ic} n="ChevronDown" s=${18} c="text-muted transition group-open:rotate-180" />
+      </summary>
+      <div className="px-4 pb-4">
+        <ul className="flex flex-col gap-2">${people.map(p => html`<li key=${p.id} className="flex items-center gap-2">
+          <${Avatar} name=${p.name} color=${colorFor(people, p.id)} size=${30} />
+          <input aria-label=${"Name for " + p.name} className=${inputCls} defaultValue=${p.name} onBlur=${e => { const v = e.target.value.trim(); if (v && v !== p.name) renamePerson(p.id, v); }} />
+          ${!usedIds.has(p.id) && p.userId !== user.id && html`<button type="button" onClick=${() => removePerson(p.id)} aria-label=${"Remove " + p.name} className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-muted hover:bg-soft"><${Ic} n="X" s=${16} /></button>`}
+        </li>`)}</ul>
+        <form onSubmit=${addPerson} className="mt-3 flex gap-2">
+          <input aria-label="New person's name" className=${inputCls} value=${newName} maxLength=${40} onInput=${e => setNewName(e.target.value)} placeholder="Add someone" />
+          <button type="submit" disabled=${!newName.trim()} className="shrink-0 rounded-xl bg-ink text-bg px-4 font-semibold disabled:opacity-50">Add</button>
+        </form>
+        <p className="mt-2 text-xs text-muted">New expenses include everyone here. People already on an expense can't be removed.</p>
+      </div>
+    </details>
   </div>`;
 }
