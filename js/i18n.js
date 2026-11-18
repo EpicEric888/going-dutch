@@ -241,6 +241,7 @@ const NL = {
   "Create a bill": "Maak een rekening", "Add items manually and share the bill.": "Voeg items zelf toe en deel de rekening.",
   "Split an expense": "Verdeel een uitgave", "Divide a single amount between friends.": "Verdeel één bedrag tussen vrienden.",
   "Track shared expenses across a trip or weekend.": "Houd gedeelde kosten bij tijdens een reis of weekend.",
+  "Shared expenses": "Gedeelde uitgaven", "Track and split expenses across trips, weekends, or everyday activities.": "Houd uitgaven bij en verdeel ze tijdens reizen, weekendjes of gewone dagen.",
   "Have a bill link?": "Heb je een link?", "Join a split someone shared with you.": "Doe mee met een rekening die iemand met je deelde.",
   "Paste a bill or group link": "Plak een link naar een rekening of groep",
   "New here?": "Nieuw hier?", "Try an example bill": "Probeer een voorbeeld",

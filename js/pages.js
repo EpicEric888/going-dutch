@@ -121,7 +121,7 @@ function Chooser({ busy, onScan, onCreate, onExpense, onGroup, onExample, onOpen
   const cards = [
     { key: "create", icon: "PlusCircle", title: "Create a bill", text: "Add items manually and share the bill.", on: onCreate },
     { key: "expense", icon: "Coins", title: "Split an expense", text: "Divide a single amount between friends.", on: onExpense },
-    { key: "group", icon: "Users", title: "Start a group", text: "Track shared expenses across a trip or weekend.", on: onGroup },
+    { key: "group", icon: "Users", title: "Shared expenses", text: "Track and split expenses across trips, weekends, or everyday activities.", on: onGroup },
   ];
   const featuredBg = { background: "linear-gradient(135deg, color-mix(in srgb, var(--money) 16%, var(--card)), color-mix(in srgb, var(--money) 5%, var(--card)))", borderColor: "color-mix(in srgb, var(--money) 28%, var(--line))" };
   const btn = "text-left transition hover:-translate-y-0.5 hover:shadow-card disabled:opacity-60 disabled:hover:translate-y-0";
@@ -147,8 +147,8 @@ function Chooser({ busy, onScan, onCreate, onExpense, onGroup, onExample, onOpen
       </button>`)}
       <button type="button" disabled=${busy} onClick=${onGroup} className=${"col-span-2 flex items-center gap-4 rounded-3xl border border-line bg-card p-4 " + btn}>
         <span className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-moneysoft text-money"><${Ic} n="Users" s=${26} /></span>
-        <span className="min-w-0 flex-1"><span className="block font-display text-lg font-bold">Start a group</span>
-          <span className="block text-sm text-muted leading-snug">Track shared expenses across a trip or weekend.</span></span>
+        <span className="min-w-0 flex-1"><span className="block font-display text-lg font-bold">Shared expenses</span>
+          <span className="block text-sm text-muted leading-snug">Track and split expenses across trips, weekends, or everyday activities.</span></span>
         <${Ic} n="ChevronRight" s=${20} c="shrink-0 text-muted" />
       </button>
     </div>
