@@ -441,17 +441,6 @@ function GroupPage({ code, user, toast, go }) {
         </div>
         <button type="button" onClick=${share} aria-label="Share group link" className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-line bg-card hover:bg-soft"><${Ic} n="Share2" s=${17} /></button>
       </div>
-      <div className="mt-4 grid grid-cols-2 gap-2">
-        <div className="rounded-xl bg-soft px-3 py-2">
-          <p className="text-[10px] uppercase tracking-[0.08em] text-muted">Total spent</p>
-          ${currencies.length ? currencies.map(cur => html`<p key=${cur} className="font-display text-xl font-extrabold tnum">${fmt((totals[cur] || {}).total || 0, cur)}</p>`) : html`<p className="font-display text-xl font-extrabold tnum">${fmt(0, group.currency)}</p>`}
-        </div>
-        <div className="rounded-xl bg-soft px-3 py-2">
-          ${!me ? html`<p className="text-[10px] uppercase tracking-[0.08em] text-muted">Your balance</p><p className="text-sm text-muted">Pick your name below</p>`
-            : !myLine.length ? html`<p className="text-[10px] uppercase tracking-[0.08em] text-muted">Your balance</p><p className="font-display text-xl font-extrabold">All square</p>`
-            : myLine.map(([cur, v]) => html`<div key=${cur}><p className="text-[10px] uppercase tracking-[0.08em] text-muted">${v > 0 ? "You're owed" : "You owe"}</p><p className=${"font-display text-xl font-extrabold tnum " + (v > 0 ? "text-money" : "text-danger")}>${fmt(Math.abs(v), cur)}</p></div>`)}
-        </div>
-      </div>
     </${Card}>
 
     ${!me && people.length > 0 && html`<${Card} className="p-4">
@@ -491,18 +480,47 @@ function GroupPage({ code, user, toast, go }) {
           </li>`)}</ul>`)}
     </${Card}>
 
-    ${realBills.length > 0 && html`<${Card} className="p-4">
-      <div className="flex items-start justify-between gap-2">
-        <div><h2 className="font-display text-lg font-bold">Summary</h2><p className="text-sm text-muted">What everyone spent and where they stand.</p></div>
-        <button type="button" onClick=${copySummary} className="inline-flex shrink-0 items-center gap-1 rounded-full border border-line bg-card px-3 py-1.5 text-xs font-semibold hover:bg-soft"><${Ic} n="Copy" s=${13} />Copy summary</button>
+    ${realBills.length > 0 && html`<${Card} className="p-4 sm:p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="font-display text-xl font-bold leading-tight">Trip summary</h2>
+          <p className="text-sm text-muted">${people.length} ${people.length === 1 ? "participant" : "participants"}</p>
+        </div>
+        <button type="button" onClick=${copySummary} className="hidden shrink-0 items-center gap-1.5 rounded-full border border-line bg-card px-3 py-1.5 text-xs font-semibold hover:bg-soft sm:inline-flex"><${Ic} n="Copy" s=${13} />Copy summary</button>
       </div>
+
+      <div className="mt-4 grid grid-cols-2 gap-2 sm:gap-3">
+        <div className="flex min-w-0 items-start gap-3 rounded-xl border border-line bg-soft p-3">
+          <span className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-card text-money sm:inline-flex"><${Ic} n="Receipt" s=${19} /></span>
+          <div className="min-w-0">
+            <p className="text-xs text-muted">Total expenses</p>
+            ${currencies.map(cur => html`<p key=${cur} className="truncate font-display text-xl font-extrabold leading-tight tnum sm:text-2xl">${fmt((totals[cur] || {}).total || 0, cur)}</p>`)}
+          </div>
+        </div>
+        <div className=${"flex min-w-0 items-start gap-3 rounded-xl border p-3 " + (myLine && myLine.length ? "" : "border-line bg-soft")}
+          style=${myLine && myLine.length ? (tone => ({ background: `color-mix(in srgb, var(${tone}) 9%, var(--soft))`, borderColor: `color-mix(in srgb, var(${tone}) 30%, var(--line))` }))(myLine[0][1] > 0 ? "--money" : "--danger") : null}>
+          <span className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-card text-money sm:inline-flex"><${Ic} n="Wallet" s=${19} /></span>
+          <div className="min-w-0">
+            ${!me ? html`<p className="text-xs text-muted">Your balance</p><p className="text-sm text-muted">Pick your name above</p>`
+              : !myLine.length ? html`<p className="text-xs text-muted">Your balance</p><p className="font-display text-xl font-extrabold leading-tight sm:text-2xl">All square</p>`
+              : myLine.map(([cur, v]) => html`<div key=${cur}><p className="text-xs text-muted">${v > 0 ? "You're owed" : "You owe"}</p>
+                  <p className=${"truncate font-display text-xl font-extrabold leading-tight tnum sm:text-2xl " + (v > 0 ? "text-money" : "text-danger")}>${fmt(Math.abs(v), cur)}</p></div>`)}
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-2 flex items-center justify-between gap-3 border-b border-line px-1 pb-3 pt-1 text-sm">
+        <span className="inline-flex items-center gap-1.5 text-muted"><${Ic} n="Users" s=${15} />Average per person</span>
+        <span className="text-right font-semibold tnum">${currencies.map(cur => html`<span key=${cur} className="block">${fmt(((totals[cur] || {}).total || 0) / Math.max(1, people.length), cur)}</span>`)}</span>
+      </div>
+
       ${currencies.map(cur => {
         const t = totals[cur] || { total: 0, share: {} };
         return html`<div key=${cur} className="mt-3">
-          <p className="text-xs text-muted">${tl(`${fmt(t.total, cur)} total · about ${fmt(t.total / Math.max(1, people.length), cur)} per person`, `${fmt(t.total, cur)} totaal · ongeveer ${fmt(t.total / Math.max(1, people.length), cur)} per persoon`)}</p>
-          <div className="mt-2 grid grid-cols-[1fr_auto_auto] items-center gap-x-4 gap-y-0 text-sm">
+          ${currencies.length > 1 && html`<p className="mb-1 text-xs font-semibold text-muted">${cur}</p>`}
+          <div className="grid grid-cols-[1fr_auto_auto] items-center gap-x-4 gap-y-0 text-sm">
             <span className="pb-1 text-[10px] uppercase tracking-[0.08em] text-muted">Person</span>
-            <span className="pb-1 text-right text-[10px] uppercase tracking-[0.08em] text-muted">Their share</span>
+            <span className="pb-1 text-right text-[10px] uppercase tracking-[0.08em] text-muted">Share</span>
             <span className="pb-1 text-right text-[10px] uppercase tracking-[0.08em] text-muted">Balance</span>
             ${people.map(p => {
               const v = (nets[cur] || {})[p.id] || 0;
@@ -516,6 +534,7 @@ function GroupPage({ code, user, toast, go }) {
         </div>`;
       })}
       <p className="mt-2 text-xs text-muted">+ gets money back, − owes. Counts every expense and every payment marked as paid.</p>
+      <button type="button" onClick=${copySummary} className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 font-semibold text-moneyink sm:hidden" style=${{ background: "var(--money)" }}><${Ic} n="Copy" s=${16} />Copy summary</button>
     </${Card}>`}
 
     <${Card} className="p-4">

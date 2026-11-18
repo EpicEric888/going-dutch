@@ -224,7 +224,8 @@ const NL = {
   "Start a group": "Start een groep",
 
   // group page v2
-  "Total spent": "Totaal uitgegeven", "Pick your name below": "Kies hieronder je naam",
+  "Total spent": "Totaal uitgegeven", "Trip summary": "Overzicht van de trip", "participant": "deelnemer", "participants": "deelnemers",
+  "Total expenses": "Totale uitgaven", "Average per person": "Gemiddeld per persoon", "Share": "Deel", "Pick your name above": "Kies hierboven je naam", "Pick your name below": "Kies hieronder je naam",
   "Edit expense": "Uitgave bewerken", "Yes, delete": "Ja, verwijderen", "Delete expense": "Uitgave verwijderen", "Save changes": "Wijzigingen opslaan",
   "What everyone spent and where they stand.": "Wat iedereen uitgaf en hoe ze ervoor staan.", "Copy summary": "Overzicht kopiëren",
   "Person": "Persoon", "Their share": "Hun deel", "Balance": "Saldo",
