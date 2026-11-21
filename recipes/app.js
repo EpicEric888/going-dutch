@@ -10,14 +10,14 @@ let lang = (() => {
 
 const T = {
   en: {
-    sub: "Cooked at home, written down to keep",
+    sub: "Recipes in English and Dutch",
     recipes: "Recipes", make: "What can I make?",
-    eyebrow: "From our kitchen", heroTitle: "The recipes we keep coming back to.",
-    heroText: "Family favorites and everyday staples, with portions you can scale and nutrition worked out for you. In English and Dutch.",
+    eyebrow: "", heroTitle: "Family recipes",
+    heroText: "Recipes we cook at home. Adjust the servings, switch between metric and US units, and see nutrition per serving.",
     all: "All", search: "Search recipes", empty: "No recipes match that search.",
     serves: n => `Serves ${n}`, perServing: "per serving",
     storyTitle: "About these recipes",
-    storyText: "These are the dishes we cook at home and want to keep. Some are passed down in the family, some we picked up along the way. Every recipe is in English and Dutch, so everyone can cook them.",
+    storyText: "A collection of recipes we cook at home. Each one is available in English and Dutch.",
     back: "All recipes", ingredients: "Ingredients",
     servings: n => n === 1 ? "1 serving" : `${n} servings`, fewer: "Fewer servings", more: "More servings",
     metric: "Metric", us: "US", unitsLabel: "Units",
@@ -25,7 +25,7 @@ const T = {
     estimate: "Estimates, worked out from the ingredients listed.",
     method: "Method", stepHint: "Tap a step to tick it off.",
     makeTitle: "What can I make?",
-    makeText: "Tick what you have. Add an amount if you know it, and we'll work out how many servings you can make.",
+    makeText: "Select the ingredients you have. Add amounts to see how many servings you can make.",
     have: "What you have", results: "What you can make",
     pickSome: "Tick a few ingredients to see what you can make.",
     full: "You have everything", some: n => `About ${n} ${n === 1 ? "serving" : "servings"} with what you have`, none: "Missing ingredients",
@@ -36,14 +36,14 @@ const T = {
     title: "Pape Family Recipes"
   },
   nl: {
-    sub: "Thuis gekookt, opgeschreven om te bewaren",
+    sub: "Recepten in het Nederlands en Engels",
     recipes: "Recepten", make: "Wat kan ik maken?",
-    eyebrow: "Uit onze keuken", heroTitle: "De recepten waar we steeds op terugkomen.",
-    heroText: "Familiefavorieten en vaste klassiekers, met porties die je kunt aanpassen en de voedingswaarde al uitgerekend. In het Nederlands en Engels.",
+    eyebrow: "", heroTitle: "Familierecepten",
+    heroText: "Recepten die we thuis koken. Pas het aantal porties aan, wissel tussen metrische en Amerikaanse eenheden en bekijk de voedingswaarde per portie.",
     all: "Alles", search: "Zoek recepten", empty: "Geen recepten gevonden.",
     serves: n => `Voor ${n} personen`, perServing: "per portie",
     storyTitle: "Over deze recepten",
-    storyText: "Dit zijn de gerechten die we thuis koken en willen bewaren. Sommige gaan al generaties mee in de familie, andere hebben we onderweg opgepikt. Elk recept staat er in het Nederlands en Engels, zodat iedereen ze kan maken.",
+    storyText: "Een verzameling recepten die we thuis koken. Elk recept is beschikbaar in het Nederlands en Engels.",
     back: "Alle recepten", ingredients: "Ingrediënten",
     servings: n => n === 1 ? "1 portie" : `${n} porties`, fewer: "Minder porties", more: "Meer porties",
     metric: "Metrisch", us: "VS", unitsLabel: "Eenheden",
@@ -51,7 +51,7 @@ const T = {
     estimate: "Schattingen, uitgerekend op basis van de ingrediënten.",
     method: "Bereiding", stepHint: "Tik op een stap om hem af te vinken.",
     makeTitle: "Wat kan ik maken?",
-    makeText: "Vink aan wat je in huis hebt. Vul een hoeveelheid in als je die weet, dan rekenen we uit hoeveel porties je kunt maken.",
+    makeText: "Selecteer de ingrediënten die je in huis hebt. Vul hoeveelheden in om te zien hoeveel porties je kunt maken.",
     have: "Wat je in huis hebt", results: "Wat je kunt maken",
     pickSome: "Vink een paar ingrediënten aan om te zien wat je kunt maken.",
     full: "Je hebt alles", some: n => `Ongeveer ${n} ${n === 1 ? "portie" : "porties"} met wat je hebt`, none: "Ingrediënten ontbreken",
@@ -244,7 +244,7 @@ function homeGrid() {
 
 function viewHome() {
   return `<section class="hero">
-      <div class="eyebrow">${esc(t("eyebrow"))}</div>
+      ${t("eyebrow") ? `<div class="eyebrow">${esc(t("eyebrow"))}</div>` : ""}
       <h1 class="serif">${esc(t("heroTitle"))}</h1>
       <p>${esc(t("heroText"))}</p>
     </section>
