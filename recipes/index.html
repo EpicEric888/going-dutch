@@ -97,6 +97,11 @@
   .ings { list-style: none; padding: 0; margin: 0; }
   .ings li { display: flex; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); }
   .ings li:first-child { border-top: 0; }
+  .ing-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+  .ing-head h2 { margin: 0 !important; }
+  .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; background: var(--bg); padding: 3px; flex: none; }
+  .seg button { border: 0; background: none; padding: 5px 11px; border-radius: 999px; font-size: 13px; font-weight: 700; cursor: pointer; color: var(--muted); }
+  .seg button[aria-pressed="true"] { background: var(--paper); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.12); }
   .ings .note { display: block; font-size: 13px; color: var(--muted); }
   .steps .st { display: block; font-weight: 700; margin-bottom: 2px; }
   .ings .amt { min-width: 84px; font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -154,7 +159,7 @@
   <footer id="foot"></footer>
 </div>
 <nav class="tabbar" id="tabbar" aria-label="Main"></nav>
-<script src="app.js?v=4"></script>
+<script src="app.js?v=6"></script>
 <script>
   window.goatcounter = { path: function () { var h = location.hash; return "/recipes" + (/^#\/recipe\//.test(h) ? "/" + h.split("/")[2] : /^#\/make/.test(h) ? "/make" : ""); } };
   window.addEventListener("hashchange", function () { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count(); });

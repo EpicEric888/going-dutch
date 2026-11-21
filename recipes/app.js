@@ -20,6 +20,7 @@ const T = {
     storyText: "These are the dishes we cook at home and want to keep. Some are passed down in the family, some we picked up along the way. Every recipe is in English and Dutch, so everyone can cook them.",
     back: "All recipes", ingredients: "Ingredients",
     servings: n => n === 1 ? "1 serving" : `${n} servings`, fewer: "Fewer servings", more: "More servings",
+    metric: "Metric", us: "US", unitsLabel: "Units",
     nutrition: "Nutrition per serving", calories: "kcal", protein: "Protein", carbs: "Carbs", fat: "Fat",
     estimate: "Estimates, worked out from the ingredients listed.",
     method: "Method", stepHint: "Tap a step to tick it off.",
@@ -45,6 +46,7 @@ const T = {
     storyText: "Dit zijn de gerechten die we thuis koken en willen bewaren. Sommige gaan al generaties mee in de familie, andere hebben we onderweg opgepikt. Elk recept staat er in het Nederlands en Engels, zodat iedereen ze kan maken.",
     back: "Alle recepten", ingredients: "Ingrediënten",
     servings: n => n === 1 ? "1 portie" : `${n} porties`, fewer: "Minder porties", more: "Meer porties",
+    metric: "Metrisch", us: "VS", unitsLabel: "Eenheden",
     nutrition: "Voedingswaarde per portie", calories: "kcal", protein: "Eiwit", carbs: "Koolh.", fat: "Vet",
     estimate: "Schattingen, uitgerekend op basis van de ingrediënten.",
     method: "Bereiding", stepHint: "Tik op een stap om hem af te vinken.",
@@ -90,7 +92,7 @@ function kitchenRound(n, unit) {
 function fmtAmount(n, unit) {
   n = kitchenRound(n, unit);
   if (unit === "g" || unit === "ml") return numFmt(n >= 10 ? Math.round(n) : Math.round(n * 10) / 10, 1);
-  if (COUNTABLE.has(unit)) {
+  if (COUNTABLE.has(unit) || unit === "lb" || unit === "oz") {
     let whole = Math.floor(n), frac = n - whole;
     const [val, glyph] = FRACTIONS.reduce((best, f) => Math.abs(f[0] - frac) < Math.abs(best[0] - frac) ? f : best);
     if (Math.abs(val - frac) <= 0.05) {
@@ -101,12 +103,28 @@ function fmtAmount(n, unit) {
   return numFmt(n, 2);
 }
 
-// Dutch readers get metric: cups to ml, pounds and ounces to grams/kilos (display only)
+/* metric or US units, display only (the recipe data keeps the original amounts) */
+const UNITS_KEY = "pape.units";
+let sys = (() => {
+  try { const s = localStorage.getItem(UNITS_KEY); if (s === "metric" || s === "us") return s; } catch (e) {}
+  if (lang === "nl") return "metric";
+  return /-(US|LR|MM)\b/i.test((navigator.languages || [navigator.language || ""])[0] || "") ? "us" : "metric";
+})();
+const snapFrac = x => { const w = Math.floor(x), f = x - w; const [v] = FRACTIONS.reduce((b, c) => Math.abs(c[0] - f) < Math.abs(b[0] - f) ? c : b); return w + v; };
 function displayQty(n, unit) {
-  if (lang !== "nl") return [n, unit];
-  if (unit === "cup") return n * 240 >= 1000 ? [n * 0.24, "l"] : [n * 240, "ml"];
-  if (unit === "lb") return n * 453.6 >= 1000 ? [n * 0.4536, "kg"] : [n * 453.6, "g"];
-  if (unit === "oz") return [n * 28.35, "g"];
+  if (sys === "metric") {
+    if (unit === "cup") return n * 240 >= 1000 ? [n * 0.24, "l"] : [n * 240, "ml"];
+    if (unit === "lb") return n * 453.6 >= 1000 ? [n * 0.4536, "kg"] : [n * 453.6, "g"];
+    if (unit === "oz") return [n * 28.35, "g"];
+    return [n, unit];
+  }
+  const g = unit === "kg" ? n * 1000 : unit === "g" ? n : null;
+  if (g != null) return g >= 454 ? [Math.round(g / 453.6 * 4) / 4, "lb"] : [Math.max(0.5, Math.round(g / 28.35 * 2) / 2), "oz"];
+  const ml = unit === "l" ? n * 1000 : unit === "ml" ? n : null;
+  if (ml != null) {
+    if (ml < 45) return ml < 15 ? [snapFrac(ml / 5), "tsp"] : [snapFrac(ml / 15), "tbsp"];
+    return [snapFrac(ml / 240), "cup"];
+  }
   return [n, unit];
 }
 function qtyText(n, unit) {
@@ -238,6 +256,9 @@ function viewHome() {
     <section class="story"><h2 class="serif">${esc(t("storyTitle"))}</h2><p>${esc(t("storyText"))}</p></section>`;
 }
 
+function unitSwitch() {
+  return `<div class="seg" role="group" aria-label="${esc(t("unitsLabel"))}">${["metric", "us"].map(k => `<button type="button" data-sys="${k}" aria-pressed="${sys === k}">${esc(t(k))}</button>`).join("")}</div>`;
+}
 function viewRecipe(id) {
   const r = DB.recipes.find(x => x.id === id);
   if (!r) return `<a class="back" href="#/">${ICON.back}${esc(t("back"))}</a><div class="empty">${esc(t("notFound"))}</div>`;
@@ -254,7 +275,7 @@ function viewRecipe(id) {
     <div class="r-layout">
       <div class="r-side">
         <section class="panel">
-          <h2 class="serif">${esc(t("ingredients"))}</h2>
+          <div class="ing-head"><h2 class="serif">${esc(t("ingredients"))}</h2>${unitSwitch()}</div>
           <div class="stepper">
             <button type="button" data-serv="-1" aria-label="${esc(t("fewer"))}" ${s <= 1 ? "disabled" : ""}>−</button>
             <output aria-live="polite">${esc(t("servings", s))}</output>
@@ -320,7 +341,7 @@ function viewMake() {
           </li>`;
         }).join("")}</ul>
       </section>
-      <section class="panel"><h2 class="serif">${esc(t("results"))}</h2><div id="results">${makeResults()}</div></section>
+      <section class="panel"><div class="ing-head"><h2 class="serif">${esc(t("results"))}</h2>${unitSwitch()}</div><div id="results">${makeResults()}</div></section>
     </div>`;
 }
 
@@ -339,9 +360,10 @@ document.querySelectorAll(".lang button").forEach(b => b.addEventListener("click
   lang = b.dataset.lang; try { localStorage.setItem(LANG_KEY, lang); } catch (e) {} render();
 }));
 app.addEventListener("click", e => {
-  const el = e.target.closest("[data-cat],[data-serv],[data-step],[data-clear]");
+  const el = e.target.closest("[data-cat],[data-serv],[data-step],[data-clear],[data-sys]");
   if (!el) return;
   const r = route();
+  if (el.dataset.sys) { sys = el.dataset.sys; try { localStorage.setItem(UNITS_KEY, sys); } catch (e2) {} render(); return; }
   if (el.dataset.cat) { state.cat = el.dataset.cat; render(); }
   else if (el.dataset.serv) {
     const rec = DB.recipes.find(x => x.id === r.id);
