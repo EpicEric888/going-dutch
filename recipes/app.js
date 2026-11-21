@@ -33,7 +33,8 @@ const T = {
     clear: "Clear all", view: "View recipe",
     needMore: (name, g) => `${name}: about ${g} g more`,
     notFound: "We couldn't find that recipe.", loading: "Loading recipes…", loadError: "Couldn't load the recipes. Reload the page to try again.",
-    title: "Pape Family Recipes"
+    title: "Pape Family Recipes",
+    gateTitle: "This page is for family", gateText: "Enter the password to see the recipes.", password: "Password", enter: "Open", wrong: "That's not the right password."
   },
   nl: {
     sub: "Recepten in het Nederlands en Engels",
@@ -59,7 +60,8 @@ const T = {
     clear: "Alles wissen", view: "Bekijk recept",
     needMore: (name, g) => `${name}: nog ongeveer ${g} g`,
     notFound: "Dit recept bestaat niet.", loading: "Recepten laden…", loadError: "Kon de recepten niet laden. Herlaad de pagina.",
-    title: "Recepten van de familie Pape"
+    title: "Recepten van de familie Pape",
+    gateTitle: "Deze pagina is voor familie", gateText: "Vul het wachtwoord in om de recepten te zien.", password: "Wachtwoord", enter: "Openen", wrong: "Dat is niet het goede wachtwoord."
   }
 };
 const t = (k, ...a) => { const v = T[lang][k] ?? T.en[k]; return typeof v === "function" ? v(...a) : v; };
@@ -345,11 +347,35 @@ function viewMake() {
     </div>`;
 }
 
+/* ---------- password screen (keeps casual visitors out; the files themselves are still public) ---------- */
+const GATE_HASH = "948c0d98e63db3a35b766ba7202c905fad9ef4889f0ca65ad9adf1279111ea33";
+const GATE_KEY = "pape.unlocked";
+let unlocked = (() => { try { return localStorage.getItem(GATE_KEY) === GATE_HASH; } catch (e) { return false; } })();
+let gateError = false;
+async function sha256(text) {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
+}
+function viewGate() {
+  return `<section class="gate panel">
+    <span class="mark" aria-hidden="true" style="margin:0 auto 10px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
+    <h1 class="serif">${esc(t("gateTitle"))}</h1>
+    <p class="muted">${esc(t("gateText"))}</p>
+    <form id="gate-form" class="gate-form">
+      <input id="gate-pw" type="password" autocomplete="current-password" autocapitalize="none" spellcheck="false" placeholder="${esc(t("password"))}" aria-label="${esc(t("password"))}" required>
+      <button class="btn" type="submit">${esc(t("enter"))}</button>
+    </form>
+    ${gateError ? `<p class="gate-err" role="alert">${esc(t("wrong"))}</p>` : ""}
+  </section>`;
+}
+
 /* ---------- render + events ---------- */
 const app = document.getElementById("app");
 function render() {
   const r = route();
   chrome(r);
+  document.body.classList.toggle("locked", !unlocked);
+  if (!unlocked) { app.innerHTML = viewGate(); setTimeout(() => document.getElementById("gate-pw")?.focus(), 0); return; }
   if (loadFailed) { app.innerHTML = `<div class="empty">${esc(t("loadError"))}</div>`; return; }
   if (!DB) { app.innerHTML = `<div class="empty">${esc(t("loading"))}</div>`; return; }
   app.innerHTML = r.page === "recipe" ? viewRecipe(r.id) : r.page === "make" ? viewMake() : viewHome();
@@ -374,6 +400,16 @@ app.addEventListener("click", e => {
     const at = d.indexOf(i); if (at >= 0) d.splice(at, 1); else d.push(i);
     el.setAttribute("aria-pressed", String(at < 0));
   } else if (el.dataset.clear) { state.have = {}; saveHave(); render(); }
+});
+app.addEventListener("submit", async e => {
+  if (e.target.id !== "gate-form") return;
+  e.preventDefault();
+  const pw = document.getElementById("gate-pw").value.trim().toLowerCase();
+  if (await sha256("pape-recipes:" + pw) === GATE_HASH) {
+    unlocked = true; gateError = false;
+    try { localStorage.setItem(GATE_KEY, GATE_HASH); } catch (err) {}
+  } else gateError = true;
+  render();
 });
 app.addEventListener("input", e => {
   if (e.target.id === "q") { state.q = e.target.value; document.getElementById("grid").innerHTML = homeGrid(); }

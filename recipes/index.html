@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Pape Family Recipes</title>
 <meta name="description" content="Family recipes in English and Dutch, with adjustable servings and nutrition per serving.">
@@ -138,6 +139,14 @@
   .result ul { margin: 2px 0 0; padding-left: 18px; color: var(--muted); font-size: 14px; }
   .btn { border: 0; border-radius: 12px; padding: 11px 16px; font-weight: 700; cursor: pointer; background: var(--olive); color: var(--olive-ink); }
   .btn.ghost { background: none; color: var(--muted); padding: 11px 8px; }
+  .gate { max-width: 420px; margin: 48px auto 0; text-align: center; }
+  .gate h1 { font-size: 28px; font-weight: 600; margin: 4px 0 6px; }
+  .gate p { margin: 0 0 16px; }
+  .gate-form { display: flex; gap: 8px; }
+  .gate-form input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--bg); border-radius: 12px; padding: 11px 14px; outline: none; }
+  .gate-form input:focus { border-color: var(--olive); }
+  .gate-err { color: var(--clay); font-weight: 600; margin: 12px 0 0 !important; }
+  body.locked nav.links, body.locked .tabbar { display: none !important; }
   footer { padding: 26px 0 0; font-size: 13px; color: var(--muted); text-align: center; }
   footer a { color: var(--muted); }
   .empty { padding: 30px 10px; text-align: center; color: var(--muted); }
@@ -159,7 +168,7 @@
   <footer id="foot"></footer>
 </div>
 <nav class="tabbar" id="tabbar" aria-label="Main"></nav>
-<script src="app.js?v=7"></script>
+<script src="app.js?v=8"></script>
 <script>
   window.goatcounter = { path: function () { var h = location.hash; return "/recipes" + (/^#\/recipe\//.test(h) ? "/" + h.split("/")[2] : /^#\/make/.test(h) ? "/make" : ""); } };
   window.addEventListener("hashchange", function () { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count(); });
