@@ -35,7 +35,7 @@ function rules(known: string) {
   return `Rules:
 - Keep the cook's amounts and wording. Don't invent ingredients or steps that aren't there. Tidy the text into clear, plain sentences.
 - Write natural English and natural Dutch (informal "je"). Dutch uses metric words in prose (°C, cm), but keep the amounts and units as given.
-- "amount" is a number (fractions as decimals). Use "unit" for countable things (2 onions), "clove" for garlic, "pinch" for a pinch. If no amount is given (e.g. "salt to taste"), use amount 1 and unit "pinch" and put "to taste" in the note.
+- "amount" is a number (fractions as decimals). Use "unit" for countable things (2 onions), "clove" for garlic, "pinch" for a pinch. For vague amounts, estimate a real one and keep the cook's wording as the note: a splash of milk = 2 tbsp, a knob of butter = 1 tbsp, a handful of herbs = 0.25 cup. Only seasonings with no amount (e.g. "salt to taste") use amount 1, unit "pinch" and the note "to taste".
 - "key": if the ingredient is one of these known ingredients, use that exact key: ${known || "(none)"}. Otherwise leave key as "".
 - "nutrition": typical values per 100 g for the ingredient as bought, and "grams_per_unit" = grams in one of the chosen unit (e.g. 1 cup flour = 125, 1 onion = 110, 1 tbsp oil = 13.6, 1 g = 1).
 - "intro": one short, neutral sentence describing the dish. No marketing language.
