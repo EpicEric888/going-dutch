@@ -77,7 +77,14 @@ const unitLabel = (u, n) => UNITS[u] ? UNITS[u][lang][n > 1 ? 1 : 0] : u;
 const COUNTABLE = new Set(["cup", "tbsp", "tsp", "clove", "unit"]);
 const FRACTIONS = [[0, ""], [1 / 4, "¼"], [1 / 3, "⅓"], [1 / 2, "½"], [2 / 3, "⅔"], [3 / 4, "¾"], [1, ""]];
 
+// whole things read better rounded: cloves to whole numbers, onions/chiles etc. to halves once there are 2 or more
+function kitchenRound(n, unit) {
+  if (unit === "clove") return Math.max(1, Math.round(n));
+  if (unit === "unit" && n >= 2) return Math.round(n * 2) / 2;
+  return n;
+}
 function fmtAmount(n, unit) {
+  n = kitchenRound(n, unit);
   if (unit === "g" || unit === "ml") return numFmt(n >= 10 ? Math.round(n) : Math.round(n * 10) / 10, 1);
   if (COUNTABLE.has(unit)) {
     let whole = Math.floor(n), frac = n - whole;
@@ -231,7 +238,7 @@ function viewRecipe(id) {
             <button type="button" data-serv="1" aria-label="${esc(t("more"))}" ${s >= 40 ? "disabled" : ""}>+</button>
           </div>
           <ul class="ings">${r.ingredients.map(line => {
-            const amt = line.amount * factor, u = unitLabel(line.unit, amt);
+            const amt = kitchenRound(line.amount * factor, line.unit), u = unitLabel(line.unit, amt);
             return `<li><span class="amt">${fmtAmount(amt, line.unit)}${u ? " " + esc(u) : ""}</span><span>${esc(ingName(line.key, line.unit === "unit" ? amt : 1))}</span></li>`;
           }).join("")}</ul>
         </section>
@@ -285,7 +292,7 @@ function viewMake() {
         <ul class="have">${keys.map(k => {
           const h = state.have[k];
           return `<li><label><input type="checkbox" data-have="${esc(k)}" ${h ? "checked" : ""}>${esc(ingName(k))}</label>
-            ${h ? `<div class="qty"><input type="number" inputmode="decimal" min="0" step="any" data-amt="${esc(k)}" value="${esc(h.amount ?? "")}" placeholder="${esc(t("amount"))} (${esc(t("optional"))})" aria-label="${esc(t("amount"))} ${esc(ingName(k))}">
+            ${h ? `<div class="qty"><input type="number" inputmode="decimal" min="0" step="any" data-amt="${esc(k)}" value="${esc(h.amount ?? "")}" placeholder="${esc(t("amount"))}" aria-label="${esc(t("amount"))} ${esc(ingName(k))}">
               <select data-unit="${esc(k)}" aria-label="Unit">${haveUnits(k).map(u => `<option value="${u}" ${h.unit === u ? "selected" : ""}>${esc(unitLabel(u, 2) || (lang === "nl" ? "stuks" : "pieces"))}</option>`).join("")}</select></div>` : ""}
           </li>`;
         }).join("")}</ul>
