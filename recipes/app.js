@@ -34,6 +34,25 @@ const T = {
     needMore: (name, g) => `${name}: about ${g} g more`,
     notFound: "We couldn't find that recipe.", loading: "Loading recipes…", loadError: "Couldn't load the recipes. Reload the page to try again.",
     title: "Pape Family Recipes",
+    add: "Add recipe", addTitle: "Add a recipe",
+    addText: "Paste a recipe in any language, or add a photo of a recipe card. It gets turned into a recipe in English and Dutch that you can check before saving.",
+    pasteLabel: "Recipe text", pastePh: "Paste the recipe here: ingredients, amounts and steps. Any language is fine.",
+    photo: "Add a photo", photoChosen: "Photo added", removePhoto: "Remove photo",
+    readIt: "Read recipe", reading: "Reading…", readingHint: "This usually takes 10 to 30 seconds.",
+    orManual: "No text or photo?", manual: "Type it in yourself",
+    checkTitle: "Check the recipe", checkText: "Fix anything that looks off. Switch between English and Dutch to check both versions.",
+    details: "Details", editingIn: "Language", fName: "Name", fIntro: "Short description", fIntroPh: "One sentence about the dish",
+    fCategory: "Category", fServings: "Servings", fTime: "Time", fIngredient: "Ingredient", fNote: "Note, e.g. finely chopped",
+    addIngredient: "Add ingredient", fStepTitle: "Step title", fStepText: "What to do", addStep: "Add step", remove: "Remove",
+    saveHint: "Anything missing in the other language is translated when you save.",
+    cancel: "Cancel", save: "Save recipe", saving: "Saving…",
+    errEmpty: "Paste the recipe text or add a photo first.", errNoRecipe: "We couldn't find a recipe in that. Try pasting the full text.",
+    errRead: "Something went wrong reading the recipe. Try again, or type it in yourself.", errLimit: "You've hit today's limit for reading recipes. Try again tomorrow, or type it in yourself.",
+    errBusy: "Too many requests right now. Wait a minute and try again.", errPhoto: "We couldn't open that photo. Try another one.",
+    errIncomplete: "Add a name, at least one ingredient and one step.", errPassword: "The family password has changed. Reload the page and enter the new one.",
+    errSave: "Couldn't save the recipe. Check your connection and try again.", errOffline: "Adding recipes isn't available right now.",
+    errDelete: "Couldn't remove the recipe. Try again.", delRecipe: "Remove this recipe", delConfirm: "Tap again to remove it for everyone",
+    addedBy: "Added by you",
     gateTitle: "This page is for family", gateText: "Enter the password to see the recipes.", password: "Password", enter: "Open", wrong: "That's not the right password."
   },
   nl: {
@@ -61,6 +80,25 @@ const T = {
     needMore: (name, g) => `${name}: nog ongeveer ${g} g`,
     notFound: "Dit recept bestaat niet.", loading: "Recepten laden…", loadError: "Kon de recepten niet laden. Herlaad de pagina.",
     title: "Recepten van de familie Pape",
+    add: "Recept toevoegen", addTitle: "Recept toevoegen",
+    addText: "Plak een recept in welke taal dan ook, of voeg een foto van een receptkaart toe. Er komt een recept in het Nederlands en Engels uit dat je kunt nakijken voordat je het opslaat.",
+    pasteLabel: "Recepttekst", pastePh: "Plak hier het recept: ingrediënten, hoeveelheden en stappen. Elke taal is goed.",
+    photo: "Foto toevoegen", photoChosen: "Foto toegevoegd", removePhoto: "Foto verwijderen",
+    readIt: "Recept inlezen", reading: "Bezig met lezen…", readingHint: "Dit duurt meestal 10 tot 30 seconden.",
+    orManual: "Geen tekst of foto?", manual: "Typ het zelf in",
+    checkTitle: "Kijk het recept na", checkText: "Verbeter wat niet klopt. Wissel tussen Nederlands en Engels om beide versies te checken.",
+    details: "Gegevens", editingIn: "Taal", fName: "Naam", fIntro: "Korte omschrijving", fIntroPh: "Eén zin over het gerecht",
+    fCategory: "Categorie", fServings: "Porties", fTime: "Tijd", fIngredient: "Ingrediënt", fNote: "Opmerking, bijv. fijngehakt",
+    addIngredient: "Ingrediënt toevoegen", fStepTitle: "Titel van de stap", fStepText: "Wat je doet", addStep: "Stap toevoegen", remove: "Verwijderen",
+    saveHint: "Wat in de andere taal ontbreekt, wordt bij het opslaan vertaald.",
+    cancel: "Annuleren", save: "Recept opslaan", saving: "Opslaan…",
+    errEmpty: "Plak eerst de recepttekst of voeg een foto toe.", errNoRecipe: "We konden daar geen recept in vinden. Plak de volledige tekst.",
+    errRead: "Er ging iets mis bij het lezen. Probeer het opnieuw, of typ het zelf in.", errLimit: "Je hebt het maximum voor vandaag bereikt. Probeer het morgen opnieuw, of typ het zelf in.",
+    errBusy: "Te veel verzoeken. Wacht even en probeer het opnieuw.", errPhoto: "We konden die foto niet openen. Probeer een andere.",
+    errIncomplete: "Vul een naam, minstens één ingrediënt en één stap in.", errPassword: "Het familiewachtwoord is veranderd. Herlaad de pagina en vul het nieuwe in.",
+    errSave: "Kon het recept niet opslaan. Check je verbinding en probeer het opnieuw.", errOffline: "Recepten toevoegen kan nu even niet.",
+    errDelete: "Kon het recept niet verwijderen. Probeer het opnieuw.", delRecipe: "Dit recept verwijderen", delConfirm: "Tik nog een keer om het voor iedereen te verwijderen",
+    addedBy: "Door jou toegevoegd",
     gateTitle: "Deze pagina is voor familie", gateText: "Vul het wachtwoord in om de recepten te zien.", password: "Wachtwoord", enter: "Openen", wrong: "Dat is niet het goede wachtwoord."
   }
 };
@@ -78,15 +116,16 @@ const UNITS = {
   piece: { en: ["piece", "pieces"], nl: ["stuk", "stuks"] },
   packet: { en: ["packet", "packets"], nl: ["zakje", "zakjes"] },
   portion: { en: ["portion", "portions"], nl: ["portie", "porties"] },
+  pinch: { en: ["pinch", "pinches"], nl: ["snufje", "snufjes"] },
   unit: { en: ["", ""], nl: ["", ""] }
 };
 const unitLabel = (u, n) => UNITS[u] ? UNITS[u][lang][n > 1 ? 1 : 0] : u;
-const COUNTABLE = new Set(["cup", "tbsp", "tsp", "clove", "unit", "piece", "packet", "portion"]);
+const COUNTABLE = new Set(["cup", "tbsp", "tsp", "clove", "unit", "piece", "packet", "portion", "pinch"]);
 const FRACTIONS = [[0, ""], [1 / 4, "¼"], [1 / 3, "⅓"], [1 / 2, "½"], [2 / 3, "⅔"], [3 / 4, "¾"], [1, ""]];
 
 // whole things read better rounded: cloves to whole numbers, onions/chiles etc. to halves once there are 2 or more
 function kitchenRound(n, unit) {
-  if (unit === "clove" || unit === "packet" || unit === "portion") return Math.max(1, Math.round(n));
+  if (unit === "clove" || unit === "packet" || unit === "portion" || unit === "pinch") return Math.max(1, Math.round(n));
   if (unit === "piece") return Math.max(0.5, Math.round(n * 2) / 2);
   if (unit === "unit" && n >= 2) return Math.round(n * 2) / 2;
   return n;
@@ -199,6 +238,8 @@ const ICON = {
   flame: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 4 6 6 6 11a6 6 0 0 1-12 0c0-3 2-4 2-7 2 1 3 3 3 5 1-2 1-6 1-9z"/></svg>',
   back: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
   book: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/></svg>',
+  camera: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
+  plus: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>',
   basket: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18l-2 10H5zM8 10l3-6M16 10l-3-6"/></svg>'
 };
 const catArt = c => c === "salsas" ? { bg: "var(--salsas)", icon: ICON.chili } : c === "soups" ? { bg: "var(--soups)", icon: ICON.bowl } : { bg: "var(--mains)", icon: ICON.pot };
@@ -209,17 +250,18 @@ const route = () => {
   const m = h.match(/^#\/recipe\/([\w-]+)/);
   if (m) return { page: "recipe", id: m[1] };
   if (/^#\/make/.test(h)) return { page: "make" };
+  if (/^#\/add/.test(h)) return { page: "add" };
   return { page: "home" };
 };
 
 function chrome(r) {
   document.documentElement.lang = lang;
-  document.title = r.page === "recipe" && DB ? `${L(DB.recipes.find(x => x.id === r.id)?.name) || t("title")} · ${t("title")}` : r.page === "make" ? `${t("make")} · ${t("title")}` : t("title");
+  document.title = r.page === "recipe" && DB ? `${L(DB.recipes.find(x => x.id === r.id)?.name) || t("title")} · ${t("title")}` : r.page === "make" ? `${t("make")} · ${t("title")}` : r.page === "add" ? `${t("addTitle")} · ${t("title")}` : t("title");
   document.getElementById("brand-name").textContent = t("title");
   document.getElementById("brand-sub").textContent = t("sub");
   document.querySelectorAll(".lang button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));
-  const cur = r.page === "make" ? "make" : "recipes";
-  const links = [["recipes", "#/", t("recipes"), ICON.book], ["make", "#/make", t("make"), ICON.basket]];
+  const cur = r.page === "make" ? "make" : r.page === "add" ? "add" : "recipes";
+  const links = [["recipes", "#/", t("recipes"), ICON.book], ["make", "#/make", t("make"), ICON.basket], ["add", "#/add", t("add"), ICON.plus]];
   document.getElementById("nav").innerHTML = links.map(([k, href, label]) => `<a href="${href}"${cur === k ? ' aria-current="page"' : ""}>${esc(label)}</a>`).join("");
   document.getElementById("tabbar").innerHTML = links.map(([k, href, label, icon]) => `<a href="${href}"${cur === k ? ' aria-current="page"' : ""}>${icon}<span>${esc(label)}</span></a>`).join("");
   document.getElementById("foot").innerHTML = `${esc(t("title"))} · <a href="../">Going Dutch</a>`;
@@ -251,7 +293,7 @@ function viewHome() {
       <p>${esc(t("heroText"))}</p>
     </section>
     <div class="toolbar">
-      ${[{ id: "all", name: t("all") }, ...DB.categories].map(c => `<button type="button" class="chip" data-cat="${c.id}" aria-pressed="${state.cat === c.id}">${esc(L(c.name))}</button>`).join("")}
+      ${[{ id: "all", name: t("all") }, ...DB.categories.filter(c => DB.recipes.some(r => r.category === c.id))].map(c => `<button type="button" class="chip" data-cat="${c.id}" aria-pressed="${state.cat === c.id}">${esc(L(c.name))}</button>`).join("")}
       <input class="search" type="search" id="q" placeholder="${esc(t("search"))}" aria-label="${esc(t("search"))}" value="${esc(state.q)}">
     </div>
     <div class="grid" id="grid">${homeGrid()}</div>
@@ -304,7 +346,8 @@ function viewRecipe(id) {
         <ol class="steps">${steps.map((st, i) => `<li><button type="button" data-step="${i}" aria-pressed="${done.includes(i)}"><span>${typeof st === "object" ? `<b class="st">${esc(st.title)}</b>${esc(st.text)}` : esc(st)}</span></button></li>`).join("")}</ol>
         <p class="hint">${esc(t("stepHint"))}</p>
       </section>
-    </div>`;
+    </div>
+    ${r._dbId && typeof myUserId !== "undefined" && myUserId && r._author === myUserId ? `<div style="margin-top:18px;text-align:center"><span class="hint">${esc(t("addedBy"))} · </span><button type="button" class="linkbtn danger" data-delrecipe="${r._dbId}">${esc(add.confirmDel === r._dbId ? t("delConfirm") : t("delRecipe"))}</button></div>` : ""}`;
 }
 
 function haveUnits(key) {
@@ -378,7 +421,7 @@ function render() {
   if (!unlocked) { app.innerHTML = viewGate(); setTimeout(() => document.getElementById("gate-pw")?.focus(), 0); return; }
   if (loadFailed) { app.innerHTML = `<div class="empty">${esc(t("loadError"))}</div>`; return; }
   if (!DB) { app.innerHTML = `<div class="empty">${esc(t("loading"))}</div>`; return; }
-  app.innerHTML = r.page === "recipe" ? viewRecipe(r.id) : r.page === "make" ? viewMake() : viewHome();
+  app.innerHTML = r.page === "recipe" ? viewRecipe(r.id) : r.page === "make" ? viewMake() : r.page === "add" ? viewAdd() : viewHome();
 }
 
 window.addEventListener("hashchange", () => { render(); window.scrollTo(0, 0); });
@@ -432,5 +475,5 @@ app.addEventListener("change", e => {
 
 render();
 Promise.all([fetch("data/recipes.json").then(r => r.json()), fetch("data/ingredients.json").then(r => r.json())])
-  .then(([d, i]) => { DB = d; ING = i; render(); })
+  .then(async ([d, i]) => { DB = d; ING = i; render(); if (typeof loadFamilyRecipes === "function") { await loadFamilyRecipes(); render(); } })
   .catch(() => { loadFailed = true; render(); });

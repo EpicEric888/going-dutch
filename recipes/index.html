@@ -30,7 +30,7 @@
   html { -webkit-text-size-adjust: 100%; }
   body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 Figtree, system-ui, sans-serif; }
   a { color: inherit; }
-  button, input, select { font: inherit; color: inherit; }
+  button, input, select, textarea { font: inherit; color: inherit; }
   .serif { font-family: Fraunces, Georgia, serif; font-optical-sizing: auto; letter-spacing: -0.01em; }
   .wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
   .muted { color: var(--muted); }
@@ -147,6 +147,28 @@
   .gate-form input:focus { border-color: var(--olive); }
   .gate-err { color: var(--clay); font-weight: 600; margin: 12px 0 0 !important; }
   body.locked nav.links, body.locked .tabbar { display: none !important; }
+  .lbl { display: block; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 6px; }
+  .ta, .fi { width: 100%; border: 1px solid var(--line); background: var(--bg); border-radius: 12px; padding: 10px 12px; outline: none; }
+  .ta { resize: vertical; line-height: 1.5; }
+  .ta:focus, .fi:focus { border-color: var(--olive); }
+  .add-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
+  .ghost-btn { display: inline-flex; align-items: center; gap: 6px; background: var(--paper); color: var(--ink); border: 1px solid var(--line); }
+  .ghost-btn.disabled { opacity: .5; }
+  .linkbtn { border: 0; background: none; padding: 0; color: var(--olive); font-weight: 700; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+  .linkbtn.danger { color: var(--clay); }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-grid .full { grid-column: 1 / -1; }
+  .lines { display: grid; gap: 10px; margin-bottom: 8px; }
+  .line { display: grid; grid-template-columns: 74px 104px 1fr 34px; gap: 6px; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+  .line .note-in { grid-column: 1 / -1; font-size: 14px; padding: 7px 12px; }
+  @media (max-width: 480px) { .line { grid-template-columns: 64px 92px 1fr 30px; } }
+  .xbtn { width: 32px; height: 32px; border-radius: 10px; border: 1px solid var(--line); background: var(--paper); cursor: pointer; font-size: 18px; color: var(--muted); }
+  .edit-steps { list-style: none; padding: 0; margin: 0 0 8px; display: grid; gap: 12px; }
+  .step-top { display: grid; grid-template-columns: 30px 1fr 34px; gap: 8px; align-items: center; margin-bottom: 6px; }
+  .step-top .num { width: 28px; height: 28px; border-radius: 50%; background: var(--clay-soft); color: var(--clay); font-weight: 700; display: grid; place-items: center; font-size: 13px; }
+  .save-bar { position: sticky; bottom: 70px; margin-top: 16px; background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 12px; box-shadow: var(--shadow); }
+  @media (min-width: 760px) { .save-bar { bottom: 12px; } }
+  .btn:disabled { opacity: .5; cursor: default; }
   footer { padding: 26px 0 0; font-size: 13px; color: var(--muted); text-align: center; }
   footer a { color: var(--muted); }
   .empty { padding: 30px 10px; text-align: center; color: var(--muted); }
@@ -168,7 +190,10 @@
   <footer id="foot"></footer>
 </div>
 <nav class="tabbar" id="tabbar" aria-label="Main"></nav>
-<script src="app.js?v=9"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="../js/config.js?v=10"></script>
+<script src="app.js?v=10"></script>
+<script src="add.js?v=10"></script>
 <script>
   window.goatcounter = { path: function () { var h = location.hash; return "/recipes" + (/^#\/recipe\//.test(h) ? "/" + h.split("/")[2] : /^#\/make/.test(h) ? "/make" : ""); } };
   window.addEventListener("hashchange", function () { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count(); });
