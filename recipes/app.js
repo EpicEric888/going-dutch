@@ -348,7 +348,7 @@ function viewMake() {
 }
 
 /* ---------- password screen (keeps casual visitors out; the files themselves are still public) ---------- */
-const GATE_HASH = "948c0d98e63db3a35b766ba7202c905fad9ef4889f0ca65ad9adf1279111ea33";
+const GATE_HASH = "5667494d214654a92012e9b8f2b855114ddbc797d40601d9564e939830e15903";
 const GATE_KEY = "pape.unlocked";
 let unlocked = (() => { try { return localStorage.getItem(GATE_KEY) === GATE_HASH; } catch (e) { return false; } })();
 let gateError = false;
