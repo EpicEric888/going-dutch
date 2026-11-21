@@ -1,28 +1,4 @@
 {
-  "chicken thigh": {
-    "calories_per_100g": 209,
-    "protein_per_100g": 26,
-    "carbs_per_100g": 0,
-    "fat_per_100g": 10.9,
-    "grams_per_unit": 453.6,
-    "default_unit": "lb",
-    "name": {
-      "en": "chicken thigh",
-      "nl": "kippendij"
-    }
-  },
-  "rice": {
-    "calories_per_100g": 130,
-    "protein_per_100g": 2.7,
-    "carbs_per_100g": 28,
-    "fat_per_100g": 0.3,
-    "grams_per_unit": 185,
-    "default_unit": "cup",
-    "name": {
-      "en": "rice",
-      "nl": "rijst"
-    }
-  },
   "chuck roast": {
     "calories_per_100g": 257,
     "protein_per_100g": 26,

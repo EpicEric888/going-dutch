@@ -24,43 +24,6 @@
   ],
   "recipes": [
     {
-      "id": "chicken-rice",
-      "category": "mains",
-      "name": {
-        "en": "Chicken & Rice",
-        "nl": "Kip met rijst"
-      },
-      "intro": {
-        "en": "Seasoned chicken thighs with rice.",
-        "nl": "Gekruide kippendijen met rijst."
-      },
-      "servings": 4,
-      "ingredients": [
-        {
-          "key": "chicken thigh",
-          "amount": 2,
-          "unit": "lb"
-        },
-        {
-          "key": "rice",
-          "amount": 1,
-          "unit": "cup"
-        }
-      ],
-      "steps": {
-        "en": [
-          "Season chicken",
-          "Cook rice",
-          "Combine and serve"
-        ],
-        "nl": [
-          "Kruid de kip",
-          "Kook de rijst",
-          "Combineer en serveer"
-        ]
-      }
-    },
-    {
       "id": "barbacoa",
       "category": "mains",
       "name": {
