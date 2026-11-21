@@ -1,0 +1,190 @@
+{
+  "chicken thigh": {
+    "calories_per_100g": 209,
+    "protein_per_100g": 26,
+    "carbs_per_100g": 0,
+    "fat_per_100g": 10.9,
+    "grams_per_unit": 453.6,
+    "default_unit": "lb",
+    "name": {
+      "en": "chicken thigh",
+      "nl": "kippendij"
+    }
+  },
+  "rice": {
+    "calories_per_100g": 130,
+    "protein_per_100g": 2.7,
+    "carbs_per_100g": 28,
+    "fat_per_100g": 0.3,
+    "grams_per_unit": 185,
+    "default_unit": "cup",
+    "name": {
+      "en": "rice",
+      "nl": "rijst"
+    }
+  },
+  "chuck roast": {
+    "calories_per_100g": 257,
+    "protein_per_100g": 26,
+    "carbs_per_100g": 0,
+    "fat_per_100g": 16.5,
+    "grams_per_unit": 1000,
+    "default_unit": "kg",
+    "name": {
+      "en": "chuck roast",
+      "nl": "runderschouder"
+    }
+  },
+  "beef cheek": {
+    "calories_per_100g": 215,
+    "protein_per_100g": 25,
+    "carbs_per_100g": 0,
+    "fat_per_100g": 12,
+    "grams_per_unit": 1000,
+    "default_unit": "kg",
+    "name": {
+      "en": "beef cheek",
+      "nl": "runderwang"
+    }
+  },
+  "onion": {
+    "calories_per_100g": 40,
+    "protein_per_100g": 1.1,
+    "carbs_per_100g": 9.3,
+    "fat_per_100g": 0.1,
+    "grams_per_unit": 110,
+    "default_unit": "unit",
+    "name": {
+      "en": "onion",
+      "nl": "ui"
+    },
+    "plural": {
+      "en": "onions",
+      "nl": "uien"
+    }
+  },
+  "beef stock": {
+    "calories_per_100g": 6,
+    "protein_per_100g": 0.8,
+    "carbs_per_100g": 0.6,
+    "fat_per_100g": 0.1,
+    "grams_per_unit": 1,
+    "default_unit": "ml",
+    "name": {
+      "en": "beef stock",
+      "nl": "runderbouillon"
+    }
+  },
+  "garlic": {
+    "calories_per_100g": 149,
+    "protein_per_100g": 6.4,
+    "carbs_per_100g": 33,
+    "fat_per_100g": 0.5,
+    "grams_per_unit": 3,
+    "default_unit": "clove",
+    "name": {
+      "en": "garlic",
+      "nl": "knoflook"
+    }
+  },
+  "guajillo chile": {
+    "calories_per_100g": 283,
+    "protein_per_100g": 12,
+    "carbs_per_100g": 57,
+    "fat_per_100g": 4,
+    "grams_per_unit": 4,
+    "default_unit": "unit",
+    "name": {
+      "en": "guajillo chile",
+      "nl": "guajillopeper"
+    },
+    "plural": {
+      "en": "guajillo chiles",
+      "nl": "guajillopepers"
+    }
+  },
+  "cumin": {
+    "calories_per_100g": 375,
+    "protein_per_100g": 18,
+    "carbs_per_100g": 44,
+    "fat_per_100g": 22,
+    "grams_per_unit": 2,
+    "default_unit": "tsp",
+    "name": {
+      "en": "cumin",
+      "nl": "komijn"
+    }
+  },
+  "avocado": {
+    "calories_per_100g": 160,
+    "protein_per_100g": 2,
+    "carbs_per_100g": 8.5,
+    "fat_per_100g": 14.7,
+    "grams_per_unit": 200,
+    "default_unit": "unit",
+    "name": {
+      "en": "avocado",
+      "nl": "avocado"
+    },
+    "plural": {
+      "en": "avocados",
+      "nl": "avocado's"
+    }
+  },
+  "habanero pepper": {
+    "calories_per_100g": 40,
+    "protein_per_100g": 1.9,
+    "carbs_per_100g": 8.8,
+    "fat_per_100g": 0.4,
+    "grams_per_unit": 8,
+    "default_unit": "unit",
+    "name": {
+      "en": "habanero pepper",
+      "nl": "habanero"
+    },
+    "plural": {
+      "en": "habanero peppers",
+      "nl": "habanero's"
+    }
+  },
+  "cilantro": {
+    "calories_per_100g": 23,
+    "protein_per_100g": 2.1,
+    "carbs_per_100g": 3.7,
+    "fat_per_100g": 0.5,
+    "grams_per_unit": 4,
+    "default_unit": "tbsp",
+    "name": {
+      "en": "cilantro",
+      "nl": "koriander"
+    }
+  },
+  "lime": {
+    "calories_per_100g": 30,
+    "protein_per_100g": 0.7,
+    "carbs_per_100g": 10.5,
+    "fat_per_100g": 0.2,
+    "grams_per_unit": 67,
+    "default_unit": "unit",
+    "name": {
+      "en": "lime",
+      "nl": "limoen"
+    },
+    "plural": {
+      "en": "limes",
+      "nl": "limoenen"
+    }
+  },
+  "salsa verde": {
+    "calories_per_100g": 25,
+    "protein_per_100g": 0.7,
+    "carbs_per_100g": 4,
+    "fat_per_100g": 0.5,
+    "grams_per_unit": 1,
+    "default_unit": "ml",
+    "name": {
+      "en": "salsa verde",
+      "nl": "salsa verde"
+    }
+  }
+}

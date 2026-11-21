@@ -1,0 +1,192 @@
+{
+  "categories": [
+    {
+      "id": "mains",
+      "name": {
+        "en": "Mains",
+        "nl": "Hoofdgerechten"
+      }
+    },
+    {
+      "id": "salsas",
+      "name": {
+        "en": "Salsas & sides",
+        "nl": "Salsa's & bijgerechten"
+      }
+    }
+  ],
+  "recipes": [
+    {
+      "id": "chicken-rice",
+      "category": "mains",
+      "name": {
+        "en": "Chicken & Rice",
+        "nl": "Kip met rijst"
+      },
+      "intro": {
+        "en": "Simple, filling, and easy to scale up for a crowd.",
+        "nl": "Simpel, vullend en makkelijk op te schalen voor een groep."
+      },
+      "servings": 4,
+      "ingredients": [
+        {
+          "key": "chicken thigh",
+          "amount": 2,
+          "unit": "lb"
+        },
+        {
+          "key": "rice",
+          "amount": 1,
+          "unit": "cup"
+        }
+      ],
+      "steps": {
+        "en": [
+          "Season chicken",
+          "Cook rice",
+          "Combine and serve"
+        ],
+        "nl": [
+          "Kruid de kip",
+          "Kook de rijst",
+          "Combineer en serveer"
+        ]
+      }
+    },
+    {
+      "id": "barbacoa",
+      "category": "mains",
+      "name": {
+        "en": "Barbacoa de Res",
+        "nl": "Barbacoa de Res"
+      },
+      "intro": {
+        "en": "A family recipe, slow-cooked until it falls apart. We use chuck roast instead of brisket.",
+        "nl": "Een familierecept, langzaam gegaard tot het uit elkaar valt. Wij gebruiken runderschouder in plaats van brisket."
+      },
+      "servings": 6,
+      "ingredients": [
+        {
+          "key": "chuck roast",
+          "amount": 1,
+          "unit": "kg"
+        },
+        {
+          "key": "beef cheek",
+          "amount": 1,
+          "unit": "kg"
+        },
+        {
+          "key": "onion",
+          "amount": 2,
+          "unit": "unit"
+        },
+        {
+          "key": "beef stock",
+          "amount": 475,
+          "unit": "ml"
+        },
+        {
+          "key": "garlic",
+          "amount": 8,
+          "unit": "clove"
+        },
+        {
+          "key": "guajillo chile",
+          "amount": 4,
+          "unit": "unit"
+        },
+        {
+          "key": "cumin",
+          "amount": 2,
+          "unit": "tsp"
+        }
+      ],
+      "steps": {
+        "en": [
+          "Cut the meat into 5-6cm pieces, mix with salt, and let sit 20-30 minutes to come to room temperature",
+          "Preheat oven to 150°C (300°F)",
+          "Heat a heavy dutch oven over medium-high heat",
+          "Add neutral oil to coat the bottom of the pan",
+          "Brown the meat in batches on all sides",
+          "Once all meat is browned, return it to the pan along with all other ingredients and bring to a boil. Once boiling, reduce heat, place a piece of parchment paper on top, then cover with the lid",
+          "Place the pan in the oven and cook for 6-7 hours",
+          "Remove from oven and shred the meat into small pieces",
+          "Pan-fry the shredded meat for a few minutes for desired crispiness"
+        ],
+        "nl": [
+          "Snijd het vlees in stukken van 5 tot 6 cm, meng met zout en laat 20 tot 30 minuten op kamertemperatuur komen",
+          "Verwarm de oven voor op 150°C (300°F)",
+          "Verhit een zware braadpan op middelhoog vuur",
+          "Doe er zoveel neutrale olie in dat de bodem bedekt is",
+          "Bak het vlees in porties rondom bruin",
+          "Doe al het aangebraden vlees terug in de pan met alle andere ingrediënten en breng aan de kook. Zet het vuur lager, leg een vel bakpapier op het vlees en doe de deksel erop",
+          "Zet de pan 6 tot 7 uur in de oven",
+          "Haal de pan uit de oven en trek het vlees in kleine stukjes",
+          "Bak het getrokken vlees een paar minuten in een koekenpan tot het zo krokant is als je wilt"
+        ]
+      },
+      "time": {
+        "en": "About 7 hours",
+        "nl": "Ongeveer 7 uur"
+      }
+    },
+    {
+      "id": "avocado-salsa",
+      "category": "salsas",
+      "name": {
+        "en": "Avocado Salsa",
+        "nl": "Avocadosalsa"
+      },
+      "intro": {
+        "en": "Creamy, bright and properly spicy. Great with the barbacoa.",
+        "nl": "Romig, fris en flink pittig. Heerlijk bij de barbacoa."
+      },
+      "servings": 4,
+      "ingredients": [
+        {
+          "key": "avocado",
+          "amount": 1,
+          "unit": "unit"
+        },
+        {
+          "key": "habanero pepper",
+          "amount": 0.5,
+          "unit": "unit"
+        },
+        {
+          "key": "onion",
+          "amount": 0.25,
+          "unit": "unit"
+        },
+        {
+          "key": "cilantro",
+          "amount": 1,
+          "unit": "tbsp"
+        },
+        {
+          "key": "lime",
+          "amount": 0.5,
+          "unit": "unit"
+        },
+        {
+          "key": "salsa verde",
+          "amount": 100,
+          "unit": "ml"
+        }
+      ],
+      "steps": {
+        "en": [
+          "In a blender, blend the avocado, habanero, onion, cilantro, and lime juice",
+          "Add the salsa verde and blend to the desired texture",
+          "Add salt to taste"
+        ],
+        "nl": [
+          "Doe de avocado, habanero, ui, koriander en het limoensap in een blender en mix glad",
+          "Voeg de salsa verde toe en mix tot de dikte die je wilt",
+          "Breng op smaak met zout"
+        ]
+      }
+    }
+  ]
+}

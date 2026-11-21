@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pape Family Recipes</title>
+<meta name="description" content="The recipes we cook at home, in English and Dutch. Scale portions, see nutrition, and find out what you can make with what's in the fridge.">
+<meta property="og:title" content="Pape Family Recipes">
+<meta property="og:description" content="The recipes we cook at home, in English and Dutch.">
+<meta name="theme-color" content="#F4EEE2">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%235E6B3A'/%3E%3Cpath d='M18 30h28a14 14 0 0 1-28 0z' fill='%23F4EEE2'/%3E%3Cpath d='M24 22c0-3 3-3 3-6M32 22c0-3 3-3 3-6M40 22c0-3 3-3 3-6' stroke='%23F4EEE2' stroke-width='2.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #F4EEE2; --paper: #FBF8F1; --ink: #2A2418; --muted: #786E5C; --line: #E2D7C2;
+    --olive: #5E6B3A; --olive-ink: #FBF8F1; --olive-soft: #E7E6CF; --clay: #B4532A; --clay-soft: #F3DFD0;
+    --mains: #E9D6BE; --salsas: #DCE3C3; --shadow: 0 1px 2px rgba(42,36,24,.05), 0 10px 30px -18px rgba(42,36,24,.35);
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+    --bg: #1A1913; --paper: #23211A; --ink: #EFE8DA; --muted: #A79E8B; --line: #3A362B;
+    --olive: #A9B97A; --olive-ink: #1A1913; --olive-soft: #2F3324; --clay: #E28C61; --clay-soft: #3A2A20;
+    --mains: #3A3024; --salsas: #2D3424; --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 30px -16px rgba(0,0,0,.7);
+    color-scheme: dark;
+  }}
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 Figtree, system-ui, sans-serif; }
+  a { color: inherit; }
+  button, input, select { font: inherit; color: inherit; }
+  .serif { font-family: Fraunces, Georgia, serif; font-optical-sizing: auto; letter-spacing: -0.01em; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
+  .muted { color: var(--muted); }
+
+  header.top { display: flex; align-items: center; gap: 12px; padding: 18px 0 10px; }
+  .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; flex: 1; min-width: 0; }
+  .mark { width: 40px; height: 40px; border-radius: 50%; background: var(--olive); color: var(--olive-ink); display: grid; place-items: center; flex: none; }
+  .brand b { font-family: Fraunces, Georgia, serif; font-weight: 600; font-size: 21px; line-height: 1.1; }
+  .brand small { display: block; font-size: 12px; color: var(--muted); font-weight: 500; }
+  nav.links { display: none; gap: 4px; }
+  nav.links a { text-decoration: none; padding: 8px 14px; border-radius: 999px; font-weight: 600; font-size: 15px; }
+  nav.links a[aria-current="page"] { background: var(--olive-soft); }
+  .lang { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; background: var(--paper); padding: 3px; }
+  .lang button { border: 0; background: none; padding: 5px 10px; border-radius: 999px; font-size: 13px; font-weight: 700; cursor: pointer; color: var(--muted); }
+  .lang button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+  @media (min-width: 760px) { nav.links { display: flex; } }
+
+  .tabbar { position: fixed; inset: auto 0 0 0; display: flex; background: var(--paper); border-top: 1px solid var(--line); padding-bottom: env(safe-area-inset-bottom, 0); z-index: 20; }
+  .tabbar a { flex: 1; text-align: center; padding: 10px 4px 9px; text-decoration: none; font-size: 12px; font-weight: 600; color: var(--muted); display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .tabbar a[aria-current="page"] { color: var(--olive); }
+  @media (min-width: 760px) { .tabbar { display: none; } }
+  main { padding-bottom: 90px; }
+  @media (min-width: 760px) { main { padding-bottom: 48px; } }
+
+  .hero { padding: 26px 0 8px; }
+  .eyebrow { text-transform: uppercase; letter-spacing: .12em; font-size: 12px; font-weight: 700; color: var(--clay); }
+  .hero h1 { font-size: clamp(34px, 7vw, 56px); line-height: 1.02; margin: 8px 0 10px; font-weight: 600; max-width: 14ch; }
+  .hero p { margin: 0; max-width: 52ch; color: var(--muted); font-size: 17px; }
+
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 22px 0 14px; }
+  .chip { border: 1px solid var(--line); background: var(--paper); padding: 7px 14px; border-radius: 999px; font-weight: 600; font-size: 14px; cursor: pointer; }
+  .chip[aria-pressed="true"] { background: var(--olive); color: var(--olive-ink); border-color: transparent; }
+  .search { flex: 1 1 220px; min-width: 0; border: 1px solid var(--line); background: var(--paper); border-radius: 999px; padding: 8px 14px; outline: none; }
+  .search:focus { border-color: var(--olive); }
+
+  .grid { display: grid; gap: 14px; grid-template-columns: 1fr; }
+  @media (min-width: 600px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (min-width: 900px) { .grid { grid-template-columns: repeat(3, 1fr); } }
+  .card { display: flex; flex-direction: column; text-decoration: none; background: var(--paper); border: 1px solid var(--line); border-radius: 20px; overflow: hidden; box-shadow: var(--shadow); transition: transform .15s ease; }
+  .card:hover { transform: translateY(-2px); }
+  .card .art { height: 130px; position: relative; display: grid; place-items: center; color: var(--ink); }
+  .card .art svg { opacity: .55; }
+  .card .art .tag { position: absolute; left: 14px; top: 12px; font-size: 12px; font-weight: 700; background: var(--paper); border-radius: 999px; padding: 3px 10px; }
+  .card .body { padding: 14px 16px 16px; }
+  .card h3 { margin: 0; font-size: 22px; font-weight: 600; line-height: 1.15; }
+  .card p { margin: 6px 0 10px; color: var(--muted); font-size: 14.5px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); font-weight: 500; }
+  .meta span { display: inline-flex; align-items: center; gap: 5px; }
+
+  .story { margin: 34px 0 0; padding: 22px; border-radius: 20px; background: var(--olive-soft); display: grid; gap: 6px; }
+  .story h2 { margin: 0; font-size: 24px; font-weight: 600; }
+  .story p { margin: 0; max-width: 62ch; }
+
+  .back { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; font-weight: 600; color: var(--muted); font-size: 14px; margin: 14px 0 4px; }
+  .r-head h1 { font-size: clamp(32px, 6vw, 50px); line-height: 1.05; margin: 6px 0 8px; font-weight: 600; }
+  .r-head p { margin: 0 0 12px; color: var(--muted); max-width: 60ch; font-size: 17px; }
+  .r-layout { display: grid; gap: 16px; margin-top: 18px; }
+  @media (min-width: 860px) { .r-layout { grid-template-columns: 360px 1fr; align-items: start; } .r-side { position: sticky; top: 16px; } }
+  .panel { background: var(--paper); border: 1px solid var(--line); border-radius: 20px; padding: 18px; box-shadow: var(--shadow); }
+  .panel h2 { margin: 0 0 12px; font-size: 21px; font-weight: 600; }
+  .stepper { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--bg); border-radius: 14px; padding: 6px; margin-bottom: 12px; }
+  .stepper button { width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--line); background: var(--paper); font-size: 20px; font-weight: 600; cursor: pointer; }
+  .stepper button:disabled { opacity: .4; cursor: default; }
+  .stepper output { font-weight: 700; text-align: center; flex: 1; }
+  .ings { list-style: none; padding: 0; margin: 0; }
+  .ings li { display: flex; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); }
+  .ings li:first-child { border-top: 0; }
+  .ings .amt { min-width: 84px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .nutri { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 4px; }
+  .nutri div { background: var(--bg); border-radius: 12px; padding: 10px 6px; text-align: center; }
+  .nutri b { display: block; font-size: 18px; font-variant-numeric: tabular-nums; }
+  .nutri span { font-size: 12px; color: var(--muted); }
+  .steps { list-style: none; counter-reset: s; padding: 0; margin: 0; display: grid; gap: 10px; }
+  .steps li { counter-increment: s; }
+  .steps button { display: flex; gap: 14px; width: 100%; text-align: left; border: 1px solid var(--line); background: var(--paper); border-radius: 16px; padding: 14px; cursor: pointer; line-height: 1.5; }
+  .steps button::before { content: counter(s); flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--clay-soft); color: var(--clay); font-weight: 700; display: grid; place-items: center; font-size: 14px; }
+  .steps button[aria-pressed="true"] { opacity: .5; text-decoration: line-through; }
+  .steps button[aria-pressed="true"]::before { content: "✓"; background: var(--olive); color: var(--olive-ink); }
+  .hint { font-size: 13px; color: var(--muted); margin: 10px 2px 0; }
+
+  .make-layout { display: grid; gap: 16px; margin-top: 18px; }
+  @media (min-width: 860px) { .make-layout { grid-template-columns: 1fr 1fr; align-items: start; } }
+  .have { list-style: none; padding: 0; margin: 0; }
+  .have li { border-top: 1px solid var(--line); padding: 8px 0; }
+  .have li:first-child { border-top: 0; }
+  .have label { display: flex; align-items: center; gap: 10px; cursor: pointer; font-weight: 500; }
+  .have input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--olive); }
+  .have .qty { display: flex; gap: 8px; margin: 8px 0 2px 30px; }
+  .have .qty input, .have .qty select { border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 7px 10px; min-width: 0; }
+  .have .qty input { width: 110px; }
+  .result { border: 1px solid var(--line); border-radius: 16px; padding: 14px; background: var(--paper); display: grid; gap: 4px; text-decoration: none; }
+  .result + .result { margin-top: 10px; }
+  .result .top { display: flex; align-items: center; gap: 10px; }
+  .badge { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+  .badge.ok { background: var(--olive); color: var(--olive-ink); }
+  .badge.some { background: var(--clay-soft); color: var(--clay); }
+  .badge.none { background: var(--bg); color: var(--muted); border: 1px solid var(--line); }
+  .result h3 { margin: 0; font-size: 19px; font-weight: 600; flex: 1; }
+  .result ul { margin: 2px 0 0; padding-left: 18px; color: var(--muted); font-size: 14px; }
+  .btn { border: 0; border-radius: 12px; padding: 11px 16px; font-weight: 700; cursor: pointer; background: var(--olive); color: var(--olive-ink); }
+  .btn.ghost { background: none; color: var(--muted); padding: 11px 8px; }
+  footer { padding: 26px 0 0; font-size: 13px; color: var(--muted); text-align: center; }
+  footer a { color: var(--muted); }
+  .empty { padding: 30px 10px; text-align: center; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="#/">
+      <span class="mark" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 11h18a9 9 0 0 1-18 0z"/><path d="M8 7c0-2 2-2 2-4M12 7c0-2 2-2 2-4M16 7c0-2 2-2 2-4"/></svg></span>
+      <span><b id="brand-name">Pape Family Recipes</b><small id="brand-sub"></small></span>
+    </a>
+    <nav class="links" id="nav" aria-label="Main"></nav>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" data-lang="en">EN</button><button type="button" data-lang="nl">NL</button>
+    </div>
+  </header>
+  <main id="app" aria-live="polite"></main>
+  <footer id="foot"></footer>
+</div>
+<nav class="tabbar" id="tabbar" aria-label="Main"></nav>
+<script src="app.js?v=1"></script>
+<script>
+  window.goatcounter = { path: function () { var h = location.hash; return "/recipes" + (/^#\/recipe\//.test(h) ? "/" + h.split("/")[2] : /^#\/make/.test(h) ? "/make" : ""); } };
+  window.addEventListener("hashchange", function () { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count(); });
+</script>
+<script data-goatcounter="https://delapape.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+</body>
+</html>
