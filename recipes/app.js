@@ -71,15 +71,19 @@ const UNITS = {
   tbsp: { en: ["tbsp", "tbsp"], nl: ["el", "el"] },
   tsp: { en: ["tsp", "tsp"], nl: ["tl", "tl"] },
   clove: { en: ["clove", "cloves"], nl: ["teentje", "teentjes"] },
+  piece: { en: ["piece", "pieces"], nl: ["stuk", "stuks"] },
+  packet: { en: ["packet", "packets"], nl: ["zakje", "zakjes"] },
+  portion: { en: ["portion", "portions"], nl: ["portie", "porties"] },
   unit: { en: ["", ""], nl: ["", ""] }
 };
 const unitLabel = (u, n) => UNITS[u] ? UNITS[u][lang][n > 1 ? 1 : 0] : u;
-const COUNTABLE = new Set(["cup", "tbsp", "tsp", "clove", "unit"]);
+const COUNTABLE = new Set(["cup", "tbsp", "tsp", "clove", "unit", "piece", "packet", "portion"]);
 const FRACTIONS = [[0, ""], [1 / 4, "¼"], [1 / 3, "⅓"], [1 / 2, "½"], [2 / 3, "⅔"], [3 / 4, "¾"], [1, ""]];
 
 // whole things read better rounded: cloves to whole numbers, onions/chiles etc. to halves once there are 2 or more
 function kitchenRound(n, unit) {
-  if (unit === "clove") return Math.max(1, Math.round(n));
+  if (unit === "clove" || unit === "packet" || unit === "portion") return Math.max(1, Math.round(n));
+  if (unit === "piece") return Math.max(0.5, Math.round(n * 2) / 2);
   if (unit === "unit" && n >= 2) return Math.round(n * 2) / 2;
   return n;
 }
@@ -96,6 +100,24 @@ function fmtAmount(n, unit) {
   }
   return numFmt(n, 2);
 }
+
+// Dutch readers get metric: cups to ml, pounds and ounces to grams/kilos (display only)
+function displayQty(n, unit) {
+  if (lang !== "nl") return [n, unit];
+  if (unit === "cup") return n * 240 >= 1000 ? [n * 0.24, "l"] : [n * 240, "ml"];
+  if (unit === "lb") return n * 453.6 >= 1000 ? [n * 0.4536, "kg"] : [n * 453.6, "g"];
+  if (unit === "oz") return [n * 28.35, "g"];
+  return [n, unit];
+}
+function qtyText(n, unit) {
+  n = kitchenRound(n, unit);
+  const [a, u] = displayQty(n, unit);
+  const converted = u !== unit;
+  const shown = (u === "g" || u === "ml") && a >= 50 ? Math.round(a / 5) * 5 : converted && (u === "kg" || u === "l") ? Math.round(a * 10) / 10 : a;
+  const lab = unitLabel(u, a);
+  return `${fmtAmount(shown, u)}${lab ? " " + lab : ""}`;
+}
+const PLURAL_UNITS = new Set(["unit", "packet"]);
 
 /* ---------- data ---------- */
 let DB = null, ING = null, loadFailed = false;
@@ -128,10 +150,10 @@ function toGrams(amount, unit, key) {
 }
 function recipeStatus(recipe, have) {
   const ratios = [], missing = [];
-  recipe.ingredients.forEach(line => {
+  recipe.ingredients.filter(line => !ING[line.key]?.pantry).forEach(line => {
     const need = lineGrams(line);
     const h = have[line.key];
-    if (!h) { ratios.push(0); missing.push(`${ingName(line.key, line.amount)} (${fmtAmount(line.amount, line.unit)}${unitLabel(line.unit, line.amount) ? " " + unitLabel(line.unit, line.amount) : ""})`); return; }
+    if (!h) { ratios.push(0); missing.push(`${ingName(line.key, PLURAL_UNITS.has(line.unit) ? line.amount : 1)} (${qtyText(line.amount, line.unit)})`); return; }
     if (h.amount === "" || h.amount == null || isNaN(h.amount)) { ratios.push(1); return; } // ticked, no amount: plenty
     const got = toGrams(Number(h.amount), h.unit, line.key) ?? 0;
     ratios.push(need ? Math.min(got / need, 1) : 1);
@@ -150,6 +172,7 @@ const saveHave = () => { try { localStorage.setItem("pape.have", JSON.stringify(
 /* ---------- icons ---------- */
 const ICON = {
   pot: '<svg width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 28h44v12a14 14 0 0 1-14 14H24a14 14 0 0 1-14-14z"/><path d="M6 28h52M24 20c0-3 3-3 3-6M32 20c0-3 3-3 3-6M40 20c0-3 3-3 3-6"/></svg>',
+  bowl: '<svg width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 32h48a24 24 0 0 1-48 0z"/><path d="M22 54h20M40 10 26 30M50 14 30 31"/></svg>',
   chili: '<svg width="64" height="64" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M44 18c-6 0-10 4-12 10-3 9-9 18-22 22 16 4 34-2 40-16 2-6 0-12-6-16z"/><path d="M44 18c0-4 2-7 6-8M44 18c3 0 6 2 7 5"/></svg>',
   users: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.5 3.3-5.5 6.5-5.5s5.9 2 6.5 5.5M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c2 .6 3.3 2.4 3.6 5.2"/></svg>',
   clock: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
@@ -158,7 +181,7 @@ const ICON = {
   book: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/></svg>',
   basket: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18l-2 10H5zM8 10l3-6M16 10l-3-6"/></svg>'
 };
-const catArt = c => c === "salsas" ? { bg: "var(--salsas)", icon: ICON.chili } : { bg: "var(--mains)", icon: ICON.pot };
+const catArt = c => c === "salsas" ? { bg: "var(--salsas)", icon: ICON.chili } : c === "soups" ? { bg: "var(--soups)", icon: ICON.bowl } : { bg: "var(--mains)", icon: ICON.pot };
 
 /* ---------- views ---------- */
 const route = () => {
@@ -238,8 +261,8 @@ function viewRecipe(id) {
             <button type="button" data-serv="1" aria-label="${esc(t("more"))}" ${s >= 40 ? "disabled" : ""}>+</button>
           </div>
           <ul class="ings">${r.ingredients.map(line => {
-            const amt = kitchenRound(line.amount * factor, line.unit), u = unitLabel(line.unit, amt);
-            return `<li><span class="amt">${fmtAmount(amt, line.unit)}${u ? " " + esc(u) : ""}</span><span>${esc(ingName(line.key, line.unit === "unit" ? amt : 1))}</span></li>`;
+            const amt = kitchenRound(line.amount * factor, line.unit);
+            return `<li><span class="amt">${esc(qtyText(amt, line.unit))}</span><span>${esc(ingName(line.key, PLURAL_UNITS.has(line.unit) ? amt : 1))}${line.note ? `<span class="note">${esc(L(line.note))}</span>` : ""}</span></li>`;
           }).join("")}</ul>
         </section>
         <section class="panel" style="margin-top:16px">
@@ -255,7 +278,7 @@ function viewRecipe(id) {
       </div>
       <section class="panel">
         <h2 class="serif">${esc(t("method"))}</h2>
-        <ol class="steps">${steps.map((st, i) => `<li><button type="button" data-step="${i}" aria-pressed="${done.includes(i)}">${esc(st)}</button></li>`).join("")}</ol>
+        <ol class="steps">${steps.map((st, i) => `<li><button type="button" data-step="${i}" aria-pressed="${done.includes(i)}"><span>${typeof st === "object" ? `<b class="st">${esc(st.title)}</b>${esc(st.text)}` : esc(st)}</span></button></li>`).join("")}</ol>
         <p class="hint">${esc(t("stepHint"))}</p>
       </section>
     </div>`;
@@ -278,7 +301,7 @@ function makeResults() {
     </a>`).join("");
 }
 function viewMake() {
-  const keys = Object.keys(ING).sort((a, b) => ingName(a).localeCompare(ingName(b), lang));
+  const keys = Object.keys(ING).filter(k => !ING[k].pantry).sort((a, b) => ingName(a).localeCompare(ingName(b), lang));
   return `<section class="hero" style="padding-bottom:0">
       <div class="eyebrow">${esc(t("make"))}</div>
       <h1 class="serif" style="font-size:clamp(32px,6vw,48px)">${esc(t("makeTitle"))}</h1>

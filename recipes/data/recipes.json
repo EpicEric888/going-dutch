@@ -8,6 +8,13 @@
       }
     },
     {
+      "id": "soups",
+      "name": {
+        "en": "Soups & noodles",
+        "nl": "Soepen & noedels"
+      }
+    },
+    {
       "id": "salsas",
       "name": {
         "en": "Salsas & sides",
@@ -185,6 +192,234 @@
           "Doe de avocado, habanero, ui, koriander en het limoensap in een blender en mix glad",
           "Voeg de salsa verde toe en mix tot de dikte die je wilt",
           "Breng op smaak met zout"
+        ]
+      }
+    },
+    {
+      "id": "taiwanese-beef-noodle-soup",
+      "category": "soups",
+      "name": {
+        "en": "Taiwanese Beef Noodle Soup",
+        "nl": "Taiwanese noedelsoep met rundvlees"
+      },
+      "intro": {
+        "en": "Tender braised shank in a deep, spicy broth. Use your biggest pot, 6 to 8 quarts or larger.",
+        "nl": "Mals gestoofde schenkel in een diepe, pittige bouillon. Gebruik je grootste pan, 6 tot 8 liter of groter."
+      },
+      "time": {
+        "en": "About 4 hours",
+        "nl": "Ongeveer 4 uur"
+      },
+      "servings": 6,
+      "ingredients": [
+        {
+          "key": "beef shank",
+          "amount": 3,
+          "unit": "lb",
+          "note": {
+            "en": "cut into 2-inch chunks",
+            "nl": "in stukken van 5 cm"
+          }
+        },
+        {
+          "key": "ginger",
+          "amount": 1,
+          "unit": "piece",
+          "note": {
+            "en": "2-inch piece, smashed",
+            "nl": "stuk van 5 cm, gekneusd"
+          }
+        },
+        {
+          "key": "garlic",
+          "amount": 6,
+          "unit": "clove",
+          "note": {
+            "en": "smashed",
+            "nl": "gekneusd"
+          }
+        },
+        {
+          "key": "scallion",
+          "amount": 3,
+          "unit": "unit",
+          "note": {
+            "en": "cut into 2-inch pieces, plus more for topping",
+            "nl": "in stukken van 5 cm, plus extra om te garneren"
+          }
+        },
+        {
+          "key": "onion",
+          "amount": 1,
+          "unit": "unit",
+          "note": {
+            "en": "cut into wedges",
+            "nl": "in parten"
+          }
+        },
+        {
+          "key": "tomato",
+          "amount": 1,
+          "unit": "unit",
+          "note": {
+            "en": "cut into wedges",
+            "nl": "in parten"
+          }
+        },
+        {
+          "key": "dried chili",
+          "amount": 4,
+          "unit": "unit",
+          "note": {
+            "en": "torn in half",
+            "nl": "doormidden gescheurd"
+          }
+        },
+        {
+          "key": "neutral oil",
+          "amount": 2,
+          "unit": "tbsp"
+        },
+        {
+          "key": "tomato paste",
+          "amount": 1,
+          "unit": "tbsp"
+        },
+        {
+          "key": "spicy bean sauce",
+          "amount": 2,
+          "unit": "tbsp"
+        },
+        {
+          "key": "sugar",
+          "amount": 2,
+          "unit": "tsp"
+        },
+        {
+          "key": "soy sauce",
+          "amount": 0.5,
+          "unit": "cup"
+        },
+        {
+          "key": "shaoxing wine",
+          "amount": 0.5,
+          "unit": "cup"
+        },
+        {
+          "key": "water",
+          "amount": 8,
+          "unit": "cup"
+        },
+        {
+          "key": "lu bao",
+          "amount": 1,
+          "unit": "packet"
+        },
+        {
+          "key": "frozen noodles",
+          "amount": 6,
+          "unit": "portion"
+        },
+        {
+          "key": "bok choy",
+          "amount": 6,
+          "unit": "unit"
+        },
+        {
+          "key": "cilantro",
+          "amount": 2,
+          "unit": "tbsp",
+          "note": {
+            "en": "chopped, for topping",
+            "nl": "gehakt, om te garneren"
+          }
+        },
+        {
+          "key": "mustard greens",
+          "amount": 6,
+          "unit": "tbsp",
+          "note": {
+            "en": "for topping",
+            "nl": "om te garneren"
+          }
+        }
+      ],
+      "steps": {
+        "en": [
+          {
+            "title": "Prep (15-20 min)",
+            "text": "Cut the shank into 2-inch chunks. Smash the ginger and garlic. Cut 3 scallions into 2-inch pieces. Cut the onion and tomato into wedges. Tear the dried chilies in half. Chop cilantro and more scallions for topping."
+          },
+          {
+            "title": "Blanch the beef",
+            "text": "Boil water in your pot. Add the beef, return to a boil and boil 1 minute. Drain, rinse the beef well, and rinse out the pot."
+          },
+          {
+            "title": "Aromatics",
+            "text": "Pot on medium. Add the oil, then the ginger, garlic, scallions and onion. Cook until the onion is soft and lightly browned, about 5 minutes. Add the tomato and chilies."
+          },
+          {
+            "title": "Seasonings",
+            "text": "Add the beef, tomato paste, bean sauce, sugar, soy sauce and Shaoxing wine. Stir well and cook 2 minutes."
+          },
+          {
+            "title": "Water + lu bao",
+            "text": "Add the water and the lu bao packet. Bring to a boil."
+          },
+          {
+            "title": "Simmer",
+            "text": "Turn the heat to low so it's barely bubbling. Cover with the lid slightly cracked. Simmer 3 to 4 hours, until the beef is fork tender. Stir every 30 to 45 minutes. If the broth drops a lot, add a cup of water."
+          },
+          {
+            "title": "Finish the broth",
+            "text": "Pull out the lu bao. Skim the fat off the top. Taste and add salt or more soy sauce if needed."
+          },
+          {
+            "title": "Noodles + bok choy",
+            "text": "In a separate pot, boil water. Add the frozen noodles and bok choy together and cook 3 minutes. Drain."
+          },
+          {
+            "title": "Serve",
+            "text": "Put noodles and bok choy in bowls, then ladle broth and beef over the top. Add cilantro, scallions and a spoonful of mustard greens."
+          }
+        ],
+        "nl": [
+          {
+            "title": "Voorbereiden (15-20 min)",
+            "text": "Snijd de schenkel in stukken van 5 cm. Kneus de gember en knoflook. Snijd 3 lente-uitjes in stukken van 5 cm. Snijd de ui en tomaat in parten. Scheur de gedroogde pepers doormidden. Hak koriander en extra lente-ui fijn om te garneren."
+          },
+          {
+            "title": "Vlees blancheren",
+            "text": "Breng water aan de kook in je pan. Doe het vlees erin, laat weer koken en kook 1 minuut. Giet af, spoel het vlees goed af en spoel de pan om."
+          },
+          {
+            "title": "Aromaten",
+            "text": "Zet de pan op middelhoog vuur. Doe de olie erin, dan de gember, knoflook, lente-ui en ui. Bak tot de ui zacht en licht gebruind is, ongeveer 5 minuten. Voeg de tomaat en pepers toe."
+          },
+          {
+            "title": "Smaakmakers",
+            "text": "Voeg het vlees, de tomatenpuree, bonensaus, suiker, sojasaus en shaoxingwijn toe. Roer goed door en bak 2 minuten."
+          },
+          {
+            "title": "Water + lu bao",
+            "text": "Voeg het water en het lu bao-zakje toe. Breng aan de kook."
+          },
+          {
+            "title": "Laten sudderen",
+            "text": "Zet het vuur laag, zodat het nog net pruttelt. Leg de deksel er schuin op. Laat 3 tot 4 uur sudderen, tot het vlees met een vork uit elkaar valt. Roer elke 30 tot 45 minuten. Zakt de bouillon flink, voeg dan een kopje (240 ml) water toe."
+          },
+          {
+            "title": "Bouillon afmaken",
+            "text": "Haal het lu bao-zakje eruit. Schep het vet eraf. Proef en voeg zout of extra sojasaus toe als dat nodig is."
+          },
+          {
+            "title": "Noedels + paksoi",
+            "text": "Breng in een andere pan water aan de kook. Kook de diepvriesnoedels en paksoi samen 3 minuten. Giet af."
+          },
+          {
+            "title": "Serveren",
+            "text": "Verdeel de noedels en paksoi over kommen en schep de bouillon en het vlees erover. Garneer met koriander, lente-ui en een lepel mosterdblad."
+          }
         ]
       }
     }

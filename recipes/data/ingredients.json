@@ -186,5 +186,214 @@
       "en": "salsa verde",
       "nl": "salsa verde"
     }
+  },
+  "beef shank": {
+    "calories_per_100g": 150,
+    "protein_per_100g": 21,
+    "carbs_per_100g": 0,
+    "fat_per_100g": 6.8,
+    "grams_per_unit": 453.6,
+    "default_unit": "lb",
+    "name": {
+      "en": "beef shank",
+      "nl": "runderschenkel"
+    }
+  },
+  "ginger": {
+    "calories_per_100g": 80,
+    "protein_per_100g": 1.8,
+    "carbs_per_100g": 18,
+    "fat_per_100g": 0.8,
+    "grams_per_unit": 20,
+    "default_unit": "piece",
+    "name": {
+      "en": "ginger",
+      "nl": "gember"
+    }
+  },
+  "scallion": {
+    "calories_per_100g": 32,
+    "protein_per_100g": 1.8,
+    "carbs_per_100g": 7.3,
+    "fat_per_100g": 0.2,
+    "grams_per_unit": 15,
+    "default_unit": "unit",
+    "name": {
+      "en": "scallion",
+      "nl": "lente-ui"
+    },
+    "plural": {
+      "en": "scallions",
+      "nl": "lente-uitjes"
+    }
+  },
+  "tomato": {
+    "calories_per_100g": 18,
+    "protein_per_100g": 0.9,
+    "carbs_per_100g": 3.9,
+    "fat_per_100g": 0.2,
+    "grams_per_unit": 123,
+    "default_unit": "unit",
+    "name": {
+      "en": "tomato",
+      "nl": "tomaat"
+    },
+    "plural": {
+      "en": "tomatoes",
+      "nl": "tomaten"
+    }
+  },
+  "dried chili": {
+    "calories_per_100g": 324,
+    "protein_per_100g": 12,
+    "carbs_per_100g": 57,
+    "fat_per_100g": 6,
+    "grams_per_unit": 0.5,
+    "default_unit": "unit",
+    "name": {
+      "en": "dried red chili",
+      "nl": "gedroogde rode peper"
+    },
+    "plural": {
+      "en": "dried red chilies",
+      "nl": "gedroogde rode pepers"
+    }
+  },
+  "neutral oil": {
+    "calories_per_100g": 884,
+    "protein_per_100g": 0,
+    "carbs_per_100g": 0,
+    "fat_per_100g": 100,
+    "grams_per_unit": 13.6,
+    "default_unit": "tbsp",
+    "name": {
+      "en": "neutral oil",
+      "nl": "neutrale olie"
+    }
+  },
+  "tomato paste": {
+    "calories_per_100g": 82,
+    "protein_per_100g": 4.3,
+    "carbs_per_100g": 18.9,
+    "fat_per_100g": 0.5,
+    "grams_per_unit": 16,
+    "default_unit": "tbsp",
+    "name": {
+      "en": "tomato paste",
+      "nl": "tomatenpuree"
+    }
+  },
+  "spicy bean sauce": {
+    "calories_per_100g": 120,
+    "protein_per_100g": 7,
+    "carbs_per_100g": 13,
+    "fat_per_100g": 6,
+    "grams_per_unit": 18,
+    "default_unit": "tbsp",
+    "name": {
+      "en": "spicy bean sauce (TF brand)",
+      "nl": "pittige bonensaus (merk TF)"
+    }
+  },
+  "sugar": {
+    "calories_per_100g": 387,
+    "protein_per_100g": 0,
+    "carbs_per_100g": 100,
+    "fat_per_100g": 0,
+    "grams_per_unit": 4.2,
+    "default_unit": "tsp",
+    "name": {
+      "en": "sugar",
+      "nl": "suiker"
+    }
+  },
+  "soy sauce": {
+    "calories_per_100g": 53,
+    "protein_per_100g": 8,
+    "carbs_per_100g": 4.9,
+    "fat_per_100g": 0.6,
+    "grams_per_unit": 255,
+    "default_unit": "cup",
+    "name": {
+      "en": "soy sauce",
+      "nl": "sojasaus"
+    }
+  },
+  "shaoxing wine": {
+    "calories_per_100g": 130,
+    "protein_per_100g": 1.5,
+    "carbs_per_100g": 5,
+    "fat_per_100g": 0,
+    "grams_per_unit": 240,
+    "default_unit": "cup",
+    "name": {
+      "en": "Shaoxing wine",
+      "nl": "shaoxingwijn"
+    }
+  },
+  "water": {
+    "calories_per_100g": 0,
+    "protein_per_100g": 0,
+    "carbs_per_100g": 0,
+    "fat_per_100g": 0,
+    "grams_per_unit": 240,
+    "default_unit": "cup",
+    "name": {
+      "en": "water",
+      "nl": "water"
+    },
+    "pantry": true
+  },
+  "lu bao": {
+    "calories_per_100g": 0,
+    "protein_per_100g": 0,
+    "carbs_per_100g": 0,
+    "fat_per_100g": 0,
+    "grams_per_unit": 10,
+    "default_unit": "packet",
+    "name": {
+      "en": "lu bao spice packet",
+      "nl": "lu bao-kruidenzakje"
+    },
+    "plural": {
+      "en": "lu bao spice packets",
+      "nl": "lu bao-kruidenzakjes"
+    }
+  },
+  "frozen noodles": {
+    "calories_per_100g": 280,
+    "protein_per_100g": 9,
+    "carbs_per_100g": 56,
+    "fat_per_100g": 1.5,
+    "grams_per_unit": 150,
+    "default_unit": "portion",
+    "name": {
+      "en": "frozen wheat noodles",
+      "nl": "diepvries tarwenoedels"
+    }
+  },
+  "bok choy": {
+    "calories_per_100g": 13,
+    "protein_per_100g": 1.5,
+    "carbs_per_100g": 2.2,
+    "fat_per_100g": 0.2,
+    "grams_per_unit": 60,
+    "default_unit": "unit",
+    "name": {
+      "en": "baby bok choy",
+      "nl": "baby paksoi"
+    }
+  },
+  "mustard greens": {
+    "calories_per_100g": 20,
+    "protein_per_100g": 1.2,
+    "carbs_per_100g": 3,
+    "fat_per_100g": 0.2,
+    "grams_per_unit": 15,
+    "default_unit": "tbsp",
+    "name": {
+      "en": "pickled mustard greens",
+      "nl": "ingelegde mosterdblad"
+    }
   }
 }

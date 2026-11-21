@@ -16,13 +16,13 @@
   :root {
     --bg: #F4EEE2; --paper: #FBF8F1; --ink: #2A2418; --muted: #786E5C; --line: #E2D7C2;
     --olive: #5E6B3A; --olive-ink: #FBF8F1; --olive-soft: #E7E6CF; --clay: #B4532A; --clay-soft: #F3DFD0;
-    --mains: #E9D6BE; --salsas: #DCE3C3; --shadow: 0 1px 2px rgba(42,36,24,.05), 0 10px 30px -18px rgba(42,36,24,.35);
+    --mains: #E9D6BE; --salsas: #DCE3C3; --soups: #EBD3C4; --shadow: 0 1px 2px rgba(42,36,24,.05), 0 10px 30px -18px rgba(42,36,24,.35);
     color-scheme: light;
   }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
     --bg: #1A1913; --paper: #23211A; --ink: #EFE8DA; --muted: #A79E8B; --line: #3A362B;
     --olive: #A9B97A; --olive-ink: #1A1913; --olive-soft: #2F3324; --clay: #E28C61; --clay-soft: #3A2A20;
-    --mains: #3A3024; --salsas: #2D3424; --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 30px -16px rgba(0,0,0,.7);
+    --mains: #3A3024; --salsas: #2D3424; --soups: #3B2B25; --shadow: 0 1px 2px rgba(0,0,0,.4), 0 12px 30px -16px rgba(0,0,0,.7);
     color-scheme: dark;
   }}
   * { box-sizing: border-box; }
@@ -97,6 +97,8 @@
   .ings { list-style: none; padding: 0; margin: 0; }
   .ings li { display: flex; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); }
   .ings li:first-child { border-top: 0; }
+  .ings .note { display: block; font-size: 13px; color: var(--muted); }
+  .steps .st { display: block; font-weight: 700; margin-bottom: 2px; }
   .ings .amt { min-width: 84px; font-weight: 700; font-variant-numeric: tabular-nums; }
   .nutri { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 4px; }
   .nutri div { background: var(--bg); border-radius: 12px; padding: 10px 6px; text-align: center; }
@@ -152,7 +154,7 @@
   <footer id="foot"></footer>
 </div>
 <nav class="tabbar" id="tabbar" aria-label="Main"></nav>
-<script src="app.js?v=2"></script>
+<script src="app.js?v=4"></script>
 <script>
   window.goatcounter = { path: function () { var h = location.hash; return "/recipes" + (/^#\/recipe\//.test(h) ? "/" + h.split("/")[2] : /^#\/make/.test(h) ? "/make" : ""); } };
   window.addEventListener("hashchange", function () { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count(); });
