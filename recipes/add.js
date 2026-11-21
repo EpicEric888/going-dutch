@@ -29,6 +29,9 @@ async function loadFamilyRecipes() {
   try {
     const { data: s } = await sb.auth.getSession();
     myUserId = s.session?.user?.id || null;
+    const { data: photos } = await sb.from("family_photos").select("recipe_id, path, created_by");
+    PHOTOS = {};
+    (photos || []).forEach(p => { PHOTOS[p.recipe_id] = { url: sb.storage.from("recipe-photos").getPublicUrl(p.path).data.publicUrl, path: p.path, mine: !!myUserId && p.created_by === myUserId }; });
     const { data, error } = await sb.from("family_recipes").select("id, slug, recipe, ingredients, created_by").order("created_at");
     if (error || !data) return;
     data.forEach(row => {
@@ -41,7 +44,7 @@ async function loadFamilyRecipes() {
 }
 
 /* ---------- add flow state ---------- */
-const add = { stage: "input", text: "", photo: null, error: "", editLang: null, draft: null, busy: false, confirmDel: null };
+const add = { stage: "input", text: "", photo: null, error: "", editLang: null, draft: null, busy: false, confirmDel: null, dishPhoto: null, photoBusy: null, photoError: null };
 const blankLine = () => ({ key: "", name: { en: "", nl: "" }, plural: null, amount: "", unit: "unit", note: { en: "", nl: "" }, nut: null });
 const blankDraft = () => ({ name: { en: "", nl: "" }, intro: { en: "", nl: "" }, category: "mains", servings: 4, time: { en: "", nl: "" }, lines: [blankLine()], steps: { en: [{ title: "", text: "" }], nl: [{ title: "", text: "" }] } });
 const pair = o => ({ en: String(o?.en ?? ""), nl: String(o?.nl ?? "") });
@@ -69,6 +72,34 @@ async function shrinkPhoto(file) {
   const c = document.createElement("canvas"); c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
   c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
   return c.toDataURL("image/jpeg", 0.85).split(",")[1];
+}
+
+async function photoBlob(file) {
+  const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL.createObjectURL(file); });
+  const scale = Math.min(1, 1600 / Math.max(img.width, img.height));
+  const c = document.createElement("canvas"); c.width = Math.round(img.width * scale); c.height = Math.round(img.height * scale);
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  return await new Promise(res => c.toBlob(res, "image/jpeg", 0.82));
+}
+async function uploadPhoto(recipeId, blob) {
+  const user = await ensureSession();
+  const path = `${user.id}/${recipeId}-${Date.now()}.jpg`;
+  const { error } = await sb.storage.from("recipe-photos").upload(path, blob, { contentType: "image/jpeg", upsert: false });
+  if (error) throw error;
+  let pass = ""; try { pass = localStorage.getItem(GATE_KEY) || ""; } catch (e) {}
+  const old = PHOTOS[recipeId]?.mine ? PHOTOS[recipeId].path : null;
+  const { error: e2 } = await sb.rpc("set_family_photo", { pass_hash: pass, rid: recipeId, photo_path: path });
+  if (e2) { await sb.storage.from("recipe-photos").remove([path]); throw e2; }
+  if (old && old !== path) sb.storage.from("recipe-photos").remove([old]);
+  await loadFamilyRecipes();
+}
+async function removePhoto(recipeId) {
+  const p = PHOTOS[recipeId]; if (!p?.mine) return;
+  await ensureSession();
+  const { error } = await sb.from("family_photos").delete().eq("recipe_id", recipeId);
+  if (error) throw error;
+  await sb.storage.from("recipe-photos").remove([p.path]);
+  await loadFamilyRecipes();
 }
 
 async function callReader(body) {
@@ -128,6 +159,10 @@ function viewEdit() {
         <div><label class="lbl">${esc(t("fCategory"))}</label><select class="fi" data-f="category">${ALL_CATS.map(c => `<option value="${c}" ${d.category === c ? "selected" : ""}>${esc(L(EXTRA_CATS[c]))}</option>`).join("")}</select></div>
         <div><label class="lbl">${esc(t("fServings"))}</label>${field("servings", d.servings, "4", 'type="number" min="1" max="40" inputmode="numeric"')}</div>
         <div class="full"><label class="lbl">${esc(t("fTime"))} <span class="muted">(${esc(t("optional"))})</span></label>${field(`time.${el}`, d.time[el], el === "en" ? "About 2 hours" : "Ongeveer 2 uur")}</div>
+        <div class="full"><label class="lbl">${esc(t("dishPhoto"))}</label>
+          ${add.dishPhoto ? `<div class="dish-prev"><img src="${esc(add.dishPhoto.url)}" alt=""><button type="button" class="btn ghost" data-add="cleardish">${esc(t("removePhoto"))}</button></div>`
+            : `<label class="photo-btn"><input id="dish-photo" type="file" accept="image/*" hidden>${ICON.camera}<span>${esc(t("addDishPhoto"))}</span></label>`}
+          <p class="hint" style="margin-top:6px">${esc(t("dishPhotoHint"))}</p></div>
       </div>
     </section>
     <section class="panel" style="margin-top:16px">
@@ -221,8 +256,13 @@ function buildForSave(d) {
 
 /* ---------- events ---------- */
 app.addEventListener("click", async e => {
-  const b = e.target.closest("[data-add],[data-elang],[data-delrecipe]");
+  const b = e.target.closest("[data-add],[data-elang],[data-delrecipe],[data-photo-del]");
   if (!b) return;
+  if (b.dataset.photoDel) {
+    const id = b.dataset.photoDel; add.photoBusy = id; render();
+    try { await removePhoto(id); add.photoError = null; } catch (err) { add.photoError = id; }
+    add.photoBusy = null; render(); return;
+  }
   if (b.dataset.elang) { add.editLang = b.dataset.elang; render(); return; }
   if (b.dataset.delrecipe) {
     const id = b.dataset.delrecipe;
@@ -238,6 +278,7 @@ app.addEventListener("click", async e => {
   const a = b.dataset.add, d = add.draft;
   if (a === "manual") { add.draft = blankDraft(); add.editLang = lang; add.stage = "edit"; add.error = ""; render(); window.scrollTo(0, 0); }
   else if (a === "clearphoto") { add.photo = null; render(); }
+  else if (a === "cleardish") { add.dishPhoto = null; render(); }
   else if (a === "read") {
     add.text = document.getElementById("add-text")?.value || add.text;
     if (!add.text.trim() && !add.photo) { add.error = t("errEmpty"); render(); return; }
@@ -264,8 +305,9 @@ app.addEventListener("click", async e => {
       let pass = ""; try { pass = localStorage.getItem(GATE_KEY) || ""; } catch (err) {}
       const { data: slug, error } = await sb.rpc("add_family_recipe", { pass_hash: pass, recipe, new_ingredients: newIngs });
       if (error) throw { code: /wrong password/i.test(error.message) ? "pw" : "save" };
+      if (add.dishPhoto) { try { await uploadPhoto(slug, add.dishPhoto.blob); } catch (err) { add.photoError = slug; } }
       await loadFamilyRecipes();
-      Object.assign(add, { stage: "input", draft: null, text: "", photo: null, error: "", busy: false });
+      Object.assign(add, { stage: "input", draft: null, text: "", photo: null, error: "", busy: false, dishPhoto: null });
       location.hash = "#/recipe/" + slug;
     } catch (err) {
       add.busy = false;
@@ -280,6 +322,15 @@ app.addEventListener("input", e => {
   if (e.target.id === "add-text") add.text = e.target.value;
 });
 app.addEventListener("change", async e => {
+  if (e.target.dataset.photoFor && e.target.files?.[0]) {
+    const id = e.target.dataset.photoFor; add.photoBusy = id; add.photoError = null; render();
+    try { await uploadPhoto(id, await photoBlob(e.target.files[0])); } catch (err) { add.photoError = id; }
+    add.photoBusy = null; render(); return;
+  }
+  if (e.target.id === "dish-photo" && e.target.files?.[0]) {
+    try { const blob = await photoBlob(e.target.files[0]); add.dishPhoto = { blob, url: URL.createObjectURL(blob) }; } catch (err) { add.error = t("errPhoto"); }
+    render(); return;
+  }
   if (e.target.id === "add-photo" && e.target.files?.[0]) {
     try { add.photo = await shrinkPhoto(e.target.files[0]); add.error = ""; } catch (err) { add.error = t("errPhoto"); }
     add.text = document.getElementById("add-text")?.value || add.text; render();

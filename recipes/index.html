@@ -71,7 +71,7 @@
   @media (min-width: 900px) { .grid { grid-template-columns: repeat(3, 1fr); } }
   .card { display: flex; flex-direction: column; text-decoration: none; background: var(--paper); border: 1px solid var(--line); border-radius: 20px; overflow: hidden; box-shadow: var(--shadow); transition: transform .15s ease; }
   .card:hover { transform: translateY(-2px); }
-  .card .art { height: 130px; position: relative; display: grid; place-items: center; color: var(--ink); }
+  .card .art { height: 160px; position: relative; display: grid; place-items: center; color: var(--ink); }
   .card .art svg { opacity: .55; }
   .card .art .tag { position: absolute; left: 14px; top: 12px; font-size: 12px; font-weight: 700; background: var(--paper); border-radius: 999px; padding: 3px 10px; }
   .card .body { padding: 14px 16px 16px; }
@@ -169,6 +169,14 @@
   .save-bar { position: sticky; bottom: 70px; margin-top: 16px; background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 12px; box-shadow: var(--shadow); }
   @media (min-width: 760px) { .save-bar { bottom: 12px; } }
   .btn:disabled { opacity: .5; cursor: default; }
+  .card .art.photo { background-size: cover; background-position: center; }
+  .r-photo { margin: 10px 0 4px; position: relative; }
+  .r-photo img { display: block; width: 100%; max-height: 420px; object-fit: cover; border-radius: 20px; box-shadow: var(--shadow); }
+  .r-photo figcaption { position: absolute; right: 10px; bottom: 10px; display: flex; gap: 6px; }
+  .photo-btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); border-radius: 999px; padding: 7px 12px; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .photo-btn.disabled { opacity: .6; cursor: default; }
+  .dish-prev { display: flex; align-items: center; gap: 10px; }
+  .dish-prev img { width: 96px; height: 72px; object-fit: cover; border-radius: 12px; }
   footer { padding: 26px 0 0; font-size: 13px; color: var(--muted); text-align: center; }
   footer a { color: var(--muted); }
   .empty { padding: 30px 10px; text-align: center; color: var(--muted); }
@@ -192,8 +200,8 @@
 <nav class="tabbar" id="tabbar" aria-label="Main"></nav>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="../js/config.js?v=10"></script>
-<script src="app.js?v=10"></script>
-<script src="add.js?v=10"></script>
+<script src="app.js?v=11"></script>
+<script src="add.js?v=11"></script>
 <script>
   window.goatcounter = { path: function () { var h = location.hash; return "/recipes" + (/^#\/recipe\//.test(h) ? "/" + h.split("/")[2] : /^#\/make/.test(h) ? "/make" : ""); } };
   window.addEventListener("hashchange", function () { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count(); });

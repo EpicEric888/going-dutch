@@ -52,7 +52,8 @@ const T = {
     errIncomplete: "Add a name, at least one ingredient and one step.", errPassword: "The family password has changed. Reload the page and enter the new one.",
     errSave: "Couldn't save the recipe. Check your connection and try again.", errOffline: "Adding recipes isn't available right now.",
     errDelete: "Couldn't remove the recipe. Try again.", delRecipe: "Remove this recipe", delConfirm: "Tap again to remove it for everyone",
-    addedBy: "Added by you",
+    addedBy: "Added by you", addDishPhoto: "Add a photo of the dish", replacePhoto: "Replace photo", removePhotoBtn: "Remove photo", uploading: "Uploading…",
+    dishPhoto: "Dish photo", dishPhotoHint: "Optional. A photo of the finished dish, shown on the recipe.", errPhotoUpload: "Couldn't upload the photo. Try again.",
     gateTitle: "This page is for family", gateText: "Enter the password to see the recipes.", password: "Password", enter: "Open", wrong: "That's not the right password."
   },
   nl: {
@@ -98,7 +99,8 @@ const T = {
     errIncomplete: "Vul een naam, minstens één ingrediënt en één stap in.", errPassword: "Het familiewachtwoord is veranderd. Herlaad de pagina en vul het nieuwe in.",
     errSave: "Kon het recept niet opslaan. Check je verbinding en probeer het opnieuw.", errOffline: "Recepten toevoegen kan nu even niet.",
     errDelete: "Kon het recept niet verwijderen. Probeer het opnieuw.", delRecipe: "Dit recept verwijderen", delConfirm: "Tik nog een keer om het voor iedereen te verwijderen",
-    addedBy: "Door jou toegevoegd",
+    addedBy: "Door jou toegevoegd", addDishPhoto: "Foto van het gerecht toevoegen", replacePhoto: "Foto vervangen", removePhotoBtn: "Foto verwijderen", uploading: "Uploaden…",
+    dishPhoto: "Foto van het gerecht", dishPhotoHint: "Optioneel. Een foto van het eindresultaat, te zien bij het recept.", errPhotoUpload: "Kon de foto niet uploaden. Probeer het opnieuw.",
     gateTitle: "Deze pagina is voor familie", gateText: "Vul het wachtwoord in om de recepten te zien.", password: "Wachtwoord", enter: "Openen", wrong: "Dat is niet het goede wachtwoord."
   }
 };
@@ -223,6 +225,10 @@ function recipeStatus(recipe, have) {
   return { recipe, full, missing, maxServings: Math.floor(recipe.servings * limit), limit };
 }
 
+/* ---------- photos: built-in (recipe.photo) or added by family (PHOTOS, filled by add.js) ---------- */
+let PHOTOS = {};
+const photoOf = r => PHOTOS[r.id]?.url || r.photo || null;
+
 /* ---------- state ---------- */
 const state = { cat: "all", q: "", servings: {}, done: {}, have: {} };
 try { state.have = JSON.parse(localStorage.getItem("pape.have") || "{}") || {}; } catch (e) {}
@@ -269,8 +275,9 @@ function chrome(r) {
 
 function card(r) {
   const art = catArt(r.category), n = perServing(r);
+  const ph = photoOf(r);
   return `<a class="card" href="#/recipe/${r.id}">
-    <div class="art" style="background:${art.bg}"><span class="tag">${esc(L(DB.categories.find(c => c.id === r.category)?.name))}</span>${art.icon}</div>
+    <div class="art${ph ? " photo" : ""}" style="${ph ? `background-image:url('${esc(ph)}')` : `background:${art.bg}`}"><span class="tag">${esc(L(DB.categories.find(c => c.id === r.category)?.name))}</span>${ph ? "" : art.icon}</div>
     <div class="body">
       <h3 class="serif">${esc(L(r.name))}</h3>
       <p>${esc(L(r.intro))}</p>
@@ -309,12 +316,17 @@ function viewRecipe(id) {
   const s = state.servings[id] || r.servings, factor = s / r.servings, n = perServing(r);
   const done = state.done[id] || [];
   const steps = L(r.steps) || [];
+  const ph = photoOf(r), mineP = PHOTOS[r.id]?.mine, busyP = typeof add !== "undefined" && add.photoBusy === r.id;
+  const photoBtn = label => `<label class="photo-btn${busyP ? " disabled" : ""}"><input type="file" accept="image/*" hidden data-photo-for="${r.id}" ${busyP ? "disabled" : ""}>${ICON.camera}<span>${esc(busyP ? t("uploading") : label)}</span></label>`;
   return `<a class="back" href="#/">${ICON.back}${esc(t("back"))}</a>
+    ${ph ? `<figure class="r-photo"><img src="${esc(ph)}" alt="${esc(L(r.name))}">${mineP ? `<figcaption>${photoBtn(t("replacePhoto"))}<button type="button" class="photo-btn" data-photo-del="${r.id}">${esc(t("removePhotoBtn"))}</button></figcaption>` : ""}</figure>` : ""}
     <div class="r-head">
       <div class="eyebrow">${esc(L(DB.categories.find(c => c.id === r.category)?.name))}</div>
       <h1 class="serif">${esc(L(r.name))}</h1>
       <p>${esc(L(r.intro))}</p>
       <div class="meta"><span>${ICON.users}${esc(t("serves", r.servings))}</span>${r.time ? `<span>${ICON.clock}${esc(L(r.time))}</span>` : ""}</div>
+      ${!ph && typeof sb !== "undefined" && sb ? `<div style="margin-top:12px">${photoBtn(t("addDishPhoto"))}</div>` : ""}
+      ${typeof add !== "undefined" && add.photoError === r.id ? `<p class="gate-err">${esc(t("errPhotoUpload"))}</p>` : ""}
     </div>
     <div class="r-layout">
       <div class="r-side">
