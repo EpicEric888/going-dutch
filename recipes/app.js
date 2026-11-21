@@ -486,6 +486,6 @@ app.addEventListener("change", e => {
 });
 
 render();
-Promise.all([fetch("data/recipes.json").then(r => r.json()), fetch("data/ingredients.json").then(r => r.json())])
+Promise.all([fetch("data/recipes.json", { cache: "no-cache" }).then(r => r.json()), fetch("data/ingredients.json", { cache: "no-cache" }).then(r => r.json())])
   .then(async ([d, i]) => { DB = d; ING = i; render(); if (typeof loadFamilyRecipes === "function") { await loadFamilyRecipes(); render(); } })
   .catch(() => { loadFailed = true; render(); });
