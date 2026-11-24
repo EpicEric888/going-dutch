@@ -179,6 +179,31 @@
   .photo-btn.disabled { opacity: .6; cursor: default; }
   .dish-prev { display: flex; align-items: center; gap: 10px; }
   .dish-prev img { width: 96px; height: 72px; object-fit: cover; border-radius: 12px; }
+  .print-only { display: none; }
+  @media print {
+    @page { margin: 14mm; }
+    :root { --bg: #fff; --paper: #fff; --ink: #000; --muted: #444; --line: #ccc; --shadow: none; }
+    body { background: #fff; font-size: 11pt; }
+    header.top, nav.links, .tabbar, footer, .back, .no-print, .stepper button, .seg, .r-photo figcaption, .ing-head .seg { display: none !important; }
+    .print-only { display: block !important; }
+    .wrap { max-width: none; padding: 0; }
+    main { padding: 0; }
+    .r-photo img { max-height: 70mm; width: auto; max-width: 100%; border-radius: 6px; box-shadow: none; }
+    .r-head h1 { font-size: 24pt; margin: 4px 0; }
+    .r-layout { grid-template-columns: 70mm 1fr !important; gap: 8mm; margin-top: 6mm; }
+    .r-side { position: static !important; }
+    .panel { border: 0; box-shadow: none; padding: 0; }
+    .panel h2 { font-size: 14pt; margin-bottom: 6px; }
+    .stepper { background: none; padding: 0; margin: 0 0 6px; justify-content: flex-start; }
+    .stepper output { text-align: left; font-weight: 600; color: var(--muted); }
+    .ings li { padding: 4px 0; break-inside: avoid; }
+    .nutri div { background: none; border: 1px solid var(--line); }
+    .steps { gap: 6px; }
+    .steps button { border: 0; padding: 4px 0; opacity: 1 !important; text-decoration: none !important; }
+    .steps button::before { background: none; border: 1px solid #999; color: #000; content: counter(s) !important; }
+    .steps li { break-inside: avoid; }
+    .print-foot { margin-top: 8mm; font-size: 9pt; color: var(--muted); }
+  }
   footer { padding: 26px 0 0; font-size: 13px; color: var(--muted); text-align: center; }
   footer a { color: var(--muted); }
   .empty { padding: 30px 10px; text-align: center; color: var(--muted); }
@@ -202,7 +227,7 @@
 <nav class="tabbar" id="tabbar" aria-label="Main"></nav>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="../js/config.js?v=10"></script>
-<script src="app.js?v=13"></script>
+<script src="app.js?v=14"></script>
 <script src="add.js?v=14"></script>
 <script>
   window.goatcounter = { path: function () { var h = location.hash; return "/recipes" + (/^#\/recipe\//.test(h) ? "/" + h.split("/")[2] : /^#\/make/.test(h) ? "/make" : ""); } };
