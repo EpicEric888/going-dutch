@@ -52,6 +52,7 @@ const T = {
     errIncomplete: "Add a name, at least one ingredient and one step.", errPassword: "The family password has changed. Reload the page and enter the new one.",
     errSave: "Couldn't save the recipe. Check your connection and try again.", errOffline: "Adding recipes isn't available right now.",
     errDelete: "Couldn't remove the recipe. Try again.", delRecipe: "Remove this recipe", delConfirm: "Tap again to remove it for everyone",
+    editRecipe: "Edit recipe", editTitle: "Edit the recipe", editText: "Change anything you like. If you change one language, the other one is updated when you save.", saveChanges: "Save changes",
     addedBy: "Added by you", addDishPhoto: "Add a photo of the dish", replacePhoto: "Replace photo", removePhotoBtn: "Remove photo", uploading: "Uploading…",
     dishPhoto: "Dish photo", dishPhotoHint: "Optional. A photo of the finished dish, shown on the recipe.", errPhotoUpload: "Couldn't upload the photo. Try again.",
     gateTitle: "This page is for family", gateText: "Enter the password to see the recipes.", password: "Password", enter: "Open", wrong: "That's not the right password."
@@ -99,6 +100,7 @@ const T = {
     errIncomplete: "Vul een naam, minstens één ingrediënt en één stap in.", errPassword: "Het familiewachtwoord is veranderd. Herlaad de pagina en vul het nieuwe in.",
     errSave: "Kon het recept niet opslaan. Check je verbinding en probeer het opnieuw.", errOffline: "Recepten toevoegen kan nu even niet.",
     errDelete: "Kon het recept niet verwijderen. Probeer het opnieuw.", delRecipe: "Dit recept verwijderen", delConfirm: "Tik nog een keer om het voor iedereen te verwijderen",
+    editRecipe: "Recept bewerken", editTitle: "Recept bewerken", editText: "Pas aan wat je wilt. Verander je de ene taal, dan wordt de andere bijgewerkt als je opslaat.", saveChanges: "Wijzigingen opslaan",
     addedBy: "Door jou toegevoegd", addDishPhoto: "Foto van het gerecht toevoegen", replacePhoto: "Foto vervangen", removePhotoBtn: "Foto verwijderen", uploading: "Uploaden…",
     dishPhoto: "Foto van het gerecht", dishPhotoHint: "Optioneel. Een foto van het eindresultaat, te zien bij het recept.", errPhotoUpload: "Kon de foto niet uploaden. Probeer het opnieuw.",
     gateTitle: "Deze pagina is voor familie", gateText: "Vul het wachtwoord in om de recepten te zien.", password: "Wachtwoord", enter: "Openen", wrong: "Dat is niet het goede wachtwoord."
@@ -244,6 +246,7 @@ const ICON = {
   flame: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c1 4 6 6 6 11a6 6 0 0 1-12 0c0-3 2-4 2-7 2 1 3 3 3 5 1-2 1-6 1-9z"/></svg>',
   back: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>',
   book: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/></svg>',
+  pencil: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M14 6l4 4"/></svg>',
   camera: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>',
   plus: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>',
   basket: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18l-2 10H5zM8 10l3-6M16 10l-3-6"/></svg>'
@@ -257,6 +260,8 @@ const route = () => {
   if (m) return { page: "recipe", id: m[1] };
   if (/^#\/make/.test(h)) return { page: "make" };
   if (/^#\/add/.test(h)) return { page: "add" };
+  const ed = h.match(/^#\/edit\/([\w-]+)/);
+  if (ed) return { page: "edit", id: ed[1] };
   return { page: "home" };
 };
 
@@ -267,6 +272,7 @@ function chrome(r) {
   document.getElementById("brand-sub").textContent = t("sub");
   document.querySelectorAll(".lang button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.lang === lang)));
   const cur = r.page === "make" ? "make" : r.page === "add" ? "add" : "recipes";
+  if (r.page === "edit") document.title = `${t("editRecipe")} · ${t("title")}`;
   const links = [["recipes", "#/", t("recipes"), ICON.book], ["make", "#/make", t("make"), ICON.basket], ["add", "#/add", t("add"), ICON.plus]];
   document.getElementById("nav").innerHTML = links.map(([k, href, label]) => `<a href="${href}"${cur === k ? ' aria-current="page"' : ""}>${esc(label)}</a>`).join("");
   document.getElementById("tabbar").innerHTML = links.map(([k, href, label, icon]) => `<a href="${href}"${cur === k ? ' aria-current="page"' : ""}>${icon}<span>${esc(label)}</span></a>`).join("");
@@ -325,7 +331,7 @@ function viewRecipe(id) {
       <h1 class="serif">${esc(L(r.name))}</h1>
       <p>${esc(L(r.intro))}</p>
       <div class="meta"><span>${ICON.users}${esc(t("serves", r.servings))}</span>${r.time ? `<span>${ICON.clock}${esc(L(r.time))}</span>` : ""}</div>
-      ${!ph && typeof sb !== "undefined" && sb ? `<div style="margin-top:12px">${photoBtn(t("addDishPhoto"))}</div>` : ""}
+      ${typeof sb !== "undefined" && sb ? `<div class="r-actions"><a class="photo-btn" href="#/edit/${r.id}">${ICON.pencil}<span>${esc(t("editRecipe"))}</span></a>${!ph ? photoBtn(t("addDishPhoto")) : ""}</div>` : ""}
       ${typeof add !== "undefined" && add.photoError === r.id ? `<p class="gate-err">${esc(t("errPhotoUpload"))}</p>` : ""}
     </div>
     <div class="r-layout">
@@ -355,7 +361,7 @@ function viewRecipe(id) {
       </div>
       <section class="panel">
         <h2 class="serif">${esc(t("method"))}</h2>
-        <ol class="steps">${steps.map((st, i) => `<li><button type="button" data-step="${i}" aria-pressed="${done.includes(i)}"><span>${typeof st === "object" ? `<b class="st">${esc(st.title)}</b>${esc(st.text)}` : esc(st)}</span></button></li>`).join("")}</ol>
+        <ol class="steps">${steps.map((st, i) => `<li><button type="button" data-step="${i}" aria-pressed="${done.includes(i)}"><span>${typeof st === "object" ? `${st.title ? `<b class="st">${esc(st.title)}</b>` : ""}${esc(st.text)}` : esc(st)}</span></button></li>`).join("")}</ol>
         <p class="hint">${esc(t("stepHint"))}</p>
       </section>
     </div>
@@ -433,7 +439,7 @@ function render() {
   if (!unlocked) { app.innerHTML = viewGate(); setTimeout(() => document.getElementById("gate-pw")?.focus(), 0); return; }
   if (loadFailed) { app.innerHTML = `<div class="empty">${esc(t("loadError"))}</div>`; return; }
   if (!DB) { app.innerHTML = `<div class="empty">${esc(t("loading"))}</div>`; return; }
-  app.innerHTML = r.page === "recipe" ? viewRecipe(r.id) : r.page === "make" ? viewMake() : r.page === "add" ? viewAdd() : viewHome();
+  app.innerHTML = r.page === "recipe" ? viewRecipe(r.id) : r.page === "make" ? viewMake() : r.page === "add" ? viewAdd() : r.page === "edit" ? viewEditRecipe(r.id) : viewHome();
 }
 
 window.addEventListener("hashchange", () => { render(); window.scrollTo(0, 0); });

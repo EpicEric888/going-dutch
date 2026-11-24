@@ -173,6 +173,8 @@
   .r-photo { margin: 10px 0 4px; position: relative; }
   .r-photo img { display: block; width: 100%; max-height: 420px; object-fit: cover; border-radius: 20px; box-shadow: var(--shadow); }
   .r-photo figcaption { position: absolute; right: 10px; bottom: 10px; display: flex; gap: 6px; }
+  .r-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+  a.photo-btn { text-decoration: none; }
   .photo-btn { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); border-radius: 999px; padding: 7px 12px; font-size: 13px; font-weight: 700; cursor: pointer; }
   .photo-btn.disabled { opacity: .6; cursor: default; }
   .dish-prev { display: flex; align-items: center; gap: 10px; }
@@ -200,8 +202,8 @@
 <nav class="tabbar" id="tabbar" aria-label="Main"></nav>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="../js/config.js?v=10"></script>
-<script src="app.js?v=12"></script>
-<script src="add.js?v=12"></script>
+<script src="app.js?v=13"></script>
+<script src="add.js?v=13"></script>
 <script>
   window.goatcounter = { path: function () { var h = location.hash; return "/recipes" + (/^#\/recipe\//.test(h) ? "/" + h.split("/")[2] : /^#\/make/.test(h) ? "/make" : ""); } };
   window.addEventListener("hashchange", function () { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count(); });

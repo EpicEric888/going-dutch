@@ -44,7 +44,7 @@ async function loadFamilyRecipes() {
 }
 
 /* ---------- add flow state ---------- */
-const add = { stage: "input", text: "", photo: null, error: "", editLang: null, draft: null, busy: false, confirmDel: null, dishPhoto: null, photoBusy: null, photoError: null };
+const add = { editing: null, orig: null, stage: "input", text: "", photo: null, error: "", editLang: null, draft: null, busy: false, confirmDel: null, dishPhoto: null, photoBusy: null, photoError: null };
 const blankLine = () => ({ key: "", name: { en: "", nl: "" }, plural: null, amount: "", unit: "unit", note: { en: "", nl: "" }, nut: null });
 const blankDraft = () => ({ name: { en: "", nl: "" }, intro: { en: "", nl: "" }, category: "mains", servings: 4, time: { en: "", nl: "" }, lines: [blankLine()], steps: { en: [{ title: "", text: "" }], nl: [{ title: "", text: "" }] } });
 const pair = o => ({ en: String(o?.en ?? ""), nl: String(o?.nl ?? "") });
@@ -64,6 +64,38 @@ function draftFromAI(d) {
     servings: Math.max(1, Math.min(40, parseInt(d.servings) || 4)), time: d.time ? pair(d.time) : { en: "", nl: "" },
     lines: lines.length ? lines : [blankLine()], steps: steps.en.length || steps.nl.length ? steps : blankDraft().steps
   };
+}
+
+// an existing recipe as an editable draft
+function draftFromRecipe(r) {
+  const st = x => typeof x === "object" ? { title: String(x.title || ""), text: String(x.text || "") } : { title: "", text: String(x) };
+  return {
+    name: pair(r.name), intro: pair(r.intro), category: r.category || "other", servings: r.servings || 4, time: r.time ? pair(r.time) : { en: "", nl: "" },
+    lines: r.ingredients.map(l => {
+      const i = ING[l.key] || {};
+      return { key: ING[l.key] ? l.key : "", name: i.name ? pair(i.name) : { en: l.key, nl: l.key }, plural: i.plural || null, amount: l.amount, unit: l.unit,
+        note: l.note ? pair(l.note) : { en: "", nl: "" }, nut: ING[l.key] ? { calories_per_100g: i.calories_per_100g, protein_per_100g: i.protein_per_100g, carbs_per_100g: i.carbs_per_100g, fat_per_100g: i.fat_per_100g, grams_per_unit: i.grams_per_unit } : null };
+    }),
+    steps: { en: (r.steps?.en || []).map(st), nl: (r.steps?.nl || []).map(st) }
+  };
+}
+function viewEditRecipe(id) {
+  if (!sb) return `<div class="empty">${esc(t("errOffline"))}</div>`;
+  const r = DB.recipes.find(x => x.id === id);
+  if (!r) return `<a class="back" href="#/">${ICON.back}${esc(t("back"))}</a><div class="empty">${esc(t("notFound"))}</div>`;
+  if (add.editing !== id || !add.draft) {
+    add.editing = id; add.draft = draftFromRecipe(r); add.orig = JSON.parse(JSON.stringify(add.draft));
+    add.editLang = lang; add.error = ""; add.busy = false; add.dishPhoto = null;
+  }
+  return `<a class="back" href="#/recipe/${id}">${ICON.back}${esc(L(r.name))}</a>` + viewEdit();
+}
+// when only one language of a field was changed, blank the other so it gets re-translated
+function blankStaleTranslations(d, o) {
+  const fix = (a, b) => { if (!a || !b) return; if (a.en !== b.en && a.nl === b.nl) a.nl = ""; else if (a.nl !== b.nl && a.en === b.en) a.en = ""; };
+  fix(d.name, o.name); fix(d.intro, o.intro); fix(d.time, o.time);
+  d.lines.forEach((l, i) => { const ol = o.lines[i]; if (ol && ol.key === l.key) { fix(l.name, ol.name); fix(l.note, ol.note); } });
+  const en = JSON.stringify(d.steps.en) !== JSON.stringify(o.steps.en), nl = JSON.stringify(d.steps.nl) !== JSON.stringify(o.steps.nl);
+  if (en && !nl) d.steps.nl = []; else if (nl && !en) d.steps.en = [];
 }
 
 async function shrinkPhoto(file) {
@@ -120,6 +152,7 @@ const readerMsg = code => ({
 /* ---------- views ---------- */
 function viewAdd() {
   if (!sb) return `<div class="empty">${esc(t("errOffline"))}</div>`;
+  if (add.editing) Object.assign(add, { editing: null, orig: null, draft: null, stage: "input", error: "", busy: false });
   if (add.stage === "edit" && add.draft) return viewEdit();
   return `<section class="hero" style="padding-bottom:0">
       <h1 class="serif" style="font-size:clamp(32px,6vw,48px)">${esc(t("addTitle"))}</h1>
@@ -147,8 +180,8 @@ function viewEdit() {
   const d = add.draft, el = add.editLang || lang;
   const steps = d.steps[el] || [];
   return `<section class="hero" style="padding-bottom:0">
-      <h1 class="serif" style="font-size:clamp(28px,5vw,40px)">${esc(t("checkTitle"))}</h1>
-      <p>${esc(t("checkText"))}</p>
+      <h1 class="serif" style="font-size:clamp(28px,5vw,40px)">${esc(add.editing ? t("editTitle") : t("checkTitle"))}</h1>
+      <p>${esc(add.editing ? t("editText") : t("checkText"))}</p>
     </section>
     <section class="panel" style="margin-top:16px">
       <div class="ing-head"><h2 class="serif">${esc(t("details"))}</h2>
@@ -159,10 +192,10 @@ function viewEdit() {
         <div><label class="lbl">${esc(t("fCategory"))}</label><select class="fi" data-f="category">${ALL_CATS.map(c => `<option value="${c}" ${d.category === c ? "selected" : ""}>${esc(L(EXTRA_CATS[c]))}</option>`).join("")}</select></div>
         <div><label class="lbl">${esc(t("fServings"))}</label>${field("servings", d.servings, "4", 'type="number" min="1" max="40" inputmode="numeric"')}</div>
         <div class="full"><label class="lbl">${esc(t("fTime"))} <span class="muted">(${esc(t("optional"))})</span></label>${field(`time.${el}`, d.time[el], el === "en" ? "About 2 hours" : "Ongeveer 2 uur")}</div>
-        <div class="full"><label class="lbl">${esc(t("dishPhoto"))}</label>
+        ${add.editing ? "" : `<div class="full"><label class="lbl">${esc(t("dishPhoto"))}</label>
           ${add.dishPhoto ? `<div class="dish-prev"><img src="${esc(add.dishPhoto.url)}" alt=""><button type="button" class="btn ghost" data-add="cleardish">${esc(t("removePhoto"))}</button></div>`
             : `<label class="photo-btn"><input id="dish-photo" type="file" accept="image/*" hidden>${ICON.camera}<span>${esc(t("addDishPhoto"))}</span></label>`}
-          <p class="hint" style="margin-top:6px">${esc(t("dishPhotoHint"))}</p></div>
+          <p class="hint" style="margin-top:6px">${esc(t("dishPhotoHint"))}</p></div>`}
       </div>
     </section>
     <section class="panel" style="margin-top:16px">
@@ -188,7 +221,7 @@ function viewEdit() {
       ${add.error ? `<p class="gate-err" role="alert" style="margin:0 0 8px">${esc(add.error)}</p>` : ""}
       <p class="hint" style="margin:0 0 8px">${esc(t("saveHint"))}</p>
       <div style="display:flex;gap:8px"><button type="button" class="btn ghost" data-add="cancel">${esc(t("cancel"))}</button><span style="flex:1"></span>
-        <button type="button" class="btn" data-add="save" ${add.busy ? "disabled" : ""}>${esc(add.busy ? t("saving") : t("save"))}</button></div>
+        <button type="button" class="btn" data-add="save" ${add.busy ? "disabled" : ""}>${esc(add.busy ? t("saving") : add.editing ? t("saveChanges") : t("save"))}</button></div>
     </div>`;
 }
 
@@ -293,21 +326,32 @@ app.addEventListener("click", async e => {
   else if (a === "delline") { d.lines.splice(Number(b.dataset.i), 1); if (!d.lines.length) d.lines.push(blankLine()); render(); }
   else if (a === "addstep") { const el = add.editLang || lang; d.steps[el].push({ title: "", text: "" }); render(); }
   else if (a === "delstep") { const el = add.editLang || lang; d.steps[el].splice(Number(b.dataset.i), 1); render(); }
-  else if (a === "cancel") { Object.assign(add, { stage: "input", draft: null, error: "", busy: false }); render(); }
+  else if (a === "cancel") {
+    const back = add.editing;
+    Object.assign(add, { stage: "input", draft: null, error: "", busy: false, editing: null, orig: null });
+    if (back) location.hash = "#/recipe/" + back; else render();
+  }
   else if (a === "save") {
     cleanDraft(d);
     if (!(d.name.en || d.name.nl).trim() || !d.lines.length || !(d.steps.en.length || d.steps.nl.length)) { add.error = t("errIncomplete"); render(); return; }
     add.busy = true; add.error = ""; render();
     try {
+      if (add.editing && add.orig) blankStaleTranslations(d, add.orig);
       if (needsTranslation(d)) await translateDraft(d);
       const { recipe, newIngs } = buildForSave(d);
       await ensureSession();
       let pass = ""; try { pass = localStorage.getItem(GATE_KEY) || ""; } catch (err) {}
-      const { data: slug, error } = await sb.rpc("add_family_recipe", { pass_hash: pass, recipe, new_ingredients: newIngs });
+      if (add.editing) {
+        const old = DB.recipes.find(x => x.id === add.editing);
+        if (old?.photo) recipe.photo = old.photo;
+      }
+      const { data: slug, error } = add.editing
+        ? await sb.rpc("update_family_recipe", { pass_hash: pass, rslug: add.editing, recipe, new_ingredients: newIngs })
+        : await sb.rpc("add_family_recipe", { pass_hash: pass, recipe, new_ingredients: newIngs });
       if (error) throw { code: /wrong password/i.test(error.message) ? "pw" : "save" };
       if (add.dishPhoto) { try { await uploadPhoto(slug, add.dishPhoto.blob); } catch (err) { add.photoError = slug; } }
       await loadFamilyRecipes();
-      Object.assign(add, { stage: "input", draft: null, text: "", photo: null, error: "", busy: false, dishPhoto: null });
+      Object.assign(add, { stage: "input", draft: null, text: "", photo: null, error: "", busy: false, dishPhoto: null, editing: null, orig: null });
       location.hash = "#/recipe/" + slug;
     } catch (err) {
       add.busy = false;
