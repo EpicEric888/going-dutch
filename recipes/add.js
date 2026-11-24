@@ -188,7 +188,7 @@ function viewEdit() {
         <div class="seg" role="group" aria-label="${esc(t("editingIn"))}">${["en", "nl"].map(k => `<button type="button" data-elang="${k}" aria-pressed="${el === k}">${k === "en" ? "English" : "Nederlands"}</button>`).join("")}</div></div>
       <div class="form-grid">
         <div class="full"><label class="lbl">${esc(t("fName"))}</label>${field(`name.${el}`, d.name[el], el === "en" ? "Barbacoa de Res" : "Barbacoa de Res")}</div>
-        <div class="full"><label class="lbl">${esc(t("fIntro"))}</label>${field(`intro.${el}`, d.intro[el], t("fIntroPh"))}</div>
+        <div class="full"><label class="lbl">${esc(t("fIntro"))}</label><textarea class="ta" rows="2" data-f="intro.${el}" placeholder="${esc(t("fIntroPh"))}">${esc(d.intro[el])}</textarea></div>
         <div><label class="lbl">${esc(t("fCategory"))}</label><select class="fi" data-f="category">${ALL_CATS.map(c => `<option value="${c}" ${d.category === c ? "selected" : ""}>${esc(L(EXTRA_CATS[c]))}</option>`).join("")}</select></div>
         <div><label class="lbl">${esc(t("fServings"))}</label>${field("servings", d.servings, "4", 'type="number" min="1" max="40" inputmode="numeric"')}</div>
         <div class="full"><label class="lbl">${esc(t("fTime"))} <span class="muted">(${esc(t("optional"))})</span></label>${field(`time.${el}`, d.time[el], el === "en" ? "About 2 hours" : "Ongeveer 2 uur")}</div>
