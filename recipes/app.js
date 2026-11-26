@@ -189,10 +189,18 @@ let DB = null, ING = null, loadFailed = false;
 const ingName = (key, n = 1) => { const i = ING[key]; if (!i) return key; return n > 1 && i.plural ? L(i.plural) : L(i.name); };
 
 // grams for a recipe line, as Recipe.py does it: "g" as-is, otherwise amount x grams_per_unit
+// grams_per_unit is per the ingredient's default_unit, so convert other units first
+const W_G = { g: 1, kg: 1000, oz: 28.35, lb: 453.6 };
+const V_ML = { ml: 1, l: 1000, cup: 240, tbsp: 15, tsp: 5 };
 function lineGrams(line) {
-  if (line.unit === "g") return line.amount;
-  const gpu = ING[line.key]?.grams_per_unit;
-  return gpu ? line.amount * gpu : 0;
+  const i = ING[line.key] || {}, u = line.unit, a = Number(line.amount) || 0;
+  if (W_G[u]) return a * W_G[u];
+  if (u === i.default_unit) return i.grams_per_unit ? a * i.grams_per_unit : 0;
+  if (V_ML[u]) {
+    const dens = V_ML[i.default_unit] && i.grams_per_unit ? i.grams_per_unit / V_ML[i.default_unit] : 1;
+    return a * V_ML[u] * dens;
+  }
+  return i.grams_per_unit ? a * i.grams_per_unit : 0;
 }
 function perServing(recipe) {
   const tot = { calories: 0, protein: 0, carbs: 0, fat: 0 };
