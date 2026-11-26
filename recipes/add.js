@@ -205,8 +205,7 @@ function viewEdit() {
         <select class="fi unit-in" data-f="lines.${i}.unit" aria-label="Unit">${EDIT_UNITS.map(u => `<option value="${u}" ${ln.unit === u ? "selected" : ""}>${esc(u === "unit" ? (lang === "nl" ? "stuks" : "count") : (unitLabel(u, 2) || u))}</option>`).join("")}</select>
         <input class="fi name-in" data-f="lines.${i}.name.${el}" value="${esc(ln.name[el])}" placeholder="${esc(t("fIngredient"))}">
         <button type="button" class="xbtn" data-add="delline" data-i="${i}" aria-label="${esc(t("remove"))}">×</button>
-        <div class="line-sub"><input class="fi note-in" data-f="lines.${i}.note.${el}" value="${esc(ln.note[el])}" placeholder="${esc(t("fNote"))}">
-        <button type="button" class="xbtn mv" data-add="upline" data-i="${i}" ${i === 0 ? "disabled" : ""} aria-label="${esc(t("moveUp"))}">↑</button><button type="button" class="xbtn mv" data-add="downline" data-i="${i}" ${i === d.lines.length - 1 ? "disabled" : ""} aria-label="${esc(t("moveDown"))}">↓</button></div>
+        <div class="line-sub"><button type="button" class="xbtn grip" data-drag="${i}" aria-label="${esc(t("dragHint"))}" title="${esc(t("dragHint"))}">⠿</button><input class="fi note-in" data-f="lines.${i}.note.${el}" value="${esc(ln.note[el])}" placeholder="${esc(t("fNote"))}"></div>
       </div>`).join("")}</div>
       <button type="button" class="btn ghost" data-add="addline">+ ${esc(t("addIngredient"))}</button>
     </section>
@@ -324,10 +323,6 @@ app.addEventListener("click", async e => {
     add.busy = false; render(); window.scrollTo(0, 0);
   }
   else if (a === "addline") { d.lines.push(blankLine()); render(); }
-  else if (a === "upline" || a === "downline") {
-    const i = Number(b.dataset.i), j = a === "upline" ? i - 1 : i + 1;
-    if (j >= 0 && j < d.lines.length) { [d.lines[i], d.lines[j]] = [d.lines[j], d.lines[i]]; render(); }
-  }
   else if (a === "delline") { d.lines.splice(Number(b.dataset.i), 1); if (!d.lines.length) d.lines.push(blankLine()); render(); }
   else if (a === "addstep") { const el = add.editLang || lang; d.steps[el].push({ title: "", text: "" }); render(); }
   else if (a === "delstep") { const el = add.editLang || lang; d.steps[el].splice(Number(b.dataset.i), 1); render(); }
@@ -388,3 +383,34 @@ app.addEventListener("change", async e => {
   if (f && add.draft && e.target.tagName === "SELECT") setPath(add.draft, f, e.target.value);
 });
 function alertInline(msg) { add.error = msg; render(); }
+
+// drag ingredients by the grip (mouse and touch); arrow keys on the grip work too
+function moveLine(from, to) {
+  const d = add.draft; if (!d || to < 0 || to >= d.lines.length || to === from) return false;
+  d.lines.splice(to, 0, d.lines.splice(from, 1)[0]); return true;
+}
+app.addEventListener("keydown", e => {
+  const g = e.target.closest?.("[data-drag]"); if (!g || (e.key !== "ArrowUp" && e.key !== "ArrowDown")) return;
+  e.preventDefault(); const i = Number(g.dataset.drag), j = e.key === "ArrowUp" ? i - 1 : i + 1;
+  if (moveLine(i, j)) { render(); app.querySelector(`[data-drag="${j}"]`)?.focus(); }
+});
+app.addEventListener("pointerdown", e => {
+  const g = e.target.closest("[data-drag]"); if (!g || e.button > 0) return;
+  const list = g.closest(".lines"), row = g.closest(".line"); if (!list || !add.draft) return;
+  e.preventDefault();
+  const from = [...list.children].indexOf(row);
+  row.classList.add("dragging"); g.setPointerCapture(e.pointerId);
+  const onMove = ev => {
+    if (ev.clientY < 70) window.scrollBy(0, -12); else if (ev.clientY > innerHeight - 70) window.scrollBy(0, 12);
+    const others = [...list.children].filter(r => r !== row);
+    const idx = others.filter(r => { const b = r.getBoundingClientRect(); return ev.clientY > b.top + b.height / 2; }).length;
+    const target = others[idx] || null;
+    if (row.nextElementSibling !== target) list.insertBefore(row, target);
+  };
+  const onUp = () => {
+    g.removeEventListener("pointermove", onMove); g.removeEventListener("pointerup", onUp); g.removeEventListener("pointercancel", onUp);
+    row.classList.remove("dragging");
+    moveLine(from, [...list.children].indexOf(row)); render();
+  };
+  g.addEventListener("pointermove", onMove); g.addEventListener("pointerup", onUp); g.addEventListener("pointercancel", onUp);
+});
