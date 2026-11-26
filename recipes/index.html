@@ -160,7 +160,10 @@
   .form-grid .full { grid-column: 1 / -1; }
   .lines { display: grid; gap: 10px; margin-bottom: 8px; }
   .line { display: grid; grid-template-columns: 74px 104px 1fr 34px; gap: 6px; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
-  .line .note-in { grid-column: 1 / -1; font-size: 14px; padding: 7px 12px; }
+  .line-sub { grid-column: 1 / -1; display: flex; gap: 6px; align-items: center; }
+  .line .note-in { flex: 1; min-width: 0; font-size: 14px; padding: 7px 12px; }
+  .xbtn.mv { flex: none; font-size: 15px; }
+  .xbtn:disabled { opacity: .35; cursor: default; }
   @media (max-width: 480px) { .line { grid-template-columns: 64px 92px 1fr 30px; } }
   .xbtn { width: 32px; height: 32px; border-radius: 10px; border: 1px solid var(--line); background: var(--paper); cursor: pointer; font-size: 18px; color: var(--muted); }
   .edit-steps { list-style: none; padding: 0; margin: 0 0 8px; display: grid; gap: 12px; }
@@ -227,8 +230,8 @@
 <nav class="tabbar" id="tabbar" aria-label="Main"></nav>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="../js/config.js?v=10"></script>
-<script src="app.js?v=15"></script>
-<script src="add.js?v=14"></script>
+<script src="app.js?v=16"></script>
+<script src="add.js?v=15"></script>
 <script>
   window.goatcounter = { path: function () { var h = location.hash; return "/recipes" + (/^#\/recipe\//.test(h) ? "/" + h.split("/")[2] : /^#\/make/.test(h) ? "/make" : ""); } };
   window.addEventListener("hashchange", function () { if (window.goatcounter && window.goatcounter.count) window.goatcounter.count(); });

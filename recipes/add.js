@@ -71,9 +71,9 @@ function draftFromRecipe(r) {
   const st = x => typeof x === "object" ? { title: String(x.title || ""), text: String(x.text || "") } : { title: "", text: String(x) };
   return {
     name: pair(r.name), intro: pair(r.intro), category: r.category || "other", servings: r.servings || 4, time: r.time ? pair(r.time) : { en: "", nl: "" },
-    lines: r.ingredients.map(l => {
+    lines: r.ingredients.map((l, idx) => {
       const i = ING[l.key] || {};
-      return { key: ING[l.key] ? l.key : "", name: i.name ? pair(i.name) : { en: l.key, nl: l.key }, plural: i.plural || null, amount: l.amount, unit: l.unit,
+      return { _o: idx, key: ING[l.key] ? l.key : "", name: i.name ? pair(i.name) : { en: l.key, nl: l.key }, plural: i.plural || null, amount: l.amount, unit: l.unit,
         note: l.note ? pair(l.note) : { en: "", nl: "" }, nut: ING[l.key] ? { calories_per_100g: i.calories_per_100g, protein_per_100g: i.protein_per_100g, carbs_per_100g: i.carbs_per_100g, fat_per_100g: i.fat_per_100g, grams_per_unit: i.grams_per_unit } : null };
     }),
     steps: { en: (r.steps?.en || []).map(st), nl: (r.steps?.nl || []).map(st) }
@@ -93,7 +93,7 @@ function viewEditRecipe(id) {
 function blankStaleTranslations(d, o) {
   const fix = (a, b) => { if (!a || !b) return; if (a.en !== b.en && a.nl === b.nl) a.nl = ""; else if (a.nl !== b.nl && a.en === b.en) a.en = ""; };
   fix(d.name, o.name); fix(d.intro, o.intro); fix(d.time, o.time);
-  d.lines.forEach((l, i) => { const ol = o.lines[i]; if (ol && ol.key === l.key) { fix(l.name, ol.name); fix(l.note, ol.note); } });
+  d.lines.forEach(l => { const ol = l._o != null ? o.lines[l._o] : null; if (ol && ol.key === l.key) { fix(l.name, ol.name); fix(l.note, ol.note); } });
   const en = JSON.stringify(d.steps.en) !== JSON.stringify(o.steps.en), nl = JSON.stringify(d.steps.nl) !== JSON.stringify(o.steps.nl);
   if (en && !nl) d.steps.nl = []; else if (nl && !en) d.steps.en = [];
 }
@@ -205,7 +205,8 @@ function viewEdit() {
         <select class="fi unit-in" data-f="lines.${i}.unit" aria-label="Unit">${EDIT_UNITS.map(u => `<option value="${u}" ${ln.unit === u ? "selected" : ""}>${esc(u === "unit" ? (lang === "nl" ? "stuks" : "count") : (unitLabel(u, 2) || u))}</option>`).join("")}</select>
         <input class="fi name-in" data-f="lines.${i}.name.${el}" value="${esc(ln.name[el])}" placeholder="${esc(t("fIngredient"))}">
         <button type="button" class="xbtn" data-add="delline" data-i="${i}" aria-label="${esc(t("remove"))}">×</button>
-        <input class="fi note-in" data-f="lines.${i}.note.${el}" value="${esc(ln.note[el])}" placeholder="${esc(t("fNote"))}">
+        <div class="line-sub"><input class="fi note-in" data-f="lines.${i}.note.${el}" value="${esc(ln.note[el])}" placeholder="${esc(t("fNote"))}">
+        <button type="button" class="xbtn mv" data-add="upline" data-i="${i}" ${i === 0 ? "disabled" : ""} aria-label="${esc(t("moveUp"))}">↑</button><button type="button" class="xbtn mv" data-add="downline" data-i="${i}" ${i === d.lines.length - 1 ? "disabled" : ""} aria-label="${esc(t("moveDown"))}">↓</button></div>
       </div>`).join("")}</div>
       <button type="button" class="btn ghost" data-add="addline">+ ${esc(t("addIngredient"))}</button>
     </section>
@@ -323,6 +324,10 @@ app.addEventListener("click", async e => {
     add.busy = false; render(); window.scrollTo(0, 0);
   }
   else if (a === "addline") { d.lines.push(blankLine()); render(); }
+  else if (a === "upline" || a === "downline") {
+    const i = Number(b.dataset.i), j = a === "upline" ? i - 1 : i + 1;
+    if (j >= 0 && j < d.lines.length) { [d.lines[i], d.lines[j]] = [d.lines[j], d.lines[i]]; render(); }
+  }
   else if (a === "delline") { d.lines.splice(Number(b.dataset.i), 1); if (!d.lines.length) d.lines.push(blankLine()); render(); }
   else if (a === "addstep") { const el = add.editLang || lang; d.steps[el].push({ title: "", text: "" }); render(); }
   else if (a === "delstep") { const el = add.editLang || lang; d.steps[el].splice(Number(b.dataset.i), 1); render(); }
